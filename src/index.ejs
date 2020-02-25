@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>NTFS XAAAAAAA</title>
+    <% if (htmlWebpackPlugin.options.nodeModules) { %>
+      <!-- Add `node_modules/` to global paths so `require` works properly in development -->
+      <script>
+        require('module').globalPaths.push('<%= htmlWebpackPlugin.options.nodeModules.replace(/\\/g, '\\\\') %>')
+      </script>
+    <% } %>
+  </head>
+
+<style>
+html,body,#app{
+    height:100%;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    overflow: hidden;
+    font-family: -webkit-body;
+}
+
+::-webkit-scrollbar {
+  background: rgba(0, 0, 0, 0);
+  width: 3px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(206, 206, 206, 0.57);
+  }
+
+</style>
+  <body>
+    <div id="app"></div>
+    <!-- Set `__static` path to static files in production -->
+    <script>
+      if (process.env.NODE_ENV !== 'development') window.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
+    </script>
+
+    <!-- webpack builds are automatically injected -->
+  </body>
+</html>
