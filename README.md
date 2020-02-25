@@ -1,7 +1,7 @@
 # NTFS Tool
 
 <a href="https://ntfstool.com">
-  <img src="https://raw.githubusercontent.com/ntfstool/ntfstool/master/src/renderer/assets/github/256x256@2x.png" /></a>
+  <img src="https://github.com/ntfstool/ntfstool/blob/master/src/renderer/assets/github/256x256@2x.png?raw=true" /></a>
 
 English | [简体中文](./README-CN.md)
 
@@ -47,9 +47,9 @@ macOS users can click the link below to jump to the official website and downloa
 
 ## 🖥 User Interface
 
-![ntfstool-main1.png](https://raw.githubusercontent.com/ntfstool/ntfstool/master/src/renderer/assets/github/ntfstool-main1.png)
+![ntfstool-main1.png](https://github.com/ntfstool/ntfstool/blob/master/src/renderer/assets/github/ntfstool-main1.png?raw=true)
 
-![ntfstool-main1.png](https://raw.githubusercontent.com/ntfstool/ntfstool/master/src/renderer/assets/github/ntfstool-main2.png)
+![ntfstool-main1.png](https://github.com/ntfstool/ntfstool/blob/master/src/renderer/assets/github/ntfstool-main2.png?raw=true)
 
 ## ⌨️ Development
 
