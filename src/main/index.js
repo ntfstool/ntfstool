@@ -141,7 +141,7 @@ const initWindow = () => {
                     label: '关于AlNtfs',
                     click: async () => {
                         const {shell} = require('electron')
-                        await shell.openExternal('https://baidu.org')
+                        await shell.openExternal('https://ntfstool.com')
                     }
                 },
                 {type: 'separator'},
