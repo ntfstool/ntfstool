@@ -13,3 +13,4 @@ thumbs.db
 dist/
 test
 package-lock.json
+mynpm

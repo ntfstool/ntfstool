@@ -12,23 +12,6 @@
   </head>
 
 <style>
-html,body,#app{
-    height:100%;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    overflow: hidden;
-    font-family: -webkit-body;
-}
-
-::-webkit-scrollbar {
-  background: rgba(0, 0, 0, 0);
-  width: 3px;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(206, 206, 206, 0.57);
-  }
 
 </style>
   <body>
@@ -37,7 +20,6 @@ html,body,#app{
     <script>
       if (process.env.NODE_ENV !== 'development') window.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
     </script>
-
     <!-- webpack builds are automatically injected -->
   </body>
 </html>

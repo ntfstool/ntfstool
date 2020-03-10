@@ -1,59 +1,76 @@
-import {app, BrowserWindow, Menu, Tray, ipcMain,globalShortcut} from 'electron'
 /**
- * Set `__static` path to static files in production
- * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
+ * @author   service@ntfstool.com
+ * Copyright (c) 2020 ntfstool.com
+ * Copyright (c) 2020 alfw.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the MIT General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MIT General Public License for more details.
+ *
+ * You should have received a copy of the MIT General Public License
+ * along with this program (in the main directory of the NTFS Tool
+ * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
+
+import {app, BrowserWindow, Menu, Tray, ipcMain,globalShortcut} from 'electron'
+
 if (process.env.NODE_ENV !== 'development') {
     global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
 }
-const fs = require('fs');
 const Store = require('electron-store');
+
 const store = new Store();
+
 app.disableHardwareAcceleration();//disable gpu
+
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = '1';
 
 const default_store = {
     name: "Alntfs",
     auto_run:true,
-    theme: "",//主题
-    lang: "en",//语言设置
-    show_menu: true,//是否显示菜单栏
+    theme: "",
+    lang: "en",
+    show_menu: true,
     common: {
-        website_url: "",//官方网站
-        install_bug_type: "auto_solve",//安装坏卷
-        how_restart_window: "change_to_bacground", //如何处理休眠
+        website_url: "",
+        install_bug_type: "auto_solve",
+        how_restart_window: "change_to_bacground",
     },
     message: {
-        mount_show_msg: "",//磁盘挂载通知通知
-        update_show_msg: "",//更新通知
-        error_disk_msg: "",//卷宗异常通知
+        mount_show_msg: "",
+        update_show_msg: "",
+        error_disk_msg: "",
     },
     disk_list: {
-        history_list: [],//磁盘列表
-        ignore_list: [],//磁盘忽略列表
+        history_list: [],
+        ignore_list: [],
     },
-    privacy_url: 'https://github.com',//隐私链接
+    privacy_url: 'https://github.com',
     update: {
-        auto_check: "",//自动检查更新
-        auto_beta_update: "",//自动检查beta更新
-        update_url: "",//更新链接
-        update_beta_url: "",//beta更新链接
+        auto_check: "",
+        auto_beta_update: "",
+        update_url: "",
+        update_beta_url: "",
     },
     sudoPwd:false,
 };
-
 
 var settingWin = null;
 var trayWin = null;
 var tray = null
 let mainWindow
-//设置路径
+
 const winURL = process.env.NODE_ENV === 'development'
     ? `http://localhost:9080`
     : `file://${__dirname}/index.html`
 
-//默认主窗口
 const initWindow = () => {
-
     mainWindow = new BrowserWindow({
         show: false,
         fullscreen: false,
@@ -70,7 +87,7 @@ const initWindow = () => {
             experimentalFeatures: true,
             nodeIntegration: true
         },
-        transparent: true
+        // transparent: true
     })
 
     console.log(winURL, "winURL");
@@ -83,8 +100,6 @@ const initWindow = () => {
     mainWindow.on('closed', () => {
         mainWindow = null
     })
-
-
 
 
     // //左上角菜单栏

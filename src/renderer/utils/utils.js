@@ -1,14 +1,31 @@
 /**
- * @author service@ntfstool.com
+ * @author   service@ntfstool.com
+ * Copyright (c) 2020 ntfstool.com
+ * Copyright (c) 2020 alfw.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the MIT General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MIT General Public License for more details.
+ *
+ * You should have received a copy of the MIT General Public License
+ * along with this program (in the main directory of the NTFS Tool
+ * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
+
 import {exec} from 'child_process'
 import {t} from 'element-ui/lib/locale'
 import {alEvent} from '@/utils/alevent.js';
-import sudo from 'sudo-js'
 const log = require('electron-log');
-var reMountLock = [];//全局锁
+var reMountLock = [];//global lock
 const Store = require('electron-store');
 const store = new Store();
+var SUDO_PASSWORD = "";
 
 export function getPackageVersion() {
     try{
@@ -22,47 +39,40 @@ export function getPackageVersion() {
 export function listenSudoPwd(){
     try {
         if (store.get("sudoPwd")) {
-            sudo.setPassword(store.get("sudoPwd"));//配置全局密码
+            SUDO_PASSWORD = store.get("sudoPwd");
         }
 
-
         alEvent.$on('setPWDEvent', password => {
-
-
-            sudo.check(function (valid) {
-                if (valid !== true) {
-                    alEvent.$emit('SudoPWDEvent', "invalid password");//发送刷新事件
+            checkMabeSudoPassword(password).then(status => {
+                if(status){
+                    //ok
+                    store.set("sudoPwd",password);
+                    SUDO_PASSWORD = password;
+                }else{
+                    alEvent.$emit('SudoPWDEvent', "invalid password");
+                    console.warn('password valid : ' + password);
                 }
-
-                console.warn('setPWDEvent', password);
-                store.set("sudoPwd",password);
-                sudo.setPassword(store.get("sudoPwd"));
-
-                console.warn('password valid : ', valid);
-                return;
-            });
-            console.log(password, "Listen setPWDEvent");
+            })
         })
     }catch (e) {
         log.warn(e,"listenSudoPwd");
     }
-
 }
+
 
 export function execShell(shell) {
     return new Promise((resolve, reject) => {
         try {
             exec(shell, (error, stdout, stderr) => {
                 console.warn("execShell", {
-                    code: shell,
+                    code: "[SUDO]" + shell,
                     stdout: stdout,
-                    stderr: stderr
+                    stderr: stderr,
+                    // error:error
                 })
-                if (error) {
-                    if (error.signal !== null) {
-                        reject(error)
-                        return;
-                    }
+                if(stderr){
+                    reject(stdout + error );
+                    return;
                 }
 
                 if (!stdout && stderr) {
@@ -76,43 +86,108 @@ export function execShell(shell) {
     })
 }
 
-export function execShellSudo(shell) {
+
+
+/**
+ * force 强制不论结果
+ * @param shell
+ * @param force
+ * @returns {Promise}
+ */
+export function execShellSudo(shell,force = false) {
     return new Promise((resolve, reject) => {
+        var password = SUDO_PASSWORD;
         try {
-            var command = shell.replace(/\s+/g, ' ').split(" ");
-            var options = {check: false, withResult: true};
-            sudo.exec(command, options, function (err, pid, result) {
-                console.log(command.join(" ") + " execShellSudo",
-                    {err: err, pid: pid, result: result});
-                if (err) {
-                    if (typeof pid.msg != "undefined" && pid.msg.toLowerCase().indexOf("password") >= 0) {
-                        alEvent.$emit('SudoPWDEvent');//发送刷新事件
+            exec(`echo ${password}|sudo -S ${shell}`, (error, stdout, stderr) => {
+                console.warn("execShell", {
+                    code: "[SUDO]" + shell,
+                    stdout: stdout,
+                    stderr: stderr,
+                    // error:error
+                })
+                if(force == true){
+                    resolve();
+                    return;
+                }
+                if(stderr){
+                    if(stderr.toLowerCase().indexOf("password") >= 0){
+                        //疑似密码不对
+                        checkMabeSudoPassword().then(res => {
+                            if(!res){
+                                reject(stderr);
+                                return;
+                            }
+                        });
+                    }else{
+                        reject(stderr);
                         return;
                     }
-                    reject(typeof pid.msg != "undefined" ? pid.msg : pid);
-                } else {
-                    resolve(result);
+                }else{
+                    resolve(stdout, stderr)
                 }
             });
         }catch (e) {
-            log.warn(e,"execShellSudo");
+            log.warn(e,"execShell");
         }
     })
 }
 
-/////////////////////////执行shell/////////////////////////
+
+
+/**
+ * 检查可能是密码错误
+ * @returns {Promise}
+ */
+function checkMabeSudoPassword(setPwd = false){
+    if(setPwd!==false){
+        var password = setPwd
+    }else{
+        var password = SUDO_PASSWORD;
+    }
+    return new Promise((resolve, reject) => {
+        try {
+            exec(`echo ${password}|sudo -S ls`, (error, stdout, stderr) => {
+                if (stderr && stderr.toLowerCase().indexOf("password") >= 0) {
+                    //疑似密码不对
+                    alEvent.$emit('SudoPWDEvent');//Send the refresh event
+                    console.warn("密码不对,重新输入")
+                    resolve(true);//是密码错误
+                }else{
+                    resolve(false);//不是密码错误
+                }
+            });
+        } catch (e) {
+            log.warn(e, "checkSudo");
+        }
+    });
+}
+
+
+/**
+ * disableZoom
+ */
+export function disableZoom(webFrame) {
+    try{
+        webFrame.setVisualZoomLevelLimits(1, 1);
+        webFrame.setLayoutZoomLevelLimits(0, 0);
+    }catch (e) {
+        console.warn(e.getError(),"disableZoom error");
+    }
+}
+
+/////////////////////////Execute shell/////////////////////////
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
- * 忽略列表
+ * _ignore
  * @param disk_list
  * @returns {*}
  */
 function _ignore(disk_list) {
     return disk_list.filter(function (list) {
         try {
-            //APFS 下: Preboot Recovery VM 忽略掉
+            //APFS: Preboot Recovery VM ignore
             if (typeof list.type != "undefined" && list.type.toLowerCase().indexOf("apfs") >= 0) {
                 if (typeof list.name != "undefined") {
                     if (list.name.toLowerCase().indexOf("preboot") == 0) {
@@ -127,14 +202,14 @@ function _ignore(disk_list) {
                         return false;
                     }
 
-                    // Apple_APFS Container disk1 类型
+                    // Apple_APFS Container disk1 type
                     if (list.type.toLowerCase().indexOf("container") >= 0 && list.name.toLowerCase().indexOf("disk") >= 0) {
                         return false;
                     }
                 }
             }
 
-            //EFI 下: efi 忽略掉
+            //EFI: efi Ignore
             if (typeof list.type != "undefined" && list.type.toLowerCase().indexOf("efi") >= 0) {
                 if (typeof list.name != "undefined") {
                     if (list.name.toLowerCase().indexOf("efi") == 0) {
@@ -150,7 +225,7 @@ function _ignore(disk_list) {
 }
 
 /**
- * 显示类型  show_type:  image ext  inner
+ * show_type:  image ext  inner
  * @param disk_list
  * @returns {*}
  */
@@ -175,7 +250,7 @@ function _marktype(disk_list) {
             }
 
 
-            //剩下的都是 ext模式
+            //The rest are in ext mode
             disk_list[i]["group"] = "ext";
             disk_list_group.ext.push(disk_list[i]);
         }
@@ -186,7 +261,7 @@ function _marktype(disk_list) {
 }
 
 /**
- * 是否可以push
+ * Is it possible to push
  * @param disk_list
  * @returns {*}
  */
@@ -205,14 +280,14 @@ function _checkPushable(disk_list) {
 }
 
 /**
- * 返回严格的父磁盘节点
+ * Returns the strict parent disk node
  * @param dev_path
  * @returns {string}
  */
 function get_safe_ejst_disk_name(dev_path) {
     try {
-        var safe_dev = dev_path.substring(0, 9);//确保/dev/disk 存在
-        var safe_dev2 = dev_path.substring(9);//确保/dev/disk 存在
+        var safe_dev = dev_path.substring(0, 9);//Make sure /dev/disk exists
+        var safe_dev2 = dev_path.substring(9);//Make sure  /dev/disk exists
         var find_index = safe_dev2.lastIndexOf('s');
         if (find_index >= 0) {
             var safe_path = safe_dev + safe_dev2.substring(0, find_index);
@@ -227,7 +302,7 @@ function get_safe_ejst_disk_name(dev_path) {
 
 
 /**
- * 获取磁盘列表
+ * Get the disk list
  * @returns {Promise<any>}
  */
 export function getDiskList() {
@@ -242,11 +317,11 @@ export function getDiskList() {
                             return item.trim();
                         }).filter(function (s) {
                             s = s.trim();
-                            //必须不为空
+                            //Must not be empty
                             if (s) {
-                                //去掉0:  #: 行
+                                //Remove 0: #: line
                                 if (s.indexOf("0:") !== 0 && s.indexOf("#:") !== 0) {
-                                    //去掉没有:的行
+                                    //Remove the line without the :
                                     if (s.indexOf(":") >= 0) {
                                         return true;
                                     }
@@ -316,7 +391,7 @@ export function getDiskList() {
                 let disk_list_group = _marktype(disk_list);
 
 
-                //更新详情
+                //Update details
                 getDiskFullInfo(disk_list_group).then((diskList) => {
                     resolve(diskList)
                 }).catch((err) => {
@@ -335,7 +410,7 @@ export function getDiskList() {
 }
 
 /**
- * 获取磁盘信息
+ * getDiskFullInfo
  * @param disklist
  */
 export async function getDiskFullInfo(disklist) {
@@ -348,7 +423,7 @@ export async function getDiskFullInfo(disklist) {
                     disklist[key][disk_index]["name"] = info.mountpoint.replace(/\/Volumes\/(.*)/i, "$1");
                 }
 
-                //需要重新挂载的 NTFS
+                //NTFS needs to be remounted
                 if (disklist[key][disk_index]["info"]["readonly"] && disklist[key][disk_index]["info"]["typebundle"] == "ntfs") {
                     var _index = disklist[key][disk_index].index;
 
@@ -356,7 +431,7 @@ export async function getDiskFullInfo(disklist) {
                         console.log(_index + " is busy... +++++++++++TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT++++++++++");
                     } else {
                         reMountNtfs(_index).then((res) => {
-                            alEvent.$emit('doRefreshEvent');//发送刷新事件
+                            alEvent.$emit('doRefreshEvent');//Send the refresh event
                             console.warn(res, ">>>  reMountNtfs then +++++++++++TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT++++++++++");
                         }).catch((err) => {
                             console.warn(err, ">>>  reMountNtfs catch +++++++++++TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT++++++++++");
@@ -373,7 +448,7 @@ export async function getDiskFullInfo(disklist) {
 
 
 /**
- * 获取磁盘信息
+ * getDiskInfo
  * @param index
  */
 export function getDiskInfo(index) {
@@ -393,10 +468,8 @@ export function getDiskInfo(index) {
                     });
                     infoArr2[infoArr[i][0]] = infoArr[i][1];
                 }
-                //获取到信息列表
-                // console.warn(infoArr2,"getDiskInfo")
 
-                //筛选关键信息
+                //Filter the key information
                 var infoArr3 = {
                     "volumename": "",
                     "mounted": "",
@@ -473,7 +546,7 @@ export function getDiskInfo(index) {
                     infoArr3.total_size = disk_dize;
                     infoArr3.total_size_wei = disk_size_wei;
                 }
-                //如果还没有获取到磁盘信息
+                //If disk information has not been obtained
                 if((!infoArr3.total_size || !infoArr3.used_size) && info.length > 20){
                     var sizeData = formatDiskSize(info);
                     if(sizeData["total"]){
@@ -500,7 +573,7 @@ export function getDiskInfo(index) {
 
 
 /**
- * 重新加载Ntfs 磁盘
+ * reMountNtfs
  * @param index
  * @param force
  * @returns {Promise<any>}
@@ -518,12 +591,10 @@ export function reMountNtfs(index, force = false) {
                 reject("not is ntfs disk[" + index + "]!");
                 return;
             }
-            //检查是否需要重载
+            //Check if overload is needed
             var check_res1 = await execShell("mount |grep '" + index + "'");
             if (check_res1) {
                 if (force === true || check_res1.indexOf("read-only") >= 0) {
-                    //强制重新挂载 or read-only
-                    //1.卸载
                     await execShellSudo("umount " + link_dev);
                 } else {
                     reMountLock[index] = false;
@@ -536,7 +607,6 @@ export function reMountNtfs(index, force = false) {
             var volumename = info.volumename ? info.volumename : "AUntitled";
             var mount_path = '/Volumes/' + volumename;
 
-            //开始挂载程序
             var run_res = await execShellSudo("mkdir -p " + mount_path);
 
             var run_res = await execShellSudo(`mount_ntfs -o rw,auto,nobrowse,noowners,noatime ${link_dev} ${mount_path}`);
@@ -561,7 +631,7 @@ export function reMountNtfs(index, force = false) {
 
 
 /**
- * 在 openInFinder 中打开文件夹
+ * openInFinder
  * @param path
  * @returns {Promise<any>}
  */
@@ -588,7 +658,7 @@ export function openInFinder(path) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * 不同类型 disk 挂载方式不一样
+ * mountDisk
  * @param mount_path
  * @param link_path
  * @returns {Promise<any>}
@@ -600,7 +670,7 @@ export function mountDisk(item) {
             var volumename = typeof item.info.volumename != "undefined" && item.info.volumename ? item.info.volumename : "AUntitled";
             var mount_path = '/Volumes/' + volumename;
             var dev_path = "/dev/" + item.index;
-            //判断挂载方式  typebundle
+            //Determine the mount method
             if (typeof item.info.typebundle != "undefined" && item.info.typebundle == "ntfs") {
                 console.warn(item.index, "[ntfs mount]mountDisk start +++++++++++++++++++++TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
                 reMountNtfs(item.index, true).then((res) => {
@@ -610,7 +680,7 @@ export function mountDisk(item) {
                 });
                 return;
             }
-            //其他磁盘暂时不需要挂载
+            //No other disks need to be mounted temporarily
             reject("not need mount");
         } catch (e) {
             log.warn(e,"mountDisk");
@@ -633,12 +703,12 @@ export function uMountDisk(item) {
             if (typeof item.info.typebundle != "undefined" && item.info.typebundle == "ntfs") {
                 console.warn(item, "[NTFS]uMountDisk start +++++++++++++++++++++TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
                 resolve(await execShellSudo(`umount ${dev_path}`));
-                alEvent.$emit('doRefreshEvent');//发送刷新事件
+                alEvent.$emit('doRefreshEvent');//Send the refresh event
                 return;
             } else {
                 console.warn(item, "eject uMountDisk start +++++++++++++++++++++TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
                 resolve(await execShellSudo(`diskutil eject ${get_safe_ejst_disk_name(dev_path)}`));
-                alEvent.$emit('doRefreshEvent');//发送刷新事件
+                alEvent.$emit('doRefreshEvent');//Send the refresh event
                 return;
             }
         } catch (e) {
@@ -679,7 +749,7 @@ export function openSysDiskUtils() {
 }
 
 /**
- * 分析筛选出磁盘数据
+ * Analysis and filtering out disk data
  * @param str
  */
 function formatDiskSize(str){
@@ -693,21 +763,21 @@ function formatDiskSize(str){
 }
 function _formatDiskSizeGb(str) {
     var data = str.split("\n");
-    //获取到可能数据集
+    //Get the possible data set
     var matchData = [];
     for (var key in data) {
         if (data[key].trim().length > 10 && data[key].toLowerCase().indexOf("gb") >= 0) {
-            //规则算法: 1.去掉 gb后所有字符 2.倒叙 3.gb后除了.和数字,其他的全部截断 4.倒数回来 5 trim 掉.
+            //Rule algorithm: 1.Remove all characters after gb 2.Backtrack 3.Gb truncates everything except. And digits 4.Count down 5 trim away.
             var _match_value = data[key];
-            _match_value = _match_value.toLowerCase().replace(/\s+/g, "");//去掉所有空格,转小写
-            _match_value = _match_value.replace(/(.*[\d\.]*gb).*/i, "$1");//去掉 gb后所有字符
-            _match_value = _match_value.split("").reverse().join("");//倒叙
+            _match_value = _match_value.toLowerCase().replace(/\s+/g, "");//Remove all spaces, lower case
+            _match_value = _match_value.replace(/(.*[\d\.]*gb).*/i, "$1");//Remove all characters after gb
+            _match_value = _match_value.split("").reverse().join("");//flashback
             _match_value = _match_value.replace(/(bg[\d.]*).*/g, "$1");
-            _match_value = _match_value.split("").reverse().join("").trim();//倒叙回来
-            _match_value = _match_value.replace("gb", "");//去掉gb字符串
+            _match_value = _match_value.split("").reverse().join("").trim();//Flashback
+            _match_value = _match_value.replace("gb", "");//Remove gb string
 
             if ((_match_value.lastIndexOf('.') + 1) == _match_value.length) {
-                // trim 掉最后可能出现的 .
+                // Trim off the last possible occurrence .
                 _match_value = _match_value.substring(0, _match_value.lastIndexOf('.') - 1);
             }
 
@@ -717,25 +787,24 @@ function _formatDiskSizeGb(str) {
                 matchData[_match_value] = data[key];
             }
 
-            matchData[_match_value] = matchData[_match_value].toLowerCase().replace(/\s+/g, "");//去掉所有空格,转小写
+            matchData[_match_value] = matchData[_match_value].toLowerCase().replace(/\s+/g, "");
         }
     }
 
-    //可能数据集筛选出准确数
-    // console.log(matchData, "matchData");
+    //Possible data set to filter out the exact number
     var resData = {total: 0, used: 0, free: 0, percentage: 0,wei:"GB"};
     for (var j in matchData) {
         if (matchData[j].indexOf("total") >= 0 || matchData[j].indexOf("disksize") >= 0) {
-            //可能的关键词,在这里获取
+            //Possible keywords, get here
             resData["total"] = formatSize(j);
         }
 
         if (matchData[j].indexOf("free") >= 0) {
-            //可能的关键词,在这里获取
+            //Possible keywords, get here
             resData["free"] = formatSize(j);
         }
         if (matchData[j].indexOf("used") >= 0) {
-            //可能的关键词,在这里获取
+            //Possible keywords, get here
             resData["used"] = formatSize(j);
         }
     }
@@ -758,21 +827,20 @@ function _formatDiskSizeGb(str) {
 }
 function _formatDiskSizeMb(str) {
     var data = str.split("\n");
-    //获取到可能数据集
+    //Get the possible data set
     var matchData = [];
     for (var key in data) {
         if (data[key].trim().length > 10 && data[key].toLowerCase().indexOf("mb") >= 0) {
-            //规则算法: 1.去掉 mb后所有字符 2.倒叙 3.mb后除了.和数字,其他的全部截断 4.倒数回来 5 trim 掉.
+            //Rule algorithm: 1.Remove all characters after mb 2.Flashback 3.Except for. And numbers, all truncated after mb 4.Count down 5 trim away.
             var _match_value = data[key];
-            _match_value = _match_value.toLowerCase().replace(/\s+/g, "");//去掉所有空格,转小写
-            _match_value = _match_value.replace(/(.*[\d\.]*mb).*/i, "$1");//去掉 mb后所有字符
-            _match_value = _match_value.split("").reverse().join("");//倒叙
+            _match_value = _match_value.toLowerCase().replace(/\s+/g, "");//Remove all spaces, lower case
+            _match_value = _match_value.replace(/(.*[\d\.]*mb).*/i, "$1");//Remove all characters after gb
+            _match_value = _match_value.split("").reverse().join("");//reverse
             _match_value = _match_value.replace(/(bm[\d.]*).*/g, "$1");
-            _match_value = _match_value.split("").reverse().join("").trim();//倒叙回来
-            _match_value = _match_value.replace("mb", "");//去掉mb字符串
+            _match_value = _match_value.split("").reverse().join("").trim();//reverse
+            _match_value = _match_value.replace("mb", "");
 
             if ((_match_value.lastIndexOf('.') + 1) == _match_value.length) {
-                // trim 掉最后可能出现的 .
                 _match_value = _match_value.substring(0, _match_value.lastIndexOf('.') - 1);
             }
 
@@ -782,25 +850,20 @@ function _formatDiskSizeMb(str) {
                 matchData[_match_value] = data[key];
             }
 
-            matchData[_match_value] = matchData[_match_value].toLowerCase().replace(/\s+/g, "");//去掉所有空格,转小写
+            matchData[_match_value] = matchData[_match_value].toLowerCase().replace(/\s+/g, "");//Remove all spaces, lower case
         }
     }
 
-    //可能数据集筛选出准确数
-    // console.log(matchData, "matchData");
     var resData = {total: 0, used: 0, free: 0, percentage: 0,wei:"MB"};
     for (var j in matchData) {
         if (matchData[j].indexOf("total") >= 0 || matchData[j].indexOf("disksize") >= 0) {
-            //可能的关键词,在这里获取
             resData["total"] = formatSize(j);
         }
 
         if (matchData[j].indexOf("free") >= 0) {
-            //可能的关键词,在这里获取
             resData["free"] = formatSize(j);
         }
         if (matchData[j].indexOf("used") >= 0) {
-            //可能的关键词,在这里获取
             resData["used"] = formatSize(j);
         }
     }

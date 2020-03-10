@@ -1,6 +1,6 @@
 <template>
     <el-container class="al-main">
-        <el-col class="al-lblock" :span="8">
+        <el-col class="al-lblock" style="width: 35%;">
             <el-header class="lheader">
                 <div>
                     <div>
@@ -12,11 +12,8 @@
             <el-main class="lmain">
                 <div v-for="(list, index)  in diskList">
                     <div class="lm-t" v-if="list.length > 0">
-                        <!--系统卷-->
                         <span v-if="index == 'inner'">{{$t('Systemvolume')}}</span>
-                        <!--外置卷-->
                         <span v-if="index == 'ext'">{{$t('Externalvolume')}}</span>
-                        <!--镜像卷-->
                         <span v-if="index == 'image'">{{$t('ImageVolume')}}</span>
                     </div>
 
@@ -29,16 +26,15 @@
                         <div class="lm-block_1">
                             <div v-if="typeof item.info != 'undefined' && typeof item.info.mounted != 'undefined' && item.info.mounted"
                                  @click="uMountDisk(item)" @click.stop>
-                                <i class="iconfont iconpush" style="color: rgb(110, 110, 112);"></i>
+                                <i class="iconfont iconpush" style="color: rgb(110, 110, 112);">&#xe608;</i>
                             </div>
 
                             <div v-else @click="mountDisk(item)" @click.stop>
-                                <i class="iconfont iconrepush1" style="color: #6e6e70;    font-size: 18px;"></i>
+                                <i class="iconfont iconrepush1" style="color: #6e6e70;font-size: 18px;">&#xe609;</i>
                             </div>
                         </div>
 
                         <div class="lm-block_2">
-                            <!--系统卷-->
                             <div v-if="index == 'inner'">
                                 <img src="../assets/disk04.png">
                             </div>
@@ -105,10 +101,10 @@
                 <div class="lfooter_div" @click="refreshDevice">
                     <div style="display: flex;">
                         <div v-if="loading == -1" class="mint-spinner-snake">
-                            <i class="iconfont iconiconsxz i-loading"></i>
+                            <i class="iconfont iconiconsxz i-loading">&#xe623;</i>
                         </div>
 
-                        <i v-else class="iconfont iconshuaxin i-loading2"></i>
+                        <i v-else class="iconfont iconshuaxin i-loading2">&#xe650;</i>
                     </div>
 
                     <span class="version_span">
@@ -119,7 +115,7 @@
         </el-col>
 
 
-        <el-col class="al-rblock" :span="16">
+        <el-col class="al-rblock" style="width: 65%;">
             <el-header class="rheader">
                 <div class="rheader_1">
                     <span> {{select_item.name}}</span>
@@ -131,7 +127,6 @@
                 <div>
                     <div class="rmain">
                         <div class="rmain_l">
-                            <!--系统卷-->
                             <div v-if="select_item.group == 'inner'">
                                 <img src="../assets/disk04.png">
                             </div>
@@ -152,7 +147,6 @@
                         <div class="rmain_r">
                             <div class="rmain_r_2">
                                 <div style="background: #f9f8f8;">
-                                    <!--已安装-->
                                     <span>{{$t('installed')}}</span>
 
                                     <span v-if="typeof select_item.info.mounted != 'undefined' && select_item.info.mounted">
@@ -163,22 +157,18 @@
                                     <i class="el-icon-error" style="color: red;"></i> No
                                 </span>
                                 </div>
-                                <!--路径节点-->
                                 <div style="background: rgb(245, 245, 245);">
                                     <span>{{$t('Pathnode')}}</span>
                                     <span>
                                         /dev/{{select_item.index}}</span>
                                 </div>
-                                <!--挂载节点-->
                                 <div style="background: #f9f8f8;"><span>{{$t('Mountnode')}}</span><span> {{typeof select_item.info.mountpoint != 'undefined' && select_item.info.mountpoint? select_item.info.mountpoint :'~'}}</span>
                                 </div>
                                 <div style="background: rgb(245, 245, 245);"><span>UUID</span><span>
                                 {{typeof select_item.info.uuid != 'undefined' && select_item.info.uuid? select_item.info.uuid :'~'}}
                             </span></div>
-                                <!--分区类型-->
                                 <div style="background: #f9f8f8;"><span>{{$t('Partitiontype')}}</span><span> {{select_item.info.typebundle}}</span>
                                 </div>
-                                <!--内置  协议-->
                                 <div style="background: rgb(245, 245, 245);"><span>{{$t('Mounttype')}}</span><span> {{typeof select_item.info.protocol != 'undefined' && select_item.info.protocol? select_item.info.protocol :'~'}}
                             </span>
                                 </div>
@@ -188,11 +178,11 @@
 
                     <div class="rmain2">
                         <div class="rmain2_1" v-if="typeof select_item.info.percentage !='undefined'">
-                            <!--磁盘占用   已接近极限,请即时整理数据,以免丢失-->
+                            <!--Disk usage is approaching the limit, please organize data immediately to avoid loss-->
                             <span v-if="select_item.info.percentage >= 90">{{$t('Diskuse')}}: {{select_item.percentage}}% ,{{$t('Nearingthelimit1')}}</span>
-                            <!--可继续安全使用-->
+                            <!--Can continue to be used safely-->
                             <span v-if="select_item.info.percentage >= 50 && select_item.info.percentage < 90">{{$t('Diskuse')}}: {{select_item.info.percentage}}%,{{$t('Cancontinuetobeusedsafely')}}</span>
-                            <!--较少,可以安全存储-->
+                            <!--Less for safe storage-->
                             <span v-if="select_item.info.percentage < 50">{{$t('Diskuse')}}: {{select_item.info.percentage}}% {{$t('Lessforsafestorage')}}</span>
                         </div>
 
@@ -215,7 +205,7 @@
                                 <table class="rmain2_3_1_r">
                                     <tr>
                                         <td>
-                                            <i class="iconfont icondot mr5" style=" font-size: 10px;color: #5586db"></i>
+                                            <i class="iconfont icondot mr5" style=" font-size: 10px;color: #5586db">&#xe607;</i>
                                         </td>
                                         <td>
                                             {{$t('total')}}
@@ -235,7 +225,7 @@
                                 <table class="rmain2_3_1_r">
                                     <tr>
                                         <td>
-                                            <i class="iconfont icondot mr5" style=" font-size: 10px;color: #d12890"></i>
+                                            <i class="iconfont icondot mr5" style=" font-size: 10px;color: #d12890">&#xe607;</i>
                                         </td>
                                         <td>
                                             {{$t('used')}}
@@ -254,7 +244,7 @@
                                 <table class="rmain2_3_1_r">
                                     <tr>
                                         <td>
-                                            <i class="iconfont icondot mr5" style=" font-size: 10px;color: #f1e600"></i>
+                                            <i class="iconfont icondot mr5" style=" font-size: 10px;color: #f1e600">&#xe607;</i>
                                         </td>
                                         <td>{{$t('available')}}</td>
                                     </tr>
@@ -280,7 +270,9 @@
             </el-main>
 
             <el-footer class="rfooter">
-                <div class="rfooter_div" @click="altest"></div>
+                <div class="rfooter_div" @click="altest">
+                    <i class="iconfont icondot mr5" style=" font-size: 10px;color: #f1e600">&#xe607;</i>
+                </div>
 
                 <div class="rfooter_1">
                     <div>
@@ -293,7 +285,7 @@
 </template>
 <script>
     import {ipcRenderer, remote} from 'electron'
-    import {getDiskList, listenSudoPwd, getDiskFullInfo, uMountDisk, mountDisk, openInFinder,getPackageVersion} from '@/utils/utils'
+    import {getDiskList, listenSudoPwd, getDiskFullInfo, uMountDisk, mountDisk, openInFinder,getPackageVersion,disableZoom} from '@/utils/utils'
     import {alEvent} from '@/utils/alevent.js';
     const log = require('electron-log');
     const fs = require('fs');
@@ -303,8 +295,8 @@
             return {
                 activeTab: 'tab1',
                 devices: [],
-                diskList: [],//磁盘列表
-                loading: 0,//加载中
+                diskList: [],
+                loading: 0,
                 version:"1.0.0",
 
 
@@ -326,19 +318,17 @@
             }
         },
         mounted() {
+            disableZoom(require('electron').webFrame);
+
             var _this = this;
-            var webFrame = require('electron').webFrame;
-            webFrame.setVisualZoomLevelLimits(1, 1);
-            webFrame.setLayoutZoomLevelLimits(0, 0);
+
             listenSudoPwd();
+
             _this.refreshDevice();
-            try{
-                this.version = getPackageVersion();
-            }catch (e) {
 
-            }
+            this.version = getPackageVersion();
 
-            //管理员密码
+            //Admin password
             alEvent.$on('SudoPWDEvent', args => {
                 if (_this.sudoDialog) {
                     return;
@@ -386,7 +376,6 @@
             }
 
             alEvent.$on('doRefreshEvent', filename => {
-                //console.warn(`Listened doRefreshEvent+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++`)
                 _this.refreshDevice();
             });
         },

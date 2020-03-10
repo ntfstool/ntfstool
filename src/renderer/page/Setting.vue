@@ -53,8 +53,8 @@
                             <div class="main-from_div_1_1-div mb10">
                                 <div class="main-from_div_1_1-div_1">
                                     <div style="display: flex;flex-direction: column;justify-content: center">
-                                        <i  v-if="show_menu" class="iconfont icondot" style=" font-size: 10px;color: #67c23a"></i>
-                                        <i  v-if="!show_menu" class="iconfont icondot" style=" font-size: 10px;color: orangered"></i>
+                                        <i  v-if="show_menu" class="iconfont icondot" style=" font-size: 10px;color: #67c23a">&#xe607;</i>
+                                        <i  v-if="!show_menu" class="iconfont icondot" style=" font-size: 10px;color: orangered">&#xe607;</i>
                                     </div>
 
                                     <div style="display: flex;flex-direction: column;justify-content: center">
@@ -202,6 +202,7 @@
                 <div class="main-from_div_1_1-div_1" @click="openPrivacyUrl">
                     <div style="display: flex;flex-direction: column;justify-content: center">
                         <i class="iconfont iconjump06" style="font-size: 16px;color: black;">
+                            &#xe648;
                             <!--阅读隐私政策            -->
                             <span style="    font-size: 12px;font-family: cursive;
     vertical-align: middle;
@@ -236,6 +237,7 @@
     </el-container>
 </template>
 <script>
+    import {getDiskList, listenSudoPwd, getDiskFullInfo, uMountDisk, mountDisk, openInFinder,getPackageVersion,disableZoom} from '@/utils/utils'
     import {ipcRenderer,shell} from 'electron'
     import { alEvent } from '@/utils/alevent.js';
     const Store = require('electron-store');
@@ -304,6 +306,9 @@
             }
         },
         mounted() {
+            disableZoom(require('electron').webFrame);
+
+
             console.warn(this.lang_list,"lang_list")
             // this.remote_size = remote.getCurrentWindow().getSize();
             // console.warn(this.remote_size,"remote_size");
