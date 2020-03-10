@@ -1,7 +1,7 @@
 # NTFS Tool
 
 <a href="https://ntfstool.com">
-  <img src="https://github.com/ntfstool/ntfstool/blob/master/src/renderer/assets/github/256x256@2x.png?raw=true" /></a>
+  <img src="https://github.com/ntfstool/ntfstool/blob/1.0.2/static/github/256x256@2x.png?raw=true" /></a>
 
 [English](./README.md) | 简体中文
 
@@ -47,9 +47,9 @@ macOS 用户可以点击下方链接跳转到官网直接下载。
 
 ## 🖥 应用界面
 
-![ntfstool-main1.png](https://github.com/ntfstool/ntfstool/blob/master/src/renderer/assets/github/ntfstool-main1.png?raw=true)
+![ntfstool-main1.png](https://github.com/ntfstool/ntfstool/blob/1.0.2/static/github/ntfs-display.jpg?raw=true)
 
-![ntfstool-main1.png](https://github.com/ntfstool/ntfstool/blob/master/src/renderer/assets/github/ntfstool-main2.png?raw=true)
+![ntfstool-main1.png](https://github.com/ntfstool/ntfstool/blob/1.0.2/static/github/ntfstool-main2.png?raw=true)
 
 ## ⌨️ 本地开发
 
