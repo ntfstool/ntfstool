@@ -10,6 +10,15 @@ var reMountLock = [];//全局锁
 const Store = require('electron-store');
 const store = new Store();
 
+export function getPackageVersion() {
+    try{
+        const version = process.env.npm_package_version
+        return version;
+    }catch (e) {
+        return "45.00";
+    }
+}
+
 export function listenSudoPwd(){
     try {
         if (store.get("sudoPwd")) {
@@ -159,17 +168,16 @@ function _marktype(disk_list) {
                 continue;
             }
 
-            if (disk_list[i]['disk_mount'][0].indexOf("ext") >= 0) {
-                disk_list[i]["group"] = "ext";
-                disk_list_group.ext.push(disk_list[i]);
-                continue;
-            }
-
             if (disk_list[i]['disk_mount'][0].indexOf("image") >= 0) {
                 disk_list[i]["group"] = "image";
                 disk_list_group.image.push(disk_list[i]);
                 continue;
             }
+
+
+            //剩下的都是 ext模式
+            disk_list[i]["group"] = "ext";
+            disk_list_group.ext.push(disk_list[i]);
         }
         return disk_list_group;
     }catch (e) {

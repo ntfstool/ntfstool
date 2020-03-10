@@ -112,7 +112,7 @@
                     </div>
 
                     <span class="version_span">
-                        NTFSTool V3.0.2
+                        NTFSTool V{{version}}
                     </span>
                 </div>
             </el-footer>
@@ -293,7 +293,7 @@
 </template>
 <script>
     import {ipcRenderer, remote} from 'electron'
-    import {getDiskList, listenSudoPwd, getDiskFullInfo, uMountDisk, mountDisk, openInFinder} from '@/utils/utils'
+    import {getDiskList, listenSudoPwd, getDiskFullInfo, uMountDisk, mountDisk, openInFinder,getPackageVersion} from '@/utils/utils'
     import {alEvent} from '@/utils/alevent.js';
     const log = require('electron-log');
     const fs = require('fs');
@@ -305,6 +305,7 @@
                 devices: [],
                 diskList: [],//磁盘列表
                 loading: 0,//加载中
+                version:"1.0.0",
 
 
                 select_item: {
@@ -331,6 +332,12 @@
             webFrame.setLayoutZoomLevelLimits(0, 0);
             listenSudoPwd();
             _this.refreshDevice();
+            try{
+                this.version = getPackageVersion();
+            }catch (e) {
+
+            }
+
             //管理员密码
             alEvent.$on('SudoPWDEvent', args => {
                 if (_this.sudoDialog) {

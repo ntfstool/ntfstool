@@ -1,6 +1,6 @@
 {
   "name": "ntfstool",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Aile Mac OS NTFS Tools",
   "homepage": "https://ntfstool.com",
   "author": {
@@ -63,7 +63,7 @@
     "crypto": "^1.0.1",
     "electron-debug": "^1.4.0",
     "electron-devtools-installer": "^2.2.0",
-    "electron-log": "^4.0.6",
+    "electron-log": "^4.0.7",
     "electron-store": "^5.0.0",
     "element-ui": "2.13.0",
     "material-design-icons": "^3.0.1",

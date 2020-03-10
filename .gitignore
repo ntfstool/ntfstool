@@ -11,3 +11,5 @@ thumbs.db
 !.gitkeep
 .idea/
 dist/
+test
+package-lock.json
