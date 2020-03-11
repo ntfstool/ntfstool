@@ -535,7 +535,7 @@ pre{
   color: inherit;
 }
 .el-checkbox__inner{
-  margin-top: -2px;
+  /*margin-top: -2px;*/
 }
 .el-checkbox__inner:hover {
   border-color: gainsboro;
@@ -594,4 +594,28 @@ pre{
 }
 img{
   user-select: none;
+}
+
+.el-input__inner{
+  -webkit-appearance: none;
+  background-color: #FFF;
+  background-image: none;
+  border: 1px solid #adadaf;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  color: #616163;
+  display: inline-block;
+  font-size: inherit;
+  height: 30px;
+  line-height: 30px;
+  outline: 0;
+  border-radius: 0;
+  padding: 0 15px;
+  -webkit-transition: border-color .2s cubic-bezier(.645,.045,.355,1);
+  transition: border-color .2s cubic-bezier(.645,.045,.355,1);
+  width: 100%;
+}
+
+.el-textarea__inner{
+  border-radius: 1px;
 }

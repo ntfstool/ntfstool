@@ -428,7 +428,7 @@ const openFeedBackPage = () => {
         feedBackPageHandle = new BrowserWindow({
             fullscreen: false,
             height: 500,
-            width: 750,
+            width: 700,
             useContentSize: true,
             center: true,
             frame: false,
@@ -447,6 +447,7 @@ const openFeedBackPage = () => {
 
         feedBackPageHandle.once('ready-to-show', () => {
             feedBackPageHandle.show()
+            feedBackPageHandle.webContents.openDevTools();
         })
 
         feedBackPageHandle.on('closed', () => {
