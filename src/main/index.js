@@ -145,8 +145,8 @@ try {
             homeWinHandle = new BrowserWindow({
                 show: false,
                 fullscreen: false,
-                height: 620,
-                minHeight: 660,
+                height: 600,
+                minHeight: 600,
                 minWidth: 800,
                 width: 900,
                 maxWidth: 900,
@@ -329,8 +329,14 @@ try {
     //right tray menu
     const openTrayMenu = () => {
         const path = require('path');
-        tray = new Tray(path.join(__dirname, "../renderer/assets/menu/AINTFS18.png"));
-        tray.setPressedImage(path.join(__dirname, "../renderer/assets/menu/AINTFS_active18.png"));
+
+        const iconUrl = process.env.NODE_ENV === 'development' ?  path.join(__dirname, '../../static/menu/AINTFS18.png') :
+            path.join(__dirname, 'static/menu/AINTFS18.png')
+
+        tray = new Tray(iconUrl);
+
+        tray.setPressedImage(iconUrl);
+
         tray.setIgnoreDoubleClickEvents(true);//Very important to increase click speed
 
         tray.on('click', (event,trayBounds) => {

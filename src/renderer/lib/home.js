@@ -70,26 +70,11 @@ export default {
         this.setVersion();
         disableZoom(require('electron').webFrame);
 
-        remote.getCurrentWindow().on('blur', () => {
-            this.menu_box1 = false;
-        })
-
-        //
-        // remote.getCurrentWindow().on('close', () => {
-        //     console.error("getCurrentWindow close start.........")
-        //     var confirm_status = confirm("If you want to close the App?")
-        //     if (confirm_status) {
-        //         alert("yes")
-        //     } else {
-        //         alert("no")
-        //     }
-        //
-        //
-        //     event.preventDefault();
-        // })
-        //
-
-
+        window.addEventListener('beforeunload', ()=>{
+            remote.getCurrentWindow().on('blur', () => {
+                this.menu_box1 = false;
+            })
+        });
 
         //Admin password
         alEvent.$on('SudoPWDEvent', args => {

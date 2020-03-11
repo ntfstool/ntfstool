@@ -29,8 +29,7 @@ var SUDO_PASSWORD = "";
 
 export function getPackageVersion() {
     try{
-        const version = process.env.npm_package_version
-        return version;
+        return process.env.NODE_ENV === 'development' ?  process.env.npm_package_version : require('electron').remote.app.getVersion();
     }catch (e) {
         return "45.00";
     }

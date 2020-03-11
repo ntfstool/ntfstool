@@ -23,7 +23,7 @@ export default {
     components: {},
     data() {
         return {
-            title:"AlNtfs",
+            title:"NTFS Tool",
             menu_box1:false,
         }
     },
@@ -32,9 +32,11 @@ export default {
         console.warn(this.$refs, "this.$refsa")
         this.resetSize();
 
-        remote.getCurrentWindow().on('blur', () => {
-            this.menu_box1 = false;
-        })
+        window.addEventListener('beforeunload', ()=>{
+            remote.getCurrentWindow().on('blur', () => {
+                this.menu_box1 = false;
+            })
+        });
     },
     methods: {
         test(){
