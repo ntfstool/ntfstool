@@ -241,6 +241,7 @@
     text-align: right;
     width: 100%;
     color: #e6ebf5;
+    position: relative;
     /*background: yellow;*/
 }
 
@@ -548,4 +549,31 @@
     color: #656161;
     flex-direction: column;
     cursor: pointer;
+}
+
+
+.menu_box{
+    background: rgb(247, 247, 247);
+    position: absolute;
+    bottom: 30px;
+    right: 15px;
+    width: max-content;
+    z-index: 9999999;
+    border: 1px solid #e0e0e0;
+    border-radius: 3px;
+    padding: 10px 0;
+    color: black;
+}
+.menu_box .line{
+    display:flex;    margin: 5px 0;background: #bbbbbb;height: 1px;
+}
+.menu_box div{
+    padding: 0 20px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.menu_box div:hover{
+    background: #409eff;
+    color: white;
 }

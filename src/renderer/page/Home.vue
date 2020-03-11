@@ -281,7 +281,16 @@
 
                 <div class="rfooter_1">
                     <div>
-                        <img @click="openSysSetting" src="../assets/setting2.svg">
+                        <img  @click="openMenuBox('menu_box1')" src="../assets/setting2.svg">
+                    </div>
+
+                    <div class="menu_box" v-show="menu_box1">
+                        <div @click="exitAll">退出</div>
+                        <span class="line"></span>
+                        <div @click="openFeedBackPage">提交反馈</div>
+                        <div @click="openSettingPage">偏好设置</div>
+                        <span class="line"></span>
+                        <div @click="openAboutPage">关于</div>
                     </div>
                 </div>
             </el-footer>

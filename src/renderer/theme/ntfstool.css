@@ -619,3 +619,7 @@ img{
 .el-textarea__inner{
   border-radius: 1px;
 }
+.el-textarea__inner::placeholder,el-input__inner::placeholder{
+  color: #bdbdbd;
+  font-size: 14px;
+}

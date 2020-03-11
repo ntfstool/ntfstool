@@ -28,7 +28,7 @@
 
                     <div class="trayref_h_1_3">
                         <div class="trayref_h_1_3_1" style="position: relative">
-                            <i class="iconfont mr10 ico_color" @mouseover="setTitle('打开桌面')" @mouseout="setTitle()">&#xe8e2;</i>
+                            <i class="iconfont mr10 ico_color"  @click="openHomePage" @mouseover="setTitle('打开桌面')" @mouseout="setTitle()">&#xe8e2;</i>
                             <i class="iconfont ico_color"
                                @click="openMenuBox('menu_box1')"
 
@@ -39,10 +39,11 @@
                             <div class="menu_box" v-show="menu_box1">
                                 <div @click="openAboutPage">关于</div>
                                 <span class="line"></span>
-                                <div @click="openSysSeeting">偏好设置</div>
+                                <div @click="openHomePage">打开桌面</div>
+                                <div @click="openSettingPage">偏好设置</div>
                                 <div @click="openFeedBackPage">提交反馈</div>
                                 <span class="line"></span>
-                                <div>退出</div>
+                                <div @click="exitAll">退出</div>
                             </div>
                         </div>
                     </div>

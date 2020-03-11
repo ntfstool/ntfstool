@@ -31,11 +31,6 @@ export default {
         this._title = this.title;
         console.warn(this.$refs, "this.$refsa")
         this.resetSize();
-
-        remote.getCurrentWindow().on('blur', () => {
-            // this.menu_box1 = false;
-        })
-
     },
     methods: {
         test(){
@@ -77,9 +72,9 @@ export default {
                 shell.openExternal(option.href)
             }
         },
-        openSysSeeting(){
+        openSettingPage(){
             this.menu_box1 = false;
-            ipcRenderer.send('MainMsgFromRender', 'openSysSeeting')
+            ipcRenderer.send('MainMsgFromRender', 'openSettingPage')
         },
         openAboutPage(){
             this.menu_box1 = false;
@@ -88,6 +83,14 @@ export default {
         openFeedBackPage(){
             this.menu_box1 = false;
             ipcRenderer.send('MainMsgFromRender', 'openFeedBackPage')
+        },
+        openHomePage(){
+            this.menu_box1 = false;
+            ipcRenderer.send('MainMsgFromRender', 'openHomePage')
+        },
+        exitAll(){
+            this.menu_box1 = false;
+            ipcRenderer.send('MainMsgFromRender', 'exitAll')
         }
     }
 }

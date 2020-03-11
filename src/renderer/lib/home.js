@@ -43,6 +43,7 @@ export default {
             diskList: [],
             loading: 0,
             version: "1.0.0",
+            menu_box1: false,
 
 
             select_item: {
@@ -69,14 +70,34 @@ export default {
         this.setVersion();
         disableZoom(require('electron').webFrame);
 
-        var _this = this;
+        remote.getCurrentWindow().on('blur', () => {
+            this.menu_box1 = false;
+        })
+
+        //
+        // remote.getCurrentWindow().on('close', () => {
+        //     console.error("getCurrentWindow close start.........")
+        //     var confirm_status = confirm("If you want to close the App?")
+        //     if (confirm_status) {
+        //         alert("yes")
+        //     } else {
+        //         alert("no")
+        //     }
+        //
+        //
+        //     event.preventDefault();
+        // })
+        //
+
+
+
         //Admin password
         alEvent.$on('SudoPWDEvent', args => {
             this.changePwdEvent(args);
         });
 
         alEvent.$on('doRefreshEvent', filename => {
-            _this.refreshDevice();
+            this.refreshDevice();
         });
 
         //监听语言切换
@@ -88,7 +109,7 @@ export default {
         //监听挂载事件
         ipcRenderer.on("MountEvent", (e, filename) => {
             console.warn("main wind acive MountEvent", filename);
-            _this.refreshDevice();
+            this.refreshDevice();
         });
     },
     methods: {
@@ -97,10 +118,10 @@ export default {
             var confirm_status = confirm("提交NTFSTool应用的运行日志，从而帮助开发者改善他们的应用")
             if (confirm_status) {
                 var confirm_status = confirm("分析数据已提交,即将跳转在线帮助页面...")
-                if(confirm_status){
+                if (confirm_status) {
 
                 }
-            }else{
+            } else {
                 alert("您已放弃提交分析数据,暂无法提供免费技术支持");
             }
         },
@@ -200,7 +221,7 @@ export default {
         },
         openSysSetting() {
             console.warn(" openSysSetting click");
-            ipcRenderer.send('MainMsgFromRender', 'openSysSeeting')
+            ipcRenderer.send('MainMsgFromRender', 'openSettingPage')
         },
         altest() {
             console.warn("altest");
@@ -222,10 +243,10 @@ export default {
             }
             this.atest_lasttime = cur_time;
         },
-        setVersion(){
+        setVersion() {
             this.version = getPackageVersion();
         },
-        fsListenMount(){
+        fsListenMount() {
             //监听挂载事件
             try {
                 var path = '/Volumes/';
@@ -237,7 +258,7 @@ export default {
                 log.warn(e, "watch Volumes");
             }
         },
-        changePwdEvent(args){
+        changePwdEvent(args) {
             if (_this.sudoDialog) {
                 return;
             }
@@ -259,6 +280,25 @@ export default {
             }).catch(err => {
                 _this.sudoDialog = false;
             })
+        },
+        openMenuBox(id) {
+            this[id] = this[id] ? false : true
+        },
+        openSettingPage() {
+            this.menu_box1 = false;
+            ipcRenderer.send('MainMsgFromRender', 'openSettingPage')
+        },
+        openAboutPage() {
+            this.menu_box1 = false;
+            ipcRenderer.send('MainMsgFromRender', 'openAboutPage')
+        },
+        openFeedBackPage() {
+            this.menu_box1 = false;
+            ipcRenderer.send('MainMsgFromRender', 'openFeedBackPage')
+        },
+        exitAll(){
+            this.menu_box1 = false;
+            ipcRenderer.send('MainMsgFromRender', 'exitAll')
         }
     }
 }
