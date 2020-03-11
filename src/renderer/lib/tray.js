@@ -31,6 +31,10 @@ export default {
         this._title = this.title;
         console.warn(this.$refs, "this.$refsa")
         this.resetSize();
+
+        remote.getCurrentWindow().on('blur', () => {
+            this.menu_box1 = false;
+        })
     },
     methods: {
         test(){

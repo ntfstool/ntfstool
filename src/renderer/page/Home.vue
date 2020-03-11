@@ -121,11 +121,11 @@
                     <span> {{select_item.name}}</span>
                 </div>
 
-                <div class="help-block" @click="help()">
-                    <div>
-                        <i class="iconfont icondot" style=" font-size: 16px;">&#xe60d;</i> Help
-                    </div>
-                </div>
+                <!--<div class="help-block" @click="help()">-->
+                    <!--<div>-->
+                        <!--<i class="iconfont icondot" style=" font-size: 16px;">&#xe60d;</i> Help-->
+                    <!--</div>-->
+                <!--</div>-->
             </el-header>
 
 
@@ -170,9 +170,9 @@
                                 </div>
                                 <div style="background: #f9f8f8;"><span>{{$t('Mountnode')}}</span><span> {{typeof select_item.info.mountpoint != 'undefined' && select_item.info.mountpoint? select_item.info.mountpoint :'~'}}</span>
                                 </div>
-                                <div style="background: rgb(245, 245, 245);"><span>UUID</span><span>
-                                {{typeof select_item.info.uuid != 'undefined' && select_item.info.uuid? select_item.info.uuid :'~'}}
-                            </span></div>
+                                <div style="background: rgb(245, 245, 245);"><span>UUID</span>
+                                    <span>{{typeof select_item.info.uuid != 'undefined' && select_item.info.uuid? select_item.info.uuid :'~'}}</span>
+                                </div>
                                 <div style="background: #f9f8f8;"><span>{{$t('Partitiontype')}}</span><span> {{select_item.info.typebundle}}</span>
                                 </div>
                                 <div style="background: rgb(245, 245, 245);"><span>{{$t('Mounttype')}}</span><span> {{typeof select_item.info.protocol != 'undefined' && select_item.info.protocol? select_item.info.protocol :'~'}}

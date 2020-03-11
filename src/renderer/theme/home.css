@@ -222,7 +222,7 @@
 }
 
 .rmain_r_2 span {
-    font-size: 14px;
+    font-size: 12px;
     color: #b1b1b1;
     line-height: 20px;
 }
@@ -262,7 +262,7 @@
 
 .rmain2_1 span {
     color: #9f9f9f;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 30px;
 }
 
@@ -535,6 +535,7 @@
 
 .ar-main {
     display: flex;
+    padding: 0 20px;
     flex-direction: column;
     justify-content: space-between;
 }
@@ -551,26 +552,26 @@
     cursor: pointer;
 }
 
-
 .menu_box{
-    background: rgb(247, 247, 247);
+    background: rgb(214, 214, 214);
     position: absolute;
     bottom: 30px;
     right: 15px;
     width: max-content;
     z-index: 9999999;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #b5a8a8;
     border-radius: 3px;
     padding: 10px 0;
     color: black;
 }
 .menu_box .line{
-    display:flex;    margin: 5px 0;background: #bbbbbb;height: 1px;
+    display:flex;    margin: 5px 0;background: #a5a0a0;height: 1px;
 }
 .menu_box div{
     padding: 0 20px;
     cursor: pointer;
     font-size: 14px;
+    color: black;
 }
 
 .menu_box div:hover{

@@ -165,23 +165,24 @@ html, body, #app {
 }
 
 .menu_box{
-    background: rgb(222, 222, 222);
+    background: rgb(214, 214, 214);
     position: absolute;
     top: 20px;
     right: 0px;
     width: max-content;
     z-index: 9999999;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #b5a8a8;
     border-radius: 3px;
     padding: 10px 0;
 }
 .menu_box .line{
-    display:flex;    margin: 5px 0;background: #bbbbbb;height: 1px;
+    display:flex;    margin: 5px 0;background: #a5a0a0;height: 1px;
 }
 .menu_box div{
     padding: 0 20px;
     cursor: pointer;
     font-size: 14px;
+    color: black;
 }
 
 .menu_box div:hover{

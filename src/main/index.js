@@ -24,13 +24,15 @@ const devMod = process.env.NODE_ENV === 'development' ? true : false;
 const store = new Store();
 app.disableHardwareAcceleration();//disable gpu
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = '1';
-var settingPageHandle = null,aboutPageHandle=null,feedBackPageHandle=null,trayPageHandle = null,tray = null,windowBounds=null,homeWinHandle,before_quit_status = true;//only one time to exit all
+var settingPageHandle = null,aboutPageHandle=null,feedBackPageHandle=null,trayPageHandle = null,devToolMod =false,tray = null,windowBounds=null,homeWinHandle,before_quit_status = true;//only one time to exit all
 
 const winURL = devMod ? `http://localhost:9080` : `file://${__dirname}/index.html`;
 
 if(!devMod){
     global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
 }
+
+// devToolMod = devMod;
 
 try {
     const default_store = {
@@ -143,8 +145,8 @@ try {
             homeWinHandle = new BrowserWindow({
                 show: false,
                 fullscreen: false,
-                height: 600,
-                minHeight: 600,
+                height: 620,
+                minHeight: 660,
                 minWidth: 800,
                 width: 900,
                 maxWidth: 900,
@@ -164,7 +166,7 @@ try {
             homeWinHandle.once('ready-to-show', () => {
                 _homeWinMenu();
                 homeWinHandle.show();
-                devMod && homeWinHandle.webContents.openDevTools();
+                devToolMod && homeWinHandle.webContents.openDevTools();
             })
 
             homeWinHandle.on('close', (event) => {
@@ -187,49 +189,6 @@ try {
     }
 
     const _homeWinMenu = () => {
-
-        // //左上角菜单栏
-        // const contextMenu = Menu.buildFromTemplate([
-        //     {
-        //         label: '退出', click: function () {
-        //             app.quit()
-        //         }
-        //     },
-        //     {
-        //         label: '退出2', click: function () {
-        //             app.quit()
-        //         }
-        //     },
-        //     {
-        //         label: 'Edit',
-        //         submenu: [
-        //             { role: 'undo' },
-        //             { role: 'redo' },
-        //             { type: 'separator' },
-        //             { role: 'cut' },
-        //             { role: 'copy' },
-        //             { role: 'paste' },
-        //             [
-        //                 { role: 'pasteAndMatchStyle' },
-        //                 { role: 'delete' },
-        //                 { role: 'selectAll' },
-        //                 { type: 'separator' },
-        //                 {
-        //                     label: 'Speech',
-        //                     submenu: [
-        //                         { role: 'startspeaking' },
-        //                         { role: 'stopspeaking' }
-        //                     ]
-        //                 }
-        //             ]
-        //         ]
-        //     }
-        // ])
-        // tray.setToolTip('测试气泡提示文字')
-        // tray.setContextMenu(contextMenu)
-
-
-        //左上角菜单栏
         var template = [
             {
                 label: '关闭',
@@ -239,10 +198,16 @@ try {
                 },
                 submenu: [
                     {
-                        label: '关于AlNtfs',
+                        label: '关于',
+                        click: async () => {
+                            openAboutPage();
+                        }
+                    },
+                    {
+                        label: '分享给朋友',
                         click: async () => {
                             const {shell} = require('electron')
-                            await shell.openExternal('https://ntfstool.com')
+                            await shell.openExternal("mailto:?cc=service@ntfstool.com&subject=I recommend using this NTFSTool to operate the extended disk&body=Hi!%0d%0a I\'m already using NtfsTool and I\'m really happy with it.%0d%0aFind more info here if you\'re interested:%0d%0ahttps://ntfstool.com/?tellfriends")
                         }
                     },
                     {type: 'separator'},
@@ -252,11 +217,33 @@ try {
                             openSettingPage();
                         }
                     },
+                    {
+                        label: '检查更新',
+                        click: async () => {
+                            console.warn("检查更新");
+                        }
+                    },
                     {role: 'services'},
+                    {
+                        label: '隐藏桌面',
+                        click: async () => {
+                            if(homeWinHandle){
+                                homeWinHandle.hide();
+                                homeWinHandle.setSkipTaskbar(true);
+                                app.dock.hide()
+                            }
+                        }
+                    },
+                    {
+                        label: '提交反馈',
+                        click: async () => {
+                            openFeedBackPage();
+                        }
+                    },
                     {type: 'separator'},
                     {
-                        label: '退出AlNtfs',
-                        accelerator: 'CmdOrCtrl+Z',
+                        label: '退出',
+                        accelerator: 'CmdOrCtrl+Q',
                         role: 'quit'
                     },
                 ],
@@ -264,19 +251,40 @@ try {
             {
                 label: 'Edit',
                 submenu: [
-                    {role: 'undo'},
-                    {role: 'redo'},
-                    {type: 'separator'},
-                    {role: 'cut'},
-                    {role: 'copy'},
-                    {role: 'paste'},
-                    {role: 'delete'},
-                    {role: 'selectAll'},
-                    {type: 'separator'},
+                    { role: 'undo' },
+                    { role: 'redo' },
+                    { type: 'separator' },
+                    { role: 'cut' },
+                    { role: 'copy' },
+                    { role: 'paste' },
+                    { role: 'pasteandmatchstyle' },
+                    { role: 'delete' },
+                    { role: 'selectall' }
+                ]
+            },
+            {
+                label: 'View',
+                submenu: [
+                    { type: 'separator' },
+                    { role: 'togglefullscreen' }
+                ]
+            },
+            {
+                role: 'window',
+                submenu: [
+                    { role: 'minimize' },
+                    { role: 'close' }
+                ]
+            },
+            {
+                role: 'help',
+                submenu: [
+                    {
+                        label: 'Learn More',
+                        click() { require('electron').shell.openExternal('https://ntfstool.com') }
+                    }
                 ]
             }
-
-
         ];
 
         Menu.setApplicationMenu(Menu.buildFromTemplate(template));
@@ -302,16 +310,16 @@ try {
 
             trayPageHandle.once('ready-to-show', () => {
                 windowBounds = trayPageHandle.getBounds();
-
-                if (store.get("show_menu") != false) {
-                    openTrayMenu();
-                }
-
-                devMod && trayPageHandle.webContents.openDevTools();
+                openTrayMenu();
+                devToolMod && trayPageHandle.webContents.openDevTools();
             })
 
             trayPageHandle.on('closed', () => {
                 trayPageHandle = null
+            })
+
+            trayPageHandle.on('blur', () => {
+                trayPageHandle.hide();
             })
         } else {
             trayPageHandle.show()
@@ -322,11 +330,10 @@ try {
     const openTrayMenu = () => {
         const path = require('path');
         tray = new Tray(path.join(__dirname, "../renderer/assets/menu/AINTFS18.png"));
-        
-        tray.setIgnoreDoubleClickEvents(true);
+        tray.setPressedImage(path.join(__dirname, "../renderer/assets/menu/AINTFS_active18.png"));
+        tray.setIgnoreDoubleClickEvents(true);//Very important to increase click speed
 
         tray.on('click', (event,trayBounds) => {
-            console.warn("openTrayMenu click ++++++++++++++++++++++++++++" + Math.random());
            if(trayPageHandle){
                if(trayPageHandle.isVisible()){
                    trayPageHandle.hide();
@@ -335,7 +342,6 @@ try {
                        Math.round(trayBounds.x + (trayBounds.width / 2) - (windowBounds.width / 2)),
                        Math.round(trayBounds.y + trayBounds.height + 4), false)
                    trayPageHandle.show()
-                   trayPageHandle.focus()
                }
            }else{
                //Todo log error
@@ -343,29 +349,6 @@ try {
            }
         })
     }
-
-    const showWindow = () => {
-        const position = getWindowPosition()
-        trayPageHandle.setPosition(position.x, position.y, false)
-        trayPageHandle.show()
-        trayPageHandle.focus()
-    }
-
-    // const getWindowPosition = () => {
-    //     const windowBounds = trayPageHandle.getBounds();
-    //     const trayBounds = tray.getBounds();
-    //
-    //     var x = Math.round(trayBounds.x + (trayBounds.width / 2) - (windowBounds.width / 2))
-    //
-    //     var scr = screen.getDisplayMatching(trayBounds)
-    //     if(typeof scr.bounds!= "undefined" && scr.bounds.y != "undefined" && scr.bounds.y != 0){
-    //         var y = Math.round(trayBounds.y + trayBounds.height + scr.bounds.y)
-    //     }else{
-    //         var y = Math.round(trayBounds.y + trayBounds.height + 4)
-    //     }
-    //
-    //     return {x, y}
-    // }
 
     const openSettingPage = (show_force) => {
         if (settingPageHandle == null) {
@@ -394,7 +377,7 @@ try {
                     settingPageHandle.show()
                 }
 
-                devMod && settingPageHandle.webContents.openDevTools();
+                devToolMod && settingPageHandle.webContents.openDevTools();
             })
 
             settingPageHandle.on('close', (event) => {
@@ -436,7 +419,7 @@ try {
                     aboutPageHandle.show()
                 }
 
-                devMod && aboutPageHandle.webContents.openDevTools();
+                devToolMod && aboutPageHandle.webContents.openDevTools();
             })
 
             aboutPageHandle.on('close', (event) => {
@@ -484,7 +467,7 @@ try {
                     feedBackPageHandle.show()
                 }
 
-                devMod && feedBackPageHandle.webContents.openDevTools();
+                devToolMod && feedBackPageHandle.webContents.openDevTools();
             })
 
             feedBackPageHandle.on('close', (event) => {
@@ -501,6 +484,9 @@ try {
     }
 
     const exitAll = () => {
+        if (homeWinHandle) {
+            homeWinHandle.destroy();
+        }
         if (tray) {
             tray.destroy();
         }
@@ -513,13 +499,7 @@ try {
         if (feedBackPageHandle) {
             feedBackPageHandle.destroy();
         }
-        if (trayPageHandle) {
-            trayPageHandle.destroy();
-        }
-        if (homeWinHandle) {
-            homeWinHandle.destroy();
-        }
-        app.quit();
+        app.quit(0);
     }
 
 }catch (e) {
