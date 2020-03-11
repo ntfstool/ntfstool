@@ -22,6 +22,8 @@ import Router from 'vue-router'
 import Home from '@/page/Home'
 import Setting from '@/page/Setting'
 import Tray from '@/page/Tray'
+import About from '@/page/About'
+import FeedBack from '@/page/FeedBack'
 Vue.use(Router)
 
 export default new Router({
@@ -35,6 +37,16 @@ export default new Router({
       path: '/setting',
       name: 'Setting',
       component:Setting
+    },
+    {
+      path: '/about',
+      name: 'About',
+      component:About
+    },
+    {
+      path: '/feedBack',
+      name: 'FeedBack',
+      component:FeedBack
     },
     {
       path: '/tray',

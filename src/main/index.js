@@ -20,16 +20,18 @@
 
 import {app, BrowserWindow, Menu, Tray, ipcMain,globalShortcut} from 'electron'
 
+const winURL = process.env.NODE_ENV === 'development'
+    ? `http://localhost:9080`
+    : `file://${__dirname}/index.html`
+
 if (process.env.NODE_ENV !== 'development') {
     global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
 }
 const Store = require('electron-store');
-
 const store = new Store();
-
 app.disableHardwareAcceleration();//disable gpu
-
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = '1';
+var settingPageHandle = null,aboutPageHandle=null,feedBackPageHandle=null,trayHandle = null,tray = null,homeWinHandle;
 
 const default_store = {
     name: "Alntfs",
@@ -61,17 +63,77 @@ const default_store = {
     sudoPwd:false,
 };
 
-var settingWin = null;
-var trayWin = null;
-var tray = null
-let mainWindow
 
-const winURL = process.env.NODE_ENV === 'development'
-    ? `http://localhost:9080`
-    : `file://${__dirname}/index.html`
+app.on('ready', () => {
+    if (!store.get("name") || store.get("name") == "undefined") {
+        initStore();
+    }
+    
+    homeWindow();
+    
+    trayBox();
 
-const initWindow = () => {
-    mainWindow = new BrowserWindow({
+    globalShortcut.register('Command+Shift+J', () => {
+        let focusWin = BrowserWindow.getFocusedWindow()
+        focusWin && focusWin.toggleDevTools()
+    });
+})
+
+app.on('activate', () => {
+    if (homeWinHandle === null) {
+        homeWindow()
+    }
+})
+
+app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+        app.quit()
+    }
+})
+
+//主进程监听消息
+ipcMain.on('MainMsgFromRender', function (event, arg) {
+    console.warn(arg, "主进程监听到消息")
+    if (arg == "openSysSeeting") {
+        openSysSeeting();
+        event.sender.send('RenderMsgFromMain', arg + " succ#############")
+    }else if(arg == "openAboutPage"){
+        openAboutPage();
+    } else if(arg == "openFeedBackPage"){
+        openFeedBackPage();
+    } else if(arg == "resetConf"){
+        store.set(default_store);
+        event.returnValue = 'succ';
+    } else {
+        event.sender.send('RenderMsgFromMain', arg + " fail##############")
+    }
+})
+
+
+//监听关闭开启菜单图标
+ipcMain.on('toggleTrayMenu', function (event, arg) {
+    if (tray !== null) {
+        tray.destroy();//立刻删除 Tray 图标
+        tray = null;
+        event.returnValue = 'destroy';
+    } else {
+        openTrayMenu();
+        event.returnValue = 'newopen';
+    }
+})
+
+
+
+ipcMain.on('ChangeLangEvent', function (event, arg) {
+    console.warn("ChangeLangEvent",arg);
+    if(homeWinHandle){
+        homeWinHandle.send("ChangeLangEvent",arg);
+    }
+})
+
+
+const homeWindow = () => {
+    homeWinHandle = new BrowserWindow({
         show: false,
         fullscreen: false,
         height: 600,
@@ -90,17 +152,28 @@ const initWindow = () => {
         // transparent: true
     })
 
-    console.log(winURL, "winURL");
-    mainWindow.loadURL(winURL);
+    homeWinHandle.loadURL(winURL);
 
-    mainWindow.once('ready-to-show', () => {
-        mainWindow.show()
+    homeWinHandle.once('ready-to-show', () => {
+        _homeWinMenu();
+        homeWinHandle.show();
+
     })
 
-    mainWindow.on('closed', () => {
-        mainWindow = null
-    })
+    homeWinHandle.on('close', (event) => {
+        console.error("homeWinHandle close start.........")
+        // homeWinHandle.hide();
+        // homeWinHandle.setSkipTaskbar(true);
+        // app.dock.hide()
+        // event.preventDefault();
 
+        // setTimeout(function () {
+        //     app.dock.show()
+        // },10000)
+    });
+}
+
+const _homeWinMenu = () => {
 
     // //左上角菜单栏
     // const contextMenu = Menu.buildFromTemplate([
@@ -191,48 +264,17 @@ const initWindow = () => {
         }
 
 
-    ]
-    var menu = Menu.buildFromTemplate(template)
-    Menu.setApplicationMenu(menu);
+    ];
 
-}
-
-//右上角菜单栏
-const openTrayMenu = () => {
-    // const path = require('path');
-    // tray = new Tray(path.join(__dirname, "../renderer/assets/menu/AINTFS18.png"));
-    // tray.setPressedImage(path.join(__dirname, "../renderer/assets/menu/AINTFS_active18.png"));
-   // tray.on('click', () => toggleTrayWindow())
-}
-
-const toggleTrayWindow = () => {
-    trayWin.isFocused() ? trayWin.hide() : showWindow()
-}
-
-const showWindow = () => {
-    const position = getWindowPosition()
-    trayWin.setPosition(position.x, position.y, false)
-    trayWin.show()
-    trayWin.focus()
-}
-
-const getWindowPosition = () => {
-    const windowBounds = trayWin.getBounds()
-    const trayBounds = tray.getBounds()
-
-    // Center window horizontally below the tray icon
-    const x = Math.round(trayBounds.x + (trayBounds.width / 2) - (windowBounds.width / 2))
-    // Position window 4 pixels vertically below the tray icon
-    const y = Math.round(trayBounds.y + trayBounds.height + 4)
-    return {x, y}
+    Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
 //默认菜单栏
-const initTray = () => {
-    if (trayWin == null) {
+const trayBox = () => {
+    if (trayHandle == null) {
         //已下为插入内容
         const path = require('path')
-        trayWin = new BrowserWindow({
+        trayHandle = new BrowserWindow({
             height: 100,
             width: 380,
             frame: false,
@@ -245,28 +287,67 @@ const initTray = () => {
             }
         })
 
-        trayWin.loadURL(winURL + "#tray")
-        // settingWin.webContents.closeDevTools()
+        trayHandle.once('ready-to-show', () => {
 
-        trayWin.on('closed', () => {
-            trayWin = null
+            trayHandle.openDevTools()
+
+            if (store.get("show_menu") != false) {
+                openTrayMenu();
+            }
         })
 
-        trayWin.on('blur', () => {
-            trayWin.hide();
+        trayHandle.loadURL(winURL + "#tray")
+        // settingPageHandle.webContents.closeDevTools()
+
+        trayHandle.on('closed', () => {
+            trayHandle = null
+        })
+
+        trayHandle.on('blur', () => {
+            // trayHandle.hide();
         })
 
     } else {
-        trayWin.show()
+        trayHandle.show()
     }
 }
+
+//右上角菜单栏
+const openTrayMenu = () => {
+    const path = require('path');
+    tray = new Tray(path.join(__dirname, "../renderer/assets/menu/AINTFS18.png"));
+    tray.setPressedImage(path.join(__dirname, "../renderer/assets/menu/AINTFS_active18.png"));
+   tray.on('click', () => toggletrayHandledow())
+}
+
+const toggletrayHandledow = () => {
+    trayHandle.isFocused() ? trayHandle.hide() : showWindow()
+}
+
+const showWindow = () => {
+    const position = getWindowPosition()
+    trayHandle.setPosition(position.x, position.y, false)
+    trayHandle.show()
+    trayHandle.focus()
+}
+
+const getWindowPosition = () => {
+    const windowBounds = trayHandle.getBounds();
+    const trayBounds = tray.getBounds();
+
+    // Center window horizontally below the tray icon
+    const x = Math.round(trayBounds.x + (trayBounds.width / 2) - (windowBounds.width / 2))
+    // Position window 4 pixels vertically below the tray icon
+    const y = Math.round(trayBounds.y + trayBounds.height + 4)
+    return {x, y}
+}
+
+
 //设置进程调用
 const openSysSeeting = () => {
-    if (settingWin == null) {
+    if (settingPageHandle == null) {
         //已下为插入内容
-        const path = require('path')
-        settingWin = new BrowserWindow({
-            title: "设置",
+        settingPageHandle = new BrowserWindow({
             fullscreen: false,
             height: 500,
             width: 750,
@@ -284,18 +365,95 @@ const openSysSeeting = () => {
             }
         })
 
-        settingWin.loadURL(winURL + "#setting")
-        // settingWin.webContents.closeDevTools();//关闭dev工具
+        settingPageHandle.loadURL(winURL + "#setting")
+        // settingPageHandle.webContents.closeDevTools();//关闭dev工具
 
-        settingWin.once('ready-to-show', () => {
-            settingWin.show()
+        settingPageHandle.once('ready-to-show', () => {
+            settingPageHandle.show()
+
+            settingPageHandle.webContents.openDevTools();
         })
 
-        settingWin.on('closed', () => {
-            settingWin = null
+        settingPageHandle.on('closed', () => {
+            settingPageHandle = null
         })
     } else {
-        settingWin.show()
+        settingPageHandle.show()
+    }
+}
+
+
+//关于我们
+const openAboutPage = () => {
+    if (aboutPageHandle == null) {
+        //已下为插入内容
+        aboutPageHandle = new BrowserWindow({
+            title:"",
+            fullscreen: false,
+            height: 210,
+            width: 350,
+            // useContentSize: true,
+            // center: true,
+            // frame: false,
+            // titleBarStyle: 'show',
+            show: false,
+            backgroundColor:'rgb(243, 243, 243)',
+            resizable: false,
+            minimizable: false,
+            maximizable: false,
+            // skipTaskbar: true,
+            // webPreferences: {
+            //     nodeIntegration: true
+            // }
+        })
+
+        aboutPageHandle.loadURL(winURL + "#about")
+
+        aboutPageHandle.once('ready-to-show', () => {
+            aboutPageHandle.show()
+        })
+
+        aboutPageHandle.on('closed', () => {
+            aboutPageHandle = null
+        })
+    } else {
+        aboutPageHandle.show()
+    }
+}
+
+//反馈
+const openFeedBackPage = () => {
+    if (feedBackPageHandle == null) {
+        //已下为插入内容
+        feedBackPageHandle = new BrowserWindow({
+            fullscreen: false,
+            height: 500,
+            width: 750,
+            useContentSize: true,
+            center: true,
+            frame: false,
+            titleBarStyle: 'hidden',
+            show: false,
+            resizable: false,
+            minimizable: false,
+            maximizable: false,
+            skipTaskbar: true,
+            webPreferences: {
+                nodeIntegration: true
+            }
+        })
+
+        feedBackPageHandle.loadURL(winURL + "#feedBack")
+
+        feedBackPageHandle.once('ready-to-show', () => {
+            feedBackPageHandle.show()
+        })
+
+        feedBackPageHandle.on('closed', () => {
+            feedBackPageHandle = null
+        })
+    } else {
+        feedBackPageHandle.show()
     }
 }
 
@@ -304,84 +462,4 @@ const initStore = () => {
     store.set(default_store);
     console.warn("initStore run");
 }
-
-//
-//
-// //监听Mount事件
-// const listenMount = () => {
-//     //监测USB插入事件
-//     var path = '/Volumes/';
-//     fs.watch(path, function (event, filename) {
-//             if(mainWindow){
-//                 mainWindow.send("MountEvent",filename);
-//             }
-//     });
-// }
-
-app.on('ready', () => {
-    initWindow()
-    initTray()
-    if (!store.get("name") || store.get("name") == "undefined") {
-        initStore();
-    }
-    if (store.get("show_menu") != false) {
-        openTrayMenu();
-    }
-
-    // listenMount();
-
-
-    globalShortcut.register('Command+Shift+J', () => {
-        let focusWin = BrowserWindow.getFocusedWindow()
-        focusWin && focusWin.toggleDevTools()
-    });
-})
-
-app.on('activate', () => {
-    if (mainWindow === null) {
-        initWindow()
-    }
-})
-
-app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-        app.quit()
-    }
-})
-
-//主进程监听消息
-ipcMain.on('MainMsgFromRender', function (event, arg) {
-    console.warn(arg, "主进程监听到消息")
-    if (arg == "openSysSeeting") {
-        openSysSeeting();
-        event.sender.send('RenderMsgFromMain', arg + " succ#############")
-    }else if(arg == "resetConf"){
-        store.set(default_store);
-        event.returnValue = 'succ';
-    } else {
-        event.sender.send('RenderMsgFromMain', arg + " fail##############")
-    }
-})
-
-
-//监听关闭开启菜单图标
-ipcMain.on('toggleTrayMenu', function (event, arg) {
-    if (tray !== null) {
-        tray.destroy();//立刻删除 Tray 图标
-        tray = null;
-        event.returnValue = 'destroy';
-    } else {
-        openTrayMenu();
-        event.returnValue = 'newopen';
-    }
-})
-
-
-ipcMain.on('ChangeLangEvent', function (event, arg) {
-    console.warn("ChangeLangEvent",arg);
-    if(mainWindow){
-        mainWindow.send("ChangeLangEvent",arg);
-    }
-})
-
 
