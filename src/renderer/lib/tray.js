@@ -18,6 +18,7 @@
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
 const {shell,ipcRenderer,remote} = require('electron')
+import {openLog,noticeTheSystemError} from '@/utils/utils'
 
 export default {
     components: {},
@@ -25,6 +26,7 @@ export default {
         return {
             title:"NTFS Tool",
             menu_box1:false,
+            showDebugMenu: process.env.NODE_ENV === 'development' ? true : false,
         }
     },
     mounted() {
@@ -32,11 +34,18 @@ export default {
         console.warn(this.$refs, "this.$refsa")
         this.resetSize();
 
-        window.addEventListener('beforeunload', ()=>{
-            remote.getCurrentWindow().on('blur', () => {
-                this.menu_box1 = false;
-            })
-        });
+        // window.addEventListener('beforeunload', ()=>{
+        //     remote.getCurrentWindow().on('blur', () => {
+        //         this.menu_box1 = false;
+        //     })
+        // });
+
+
+
+
+
+
+
     },
     methods: {
         test(){
@@ -67,7 +76,7 @@ export default {
                 title: "title",
                 body: "body",
                 icon: "../static/hhw.ico",
-                href: 'https://www.iqiyi.com/v_19rqz6uit0.html'
+                href: 'https://www.ntfstool.com'
             };
 
             // 创建通知并保存
@@ -81,6 +90,14 @@ export default {
         openSettingPage(){
             this.menu_box1 = false;
             ipcRenderer.send('MainMsgFromRender', 'openSettingPage')
+        },
+        openDialog(){
+            this.menu_box1 = false;
+            ipcRenderer.send('MainMsgFromRender', 'openDialogPage')
+        },
+        openLog(){
+            this.menu_box1 = false;
+            openLog();
         },
         openAboutPage(){
             this.menu_box1 = false;
@@ -97,6 +114,25 @@ export default {
         exitAll(){
             this.menu_box1 = false;
             ipcRenderer.send('MainMsgFromRender', 'exitAll')
-        }
+        },
+        startDebug() {
+            var cur_time = new Date().getTime();
+
+            if (cur_time - this.atest_lasttime > 1000) {
+                this.atest_times = 0;
+
+            } else {
+                this.atest_times++;
+                // console.warn(this.atest_times, "this.atest_times");
+
+                if (this.atest_times > 5) {
+                    this.atest_times = 0;
+                    remote.getCurrentWindow().webContents.openDevTools();
+                    this.showDebugMenu = true;
+                    noticeTheSystemError("opendevmod");
+                }
+            }
+            this.atest_lasttime = cur_time;
+        },
     }
 }

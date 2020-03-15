@@ -24,7 +24,7 @@ const devMod = process.env.NODE_ENV === 'development' ? true : false;
 const store = new Store();
 app.disableHardwareAcceleration();//disable gpu
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = '1';
-var settingPageHandle = null,aboutPageHandle=null,feedBackPageHandle=null,trayPageHandle = null,devToolMod =false,tray = null,windowBounds=null,homeWinHandle,before_quit_status = true;//only one time to exit all
+var settingPageHandle = null,aboutPageHandle=null,dialogPageHandle=null,feedBackPageHandle=null,trayPageHandle = null,devToolMod =false,tray = null,windowBounds=null,homeWinHandle,before_quit_status = true;//only one time to exit all
 
 const winURL = devMod ? `http://localhost:9080` : `file://${__dirname}/index.html`;
 
@@ -75,9 +75,10 @@ try {
         openTrayPage();
 
         setTimeout(function () {
-            openAboutPage("hide");
-            openSettingPage("hide");
-            openFeedBackPage("hide");
+            // openAboutPage("hide");
+            openDialogPage("");
+            // openSettingPage("hide");
+            // openFeedBackPage("hide");
         }, 5000)
 
         globalShortcut.register('Command+Shift+J', () => {
@@ -100,6 +101,8 @@ try {
             openSettingPage();
         } else if (arg == "openAboutPage") {
             openAboutPage();
+        }else if (arg == "openDialogPage") {
+            openDialogPage();
         } else if (arg == "openFeedBackPage") {
             openFeedBackPage();
         } else if (arg == "openHomePage") {
@@ -149,7 +152,7 @@ try {
                 minHeight: 600,
                 minWidth: 800,
                 width: 900,
-                maxWidth: 900,
+                maxWidth: 1200,
                 useContentSize: true,
                 // center: true,
                 frame: false,
@@ -295,7 +298,7 @@ try {
         if (trayPageHandle == null) {
             trayPageHandle = new BrowserWindow({
                 height: 100,
-                width: 380,
+                width: 360,
                 frame: false,
                 resizable: false,
                 show: false,
@@ -319,7 +322,11 @@ try {
             })
 
             trayPageHandle.on('blur', () => {
-                trayPageHandle.hide();
+                if(!devMod){
+                    //TODO
+                    trayPageHandle.hide();
+                }
+
             })
         } else {
             trayPageHandle.show()
@@ -446,6 +453,55 @@ try {
         }
     }
 
+    const openDialogPage = (show_force) => {
+        if (dialogPageHandle == null) {
+            //已下为插入内容
+            dialogPageHandle = new BrowserWindow({
+                title: "系统设置",
+                fullscreen: false,
+                height: 210,
+                width: 500,
+                show: false,
+                backgroundColor: 'rgb(243, 243, 243)',
+                resizable: false,
+                minimizable: false,
+                maximizable: false,
+                alwaysOnTop:true,
+                webPreferences: {
+                    nodeIntegration: true
+                }
+            })
+
+            dialogPageHandle.loadURL(winURL + "#dialog")
+
+            dialogPageHandle.once('ready-to-show', () => {
+                if (show_force !== "hide") {
+                    dialogPageHandle.show()
+                }
+
+                dialogPageHandle.webContents.openDevTools()
+
+                devToolMod && dialogPageHandle.webContents.openDevTools();
+            })
+
+            dialogPageHandle.on('close', (event) => {
+                dialogPageHandle.hide();
+                event.preventDefault();
+            });
+
+            dialogPageHandle.on('closed', () => {
+                dialogPageHandle = null
+            });
+
+            dialogPageHandle.on('close', (event) => {
+                dialogPageHandle.hide();
+                event.preventDefault();
+            });
+        } else {
+            dialogPageHandle.show()
+        }
+    }
+
     const openFeedBackPage = (show_force) => {
         if (feedBackPageHandle == null) {
             feedBackPageHandle = new BrowserWindow({
@@ -501,6 +557,9 @@ try {
         }
         if (aboutPageHandle) {
             aboutPageHandle.destroy();
+        }
+        if (dialogPageHandle) {
+            dialogPageHandle.destroy();
         }
         if (feedBackPageHandle) {
             feedBackPageHandle.destroy();
