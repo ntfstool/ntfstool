@@ -23,6 +23,7 @@ import Home from '@/page/Home'
 import Setting from '@/page/Setting'
 import Tray from '@/page/Tray'
 import About from '@/page/About'
+import Dialog from '@/page/Dialog'
 import FeedBack from '@/page/FeedBack'
 Vue.use(Router)
 
@@ -42,6 +43,11 @@ export default new Router({
       path: '/about',
       name: 'About',
       component:About
+    },
+    {
+      path: '/dialog',
+      name: 'Dialog',
+      component:Dialog
     },
     {
       path: '/feedBack',

@@ -20,7 +20,7 @@
                     </div>
 
                     <div class="trayref_h_1_2">
-                        <div class="trayref_h_1_2_1">
+                        <div class="trayref_h_1_2_1" @click="startDebug">
                             <span>{{title}}</span>
                         </div>
                     </div>
@@ -44,6 +44,10 @@
                                 <div @click="openFeedBackPage">提交反馈</div>
                                 <span class="line"></span>
                                 <div @click="exitAll">退出</div>
+
+                                <span v-show="showDebugMenu" class="line"></span>
+                                <div v-show="showDebugMenu" @click="openDialog">Dialog</div>
+                                <div v-show="showDebugMenu" @click="openLog">openLog</div>
                             </div>
                         </div>
                     </div>
@@ -253,8 +257,6 @@
                     </div>
                 </div>
             </div>
-
-
         </div>
     </el-container>
 </template>

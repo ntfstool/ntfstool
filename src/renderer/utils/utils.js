@@ -21,21 +21,119 @@
 import {exec} from 'child_process'
 import {t} from 'element-ui/lib/locale'
 import {alEvent} from '@/utils/alevent.js';
-const log = require('electron-log');
+
+const {shell} = require('electron')
+
+const electronLog = require('electron-log');
 var reMountLock = [];//global lock
 const Store = require('electron-store');
 const store = new Store();
 var SUDO_PASSWORD = "";
 
+const saveLog = {
+    log: (key, val) => {
+        if (process.env.NODE_ENV === 'development') {
+            console.log(key, val);
+        }
+
+        electronLog.log(key, val);
+    },
+    info: (key, val) => {
+        if (process.env.NODE_ENV === 'development') {
+            console.info(key, val);
+        }
+
+        electronLog.info(key, val);
+    },
+    warn: (key, val) => {
+        if (process.env.NODE_ENV === 'development') {
+            console.warn(key, val);
+        }
+
+        electronLog.warn(key, val);
+    },
+    error: (key, val) => {
+        if (process.env.NODE_ENV === 'development') {
+            console.error(key, val);
+        }
+
+        electronLog.error(key, val);
+    },
+}
+
 export function getPackageVersion() {
-    try{
-        return process.env.NODE_ENV === 'development' ?  process.env.npm_package_version : require('electron').remote.app.getVersion();
-    }catch (e) {
+    try {
+        let curVersion = process.env.NODE_ENV === 'development' ? process.env.npm_package_version : require('electron').remote.app.getVersion();
+        saveLog.log(curVersion, "curVersion");
+        return curVersion;
+    } catch (e) {
+        saveLog.error("","getPackageVersion error");
         return "45.00";
     }
 }
 
-export function listenSudoPwd(){
+export function openLog() {
+    var logObj = electronLog.transports.file.getFile();
+    console.warn(logObj, "log getFile");
+    if (typeof logObj.path != "undefined") {
+        try {
+            execShell("open " + logObj.path);
+        } catch (e) {
+            saveLog.error(e, "log getFile error");
+        }
+    }
+}
+
+export function noticeTheSystemError(_error, setOption) {
+    var errorMap = {
+        system: 10000,
+        dialog: 10010,
+        dialog_save_err: 10011,
+        savePassword: 10020,
+        savePassword2: 10021,
+        opendevmod: 10030,
+    };
+    var error = (typeof _error != "undefined") ? _error : "system";
+    console.warn(error, "error")
+    var errorNo = (typeof errorMap[error] != "undefined") ? errorMap[error] : 1000;
+    var option = {
+        title: "System Error: " + errorNo,
+        body: "please contact official technical support",
+        href: 'https://www.ntfstool.com'
+    };
+
+    if (typeof setOption == "object") {
+        option = setOption;
+    }
+    if (typeof setOption == "string") {
+        option.body = setOption;
+    }
+
+    saveLog.error({name: _error, text: JSON.stringify(option)}, "noticeTheSystemError");
+
+    new window.Notification(option.title, option).onclick = function () {
+        shell.openExternal(option.href)
+    }
+}
+
+export function savePassword(password) {
+    try {
+        store.set("sudoPwd", password);
+        SUDO_PASSWORD = password;
+        if (password != store.get("sudoPwd")) {
+            noticeTheSystemError("savePassword");
+            return false;
+        } else {
+            return true;
+        }
+    } catch (e) {
+        noticeTheSystemError("savePassword2");
+        return false;
+    }
+}
+
+
+export function listenSudoPwd() {
     try {
         if (store.get("sudoPwd")) {
             SUDO_PASSWORD = store.get("sudoPwd");
@@ -43,18 +141,18 @@ export function listenSudoPwd(){
 
         alEvent.$on('setPWDEvent', password => {
             checkMabeSudoPassword(password).then(status => {
-                if(status){
+                if (status) {
                     //ok
-                    store.set("sudoPwd",password);
+                    store.set("sudoPwd", password);
                     SUDO_PASSWORD = password;
-                }else{
+                } else {
                     alEvent.$emit('SudoPWDEvent', "invalid password");
                     console.warn('password valid : ' + password);
                 }
             })
         })
-    }catch (e) {
-        log.warn(e,"listenSudoPwd");
+    } catch (e) {
+        saveLog.error(e, "listenSudoPwd");
     }
 }
 
@@ -63,14 +161,14 @@ export function execShell(shell) {
     return new Promise((resolve, reject) => {
         try {
             exec(shell, (error, stdout, stderr) => {
-                console.warn("execShell", {
+                saveLog.warn("execShell", {
                     code: "[SUDO]" + shell,
                     stdout: stdout,
                     stderr: stderr,
                     // error:error
                 })
-                if(stderr){
-                    reject(stdout + error );
+                if (stderr) {
+                    reject(stdout + error);
                     return;
                 }
 
@@ -79,12 +177,11 @@ export function execShell(shell) {
                 }
                 resolve(stdout, stderr)
             });
-        }catch (e) {
-            log.warn(e,"execShell");
+        } catch (e) {
+            saveLog.error(e, "execShell");
         }
     })
 }
-
 
 
 /**
@@ -93,70 +190,82 @@ export function execShell(shell) {
  * @param force
  * @returns {Promise}
  */
-export function execShellSudo(shell,force = false) {
+export function execShellSudo(shell, force = false) {
     return new Promise((resolve, reject) => {
         var password = SUDO_PASSWORD;
         try {
             exec(`echo ${password}|sudo -S ${shell}`, (error, stdout, stderr) => {
-                console.warn("execShell", {
+                saveLog.warn("execShellSudo", {
                     code: "[SUDO]" + shell,
                     stdout: stdout,
                     stderr: stderr,
                     // error:error
                 })
-                if(force == true){
+                if (force == true) {
                     resolve();
                     return;
                 }
-                if(stderr){
-                    if(stderr.toLowerCase().indexOf("password") >= 0){
+                if (stderr) {
+                    if (stderr.toLowerCase().indexOf("password") >= 0) {
                         //疑似密码不对
                         checkMabeSudoPassword().then(res => {
-                            if(!res){
+                            if (!res) {
                                 reject(stderr);
                                 return;
                             }
                         });
-                    }else{
+                    } else {
                         reject(stderr);
                         return;
                     }
-                }else{
+                } else {
                     resolve(stdout, stderr)
                 }
             });
-        }catch (e) {
-            log.warn(e,"execShell");
+        } catch (e) {
+            saveLog.error(e, "execShellSudo");
         }
     })
 }
 
 
-
 /**
- * 检查可能是密码错误
+ * check the {{work}} password
  * @returns {Promise}
  */
-function checkMabeSudoPassword(setPwd = false){
-    if(setPwd!==false){
+export function checkMabeSudoPassword(setPwd = false) {
+    if (setPwd !== false) {
         var password = setPwd
-    }else{
+    } else {
         var password = SUDO_PASSWORD;
     }
     return new Promise((resolve, reject) => {
         try {
-            exec(`echo ${password}|sudo -S ls`, (error, stdout, stderr) => {
-                if (stderr && stderr.toLowerCase().indexOf("password") >= 0) {
-                    //疑似密码不对
+            //sudo -Sk Force password
+            exec(`echo ${password}|sudo -Sk ls /usr`, (error, stdout, stderr) => {
+                saveLog.warn({
+                    error, stdout, stderr
+                }, "checkMabeSudoPassword res");
+                var errorPwd = false;
+                if (stderr) {
+                    if (stderr.toLowerCase().indexOf("password") >= 0) {
+                        if (stderr.toLowerCase().indexOf("try") >= 0 || stderr.toLowerCase().indexOf("incorrect") >= 0) {
+                            errorPwd = true;
+                        }
+                    }
+                }
+                if (errorPwd) {
                     alEvent.$emit('SudoPWDEvent');//Send the refresh event
-                    console.warn("密码不对,重新输入")
-                    resolve(true);//是密码错误
-                }else{
-                    resolve(false);//不是密码错误
+                    saveLog.warn("checkMabeSudoPassword error password")
+                    resolve(false);
+                } else {
+                    resolve(true);
+
                 }
             });
         } catch (e) {
-            log.warn(e, "checkSudo");
+            saveLog.error(e, "checkMabeSudoPassword catch error");
+            resolve(true);
         }
     });
 }
@@ -166,11 +275,11 @@ function checkMabeSudoPassword(setPwd = false){
  * disableZoom
  */
 export function disableZoom(webFrame) {
-    try{
+    try {
         webFrame.setVisualZoomLevelLimits(1, 1);
         webFrame.setLayoutZoomLevelLimits(0, 0);
-    }catch (e) {
-        console.warn(e.getError(),"disableZoom error");
+    } catch (e) {
+        saveLog.error(e.getError(), "disableZoom error");
     }
 }
 
@@ -217,8 +326,8 @@ function _ignore(disk_list) {
                 }
             }
             return true;
-        }catch (e) {
-            log.warn(e,"_ignore");
+        } catch (e) {
+            saveLog.error(e, "_ignore");
         }
     });
 }
@@ -254,8 +363,8 @@ function _marktype(disk_list) {
             disk_list_group.ext.push(disk_list[i]);
         }
         return disk_list_group;
-    }catch (e) {
-        log.warn(e,"_marktype");
+    } catch (e) {
+        saveLog.error(e, "_marktype");
     }
 }
 
@@ -273,8 +382,8 @@ function _checkPushable(disk_list) {
             }
         }
         return disk_list;
-    }catch (e) {
-        log.warn(e,"_marktype");
+    } catch (e) {
+        saveLog.error(e, "_marktype");
     }
 }
 
@@ -294,8 +403,8 @@ function get_safe_ejst_disk_name(dev_path) {
             var safe_path = safe_dev + safe_dev2;
         }
         return safe_path;
-    }catch (e) {
-        log.warn(e,"_marktype");
+    } catch (e) {
+        saveLog.error(e, "_marktype");
     }
 }
 
@@ -396,13 +505,12 @@ export function getDiskList() {
                 }).catch((err) => {
                     reject(err)
                 });
-            }catch (e) {
-                log.warn(e,"getDiskList");
+            } catch (e) {
+                saveLog.error(e, "getDiskList");
             }
 
         }).catch((e) => {
-            console.log(e);
-            log.warn(e,"getDiskList");
+            saveLog.error(e, "getDiskList");
             reject(e)
         })
     })
@@ -440,8 +548,8 @@ export async function getDiskFullInfo(disklist) {
             }
         }
         return disklist;
-    }catch (e) {
-        log.warn(e,"getDiskFullInfo");
+    } catch (e) {
+        saveLog.error(e, "getDiskFullInfo");
     }
 }
 
@@ -546,25 +654,25 @@ export function getDiskInfo(index) {
                     infoArr3.total_size_wei = disk_size_wei;
                 }
                 //If disk information has not been obtained
-                if((!infoArr3.total_size || !infoArr3.used_size) && info.length > 20){
+                if ((!infoArr3.total_size || !infoArr3.used_size) && info.length > 20) {
                     var sizeData = formatDiskSize(info);
-                    if(sizeData["total"]){
+                    if (sizeData["total"]) {
                         infoArr3.total_size = sizeData["total"];
                         infoArr3.total_size_wei = sizeData["wei"];
                     }
 
-                    if(!infoArr3.used_size && sizeData["used"]){
+                    if (!infoArr3.used_size && sizeData["used"]) {
                         infoArr3.used_size = sizeData["used"];
                         infoArr3.used_size_wei = sizeData["wei"];
                     }
 
-                    if(!infoArr3.percentage && sizeData["percentage"]){
+                    if (!infoArr3.percentage && sizeData["percentage"]) {
                         infoArr3.percentage = sizeData["percentage"];
                     }
                 }
                 resolve(infoArr3);
-            }catch (e) {
-                log.warn(e,"getDiskInfo");
+            } catch (e) {
+                saveLog.error(e, "getDiskInfo");
             }
         })
     })
@@ -622,7 +730,7 @@ export function reMountNtfs(index, force = false) {
             }
         } catch (e) {
             reMountLock[index] = false;
-            log.warn(e,"reMountNtfs");
+            saveLog.error(e, "reMountNtfs");
             reject(e)
         }
     })
@@ -647,8 +755,7 @@ export function openInFinder(path) {
                 resolve()
             }
         }).catch((e) => {
-            console.log(e);
-            log.warn(e,"openInFinder ok");
+            saveLog.error(e, "openInFinder ok");
             reject(e)
         })
     })
@@ -682,7 +789,7 @@ export function mountDisk(item) {
             //No other disks need to be mounted temporarily
             reject("not need mount");
         } catch (e) {
-            log.warn(e,"mountDisk");
+            saveLog.error(e, "mountDisk");
             reject(e)
         }
     })
@@ -711,7 +818,7 @@ export function uMountDisk(item) {
                 return;
             }
         } catch (e) {
-            log.warn(e,"uMountDisk");
+            saveLog.error(e, "uMountDisk");
             reject(e)
         }
     })
@@ -728,7 +835,7 @@ export function checkDevicesIsNtfs(mount_path) {
                 resolve(false)
             }
         }).catch((e) => {
-            log.warn(e,"checkDevicesIsNtfs");
+            saveLog.error(e, "checkDevicesIsNtfs");
             reject(e)
         })
     })
@@ -741,7 +848,7 @@ export function openSysDiskUtils() {
             await execShell(`open "/Applications/Utilities/Disk Utility.app" `);
             resolve();
         } catch (e) {
-            log.warn(e,"openSysDiskUtils");
+            saveLog.error(e, "openSysDiskUtils");
             reject(e)
         }
     })
@@ -751,15 +858,16 @@ export function openSysDiskUtils() {
  * Analysis and filtering out disk data
  * @param str
  */
-function formatDiskSize(str){
+function formatDiskSize(str) {
     var data = _formatDiskSizeGb(str);
-    if(!data.total){
+    if (!data.total) {
         var data = _formatDiskSizeMb(str);
     }
 
-    console.warn("formatDiskSize",{data,str});
+    console.warn("formatDiskSize", {data, str});
     return data;
 }
+
 function _formatDiskSizeGb(str) {
     var data = str.split("\n");
     //Get the possible data set
@@ -791,7 +899,7 @@ function _formatDiskSizeGb(str) {
     }
 
     //Possible data set to filter out the exact number
-    var resData = {total: 0, used: 0, free: 0, percentage: 0,wei:"GB"};
+    var resData = {total: 0, used: 0, free: 0, percentage: 0, wei: "GB"};
     for (var j in matchData) {
         if (matchData[j].indexOf("total") >= 0 || matchData[j].indexOf("disksize") >= 0) {
             //Possible keywords, get here
@@ -818,12 +926,13 @@ function _formatDiskSizeGb(str) {
     if (!resData["total"] && resData["used"] && resData["free"]) {
         resData["total"] = formatSize(resData["used"] + resData["free"]);
     }
-    if(!resData["percentage"] && resData["used"] && resData["total"]){
-        resData["percentage"] = formatSize(resData["used"]/resData["total"] * 100);
+    if (!resData["percentage"] && resData["used"] && resData["total"]) {
+        resData["percentage"] = formatSize(resData["used"] / resData["total"] * 100);
     }
 
     return resData;
 }
+
 function _formatDiskSizeMb(str) {
     var data = str.split("\n");
     //Get the possible data set
@@ -853,7 +962,7 @@ function _formatDiskSizeMb(str) {
         }
     }
 
-    var resData = {total: 0, used: 0, free: 0, percentage: 0,wei:"MB"};
+    var resData = {total: 0, used: 0, free: 0, percentage: 0, wei: "MB"};
     for (var j in matchData) {
         if (matchData[j].indexOf("total") >= 0 || matchData[j].indexOf("disksize") >= 0) {
             resData["total"] = formatSize(j);
@@ -877,8 +986,8 @@ function _formatDiskSizeMb(str) {
     if (!resData["total"] && resData["used"] && resData["free"]) {
         resData["total"] = formatSize(resData["used"] + resData["free"]);
     }
-    if(!resData["percentage"] && resData["used"] && resData["total"]){
-        resData["percentage"] = formatSize(resData["used"]/resData["total"] * 100);
+    if (!resData["percentage"] && resData["used"] && resData["total"]) {
+        resData["percentage"] = formatSize(resData["used"] / resData["total"] * 100);
     }
 
     return resData;
@@ -886,7 +995,7 @@ function _formatDiskSizeMb(str) {
 
 function formatSize(num) {
     var res = Math.round(parseFloat(num) * 100) / 100;
-    if(isNaN(res)){
+    if (isNaN(res)) {
         res = 0;
     }
     return res;

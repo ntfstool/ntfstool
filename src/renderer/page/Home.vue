@@ -133,19 +133,19 @@
                 <div>
                     <div class="rmain">
                         <div class="rmain_l">
-                            <div v-if="select_item.group == 'inner'">
+                            <div  class="rmain_l_box" v-if="select_item.group == 'inner'">
                                 <img src="../assets/disk04.png">
                             </div>
 
 
-                            <div v-else-if="select_item.group == 'ext'">
+                            <div class="rmain_l_box"  v-else-if="select_item.group == 'ext'">
                                 <img v-if="typeof select_item.info.typebundle != 'undefined' &&  select_item.info.typebundle == 'ntfs'"
                                      src="../assets/disk01.png">
 
                                 <img v-else src="../assets/disk02.png">
                             </div>
 
-                            <div v-else="select_item.group == 'image'">
+                            <div class="rmain_l_box"  v-else="select_item.group == 'image'">
                                 <img src="../assets/disk03.png">
                             </div>
                         </div>
