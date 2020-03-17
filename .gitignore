@@ -14,3 +14,4 @@ dist/
 test
 package-lock.json
 mynpm
+lib-ntfstool

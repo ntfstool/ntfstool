@@ -412,8 +412,8 @@ try {
             aboutPageHandle = new BrowserWindow({
                 title: "",
                 fullscreen: false,
-                height: 210,
-                width: 350,
+                height: 265,
+                width: 400,
                 show: false,
                 backgroundColor: 'rgb(243, 243, 243)',
                 resizable: false,
@@ -546,6 +546,8 @@ try {
     }
 
     const exitAll = () => {
+        //submit the statistics
+
         if (homeWinHandle) {
             homeWinHandle.destroy();
         }

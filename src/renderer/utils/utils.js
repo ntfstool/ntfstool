@@ -23,43 +23,15 @@ import {t} from 'element-ui/lib/locale'
 import {alEvent} from '@/utils/alevent.js';
 
 const {shell} = require('electron')
+const {getAspInfo} = require('ntfstool')
+const {_} = require('lodash')
 
-const electronLog = require('electron-log');
+const saveLog = require('electron-log');
 var reMountLock = [];//global lock
 const Store = require('electron-store');
 const store = new Store();
 var SUDO_PASSWORD = "";
-
-const saveLog = {
-    log: (key, val) => {
-        if (process.env.NODE_ENV === 'development') {
-            console.log(key, val);
-        }
-
-        electronLog.log(key, val);
-    },
-    info: (key, val) => {
-        if (process.env.NODE_ENV === 'development') {
-            console.info(key, val);
-        }
-
-        electronLog.info(key, val);
-    },
-    warn: (key, val) => {
-        if (process.env.NODE_ENV === 'development') {
-            console.warn(key, val);
-        }
-
-        electronLog.warn(key, val);
-    },
-    error: (key, val) => {
-        if (process.env.NODE_ENV === 'development') {
-            console.error(key, val);
-        }
-
-        electronLog.error(key, val);
-    },
-}
+export const POST_LOG_URL = 'https://ntfstool.cn-hongkong.log.aliyuncs.com/logstores/ntfstool/track';
 
 export function getPackageVersion() {
     try {
@@ -67,13 +39,46 @@ export function getPackageVersion() {
         saveLog.log(curVersion, "curVersion");
         return curVersion;
     } catch (e) {
-        saveLog.error("","getPackageVersion error");
+        saveLog.error(e, "getPackageVersion error");
         return "45.00";
     }
 }
 
+export function getSystemInfo() {
+    return new Promise((resolve, reject) => {
+        try {
+            getAspInfo({
+                dataTypes: [
+                    'SPSoftwareDataType',
+                    'SPHardwareDataType',
+                ]
+            }, (error, stdout) => {
+                if (error) throw error;
+                console.warn(stdout,"getSystemInfo stdout");
+
+                var sysinfo = {
+                    os_version:_.get(stdout,'SPSoftwareDataType.os_version'),
+                    user_name:_.get(stdout,'SPSoftwareDataType.user_name'),
+                    machine_name:_.get(stdout,'SPHardwareDataType.machine_name'),
+                    physical_memory:_.get(stdout,'SPHardwareDataType.physical_memory'),
+                    serial_number:_.get(stdout,'SPHardwareDataType.serial_number'),
+                };
+
+                saveLog.warn(sysinfo,"getSystemInfo sysinfo");
+
+                resolve(sysinfo, error)
+            });
+        } catch (e) {
+            saveLog.error(e, "getSystemInfo error");
+            reject(stdout + error);
+        }
+
+    })
+}
+
+
 export function openLog() {
-    var logObj = electronLog.transports.file.getFile();
+    var logObj = saveLog.transports.file.getFile();
     console.warn(logObj, "log getFile");
     if (typeof logObj.path != "undefined") {
         try {
@@ -92,6 +97,7 @@ export function noticeTheSystemError(_error, setOption) {
         savePassword: 10020,
         savePassword2: 10021,
         opendevmod: 10030,
+        FEEDBACK_ERROR:10040
     };
     var error = (typeof _error != "undefined") ? _error : "system";
     console.warn(error, "error")

@@ -64,6 +64,7 @@
     "electron-middle-sass": "^1.0.2",
     "electron-store": "^5.0.0",
     "element-ui": "2.13.0",
+    "lodash": "^4.17.15",
     "ntfstool": "^1.0.0",
     "vue": "^2.6.11",
     "vue-electron": "^1.0.6",
