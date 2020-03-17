@@ -27,7 +27,12 @@ const {getAspInfo} = require('ntfstool')
 const {_} = require('lodash')
 const saveLog = require('electron-log');
 
-
+/**
+ * check is dev
+ */
+export function isDev() {
+    return process.env.NODE_ENV === 'development' ? true : false;
+}
 
 /**
  * get the ntfstool version

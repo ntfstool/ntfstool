@@ -237,11 +237,11 @@
     </el-container>
 </template>
 <script>
-    import setting from '@/lib/setting.js'
+    import setting from '@/renderer/lib/setting.js'
     export default setting
 </script>
 
-<style scoped src="@/theme/setting.css"></style>
+<style scoped src="@/renderer/theme/setting.css"></style>
 
 <style scoped>
 

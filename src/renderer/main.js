@@ -21,16 +21,16 @@
 import Vue from 'vue'
 import axios from 'axios'
 import App from './App'
-import router from './router'
+import router from '@/common/router/index'
 
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
-import '@/theme/ntfstool.css'
+import '@/renderer/theme/ntfstool.css'
 
-import messages from '@/lang/index'
+import messages from '@/common/lang/index'
 import ElementLocale from 'element-ui/lib/locale'
 import VueI18n from 'vue-i18n'
-import {alEvent} from '@/utils/alevent.js';
+import {alEvent} from '@/common/utils/alevent';
 const Store = require('electron-store');
 const store = new Store();
 

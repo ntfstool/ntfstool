@@ -111,6 +111,7 @@ html, body, #app {
 
 .diskb_2 img {
     width: 44px;
+    height: 50px;
     margin-right: 10px;
 }
 
@@ -127,6 +128,8 @@ html, body, #app {
     justify-content: space-between;
     color: #4c4d4f;
     font-family: serif;
+    display: flex;
+    align-items: center;
     /*background: green*/
 }
 
@@ -137,6 +140,8 @@ html, body, #app {
 
 .diskb_3_1 span {
     color: #444446;
+    font-size: 15px;
+    font-weight: bold;
 }
 
 .diskb_3_2 {
@@ -145,6 +150,8 @@ html, body, #app {
     border-radius: 10px;
     overflow: hidden;
     background: #c7c4c5;
+    display: flex;
+    align-items: center;
 }
 
 .diskb_3_2_1 {
@@ -159,6 +166,8 @@ html, body, #app {
     justify-content: space-between;
     color: #4c4d4f;
     font-family: serif;
+    display: flex;
+    align-items: center;
     /*background: green*/
 }
 

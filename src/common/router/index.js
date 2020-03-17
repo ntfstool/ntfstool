@@ -19,12 +19,12 @@
  */
 import Vue from 'vue'
 import Router from 'vue-router'
-import Home from '@/page/Home'
-import Setting from '@/page/Setting'
-import Tray from '@/page/Tray'
-import About from '@/page/About'
-import Dialog from '@/page/Dialog'
-import FeedBack from '@/page/FeedBack'
+import Home from '@/renderer/page/Home'
+import Setting from '@/renderer/page/Setting'
+import Tray from '@/renderer/page/Tray'
+import About from '@/renderer/page/About'
+import Dialog from '@/renderer/page/Dialog'
+import FeedBack from '@/renderer/page/FeedBack'
 Vue.use(Router)
 
 export default new Router({

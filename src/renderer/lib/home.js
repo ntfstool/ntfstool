@@ -20,17 +20,15 @@
 
 import {ipcRenderer, remote} from 'electron'
 
+import {getPackageVersion, disableZoom, getSystemInfo} from '@/common/utils/AlfwCommon.js'
+
 import {
     getDiskList,
-    listenSudoPwd,
     getDiskFullInfo,
     uMountDisk,
     mountDisk,
-    openInFinder,
-    getPackageVersion,
-    disableZoom
-} from '@/utils/utils'
-import {alEvent} from '@/utils/alevent.js';
+    openInFinder} from '@/common/utils/AlfwDisk.js'
+import {alEvent} from '@/common/utils/alevent.js'
 
 const log = require('electron-log');
 const fs = require('fs');
@@ -64,7 +62,8 @@ export default {
         }
     },
     mounted() {
-        listenSudoPwd();
+
+        return;
         this.fsListenMount();
         this.refreshDevice();
         this.setVersion();
@@ -96,6 +95,10 @@ export default {
             console.warn("main wind acive MountEvent", filename);
             this.refreshDevice();
         });
+
+        remote.getCurrentWindow().on('focus', function() {
+           console.warn("currentWindow focus");
+        })
     },
     methods: {
 
@@ -232,6 +235,7 @@ export default {
             this.version = getPackageVersion();
         },
         fsListenMount() {
+            var _this = this;
             //监听挂载事件
             try {
                 var path = '/Volumes/';

@@ -64,7 +64,8 @@
                 </div>
 
                 <div class="diskb_2">
-                    <div>
+                    <div style="display: flex;
+    justify-content: center;">
                         <img src="../assets/disk2.png">
                     </div>
                 </div>
@@ -76,7 +77,7 @@
                             <i class="iconfont ico_color">&#xe607;</i>
                             <span>本地磁盘</span>
                         </div>
-                        <div>
+                        <div style="font-size: 15px;">
                             Readonly
                         </div>
                     </div>
@@ -86,11 +87,11 @@
                     </div>
 
                     <div class="diskb_3_3">
-                        <div>
+                        <div style="font-size: 15px;">
                             <!--Reboot DIsk-->
                             2133.GB
                         </div>
-                        <div>2133.GB 可用</div>
+                        <div style="    font-size: 15px;">2133.GB 可用</div>
                     </div>
                 </div>
             </div>
@@ -261,13 +262,12 @@
     </el-container>
 </template>
 <script>
-    import tray from '@/lib/tray.js'
-
+    import tray from '@/renderer/lib/tray.js'
     export default tray
 </script>
 
 
-<style scoped src="@/theme/tray.css"></style>
+<style scoped src="@/renderer/theme/tray.css"></style>
 
 <style scoped>
     .el-submenu__title {

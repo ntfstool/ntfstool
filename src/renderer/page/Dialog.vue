@@ -37,7 +37,22 @@
 <script>
     const {shell,ipcRenderer,remote} = require('electron')
 
-    import {disableZoom,execShell,checkMabeSudoPassword,noticeTheSystemError,savePassword} from '@/utils/utils'
+
+    import {getPackageVersion, disableZoom, getSystemInfo,noticeTheSystemError} from '@/common/utils/AlfwCommon.js'
+
+    import {
+        getDiskList,
+        getDiskFullInfo,
+        uMountDisk,
+        mountDisk,
+        openInFinder} from '@/common/utils/AlfwDisk.js'
+    import {alEvent} from '@/common/utils/alevent.js'
+
+    import {savePassword} from '@/common/utils/AlfwShell.js'
+
+
+
+    // import {disableZoom,execShell,checkSudoPassword,noticeTheSystemError,savePassword} from '@/utils/utils'
 
     export default {
         components: {},
@@ -50,14 +65,27 @@
         },
         mounted() {
             //get the current work name
-            execShell("whoami").then(res => {
-                if(res){
-                    this.workname = res;
-                }
-            });
+            //Todo Whoami
 
+            this.workname = "todo list";
+            
+            // execShell("whoami").then(res => {
+            //     if(res){
+            //         this.workname = res;
+            //     }
+            // });
 
             disableZoom(require('electron').webFrame);
+
+            //check the sudo pwd
+            ipcRenderer.on("SudoPwdEvent", (e) => {
+                checkSudoPassword().then(res => {
+                    if(!res){
+                        remote.getCurrentWindow().show();
+                    }
+                })
+            });
+
         },
         methods: {
             checkSudoPwd(){
@@ -78,7 +106,7 @@
                     this.btnDisable = false;
                 },10000);
 
-                checkMabeSudoPassword(this.workpwd).then(res => {
+                checkSudoPassword(this.workpwd).then(res => {
                     this.btnDisable = false;
                     if(!res){
                         shell.beep()

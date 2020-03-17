@@ -65,7 +65,11 @@
     const axios = require('axios')
     const fs = require("fs")
     const saveLog = require('electron-log');
-    import {getPackageVersion, disableZoom, getSystemInfo, noticeTheSystemError, POST_LOG_URL} from '@/utils/utils'
+
+    import {getPackageVersion, disableZoom, getSystemInfo,noticeTheSystemError} from '@/common/utils/AlfwCommon.js'
+
+    import {POST_LOG_URL} from '@/common/utils/AlfwConst.js'
+
 
     export default {
         components: {},

@@ -298,8 +298,8 @@
     </el-container>
 </template>
 <script>
-    import home from '@/lib/home.js'
+    import home from '@/renderer/lib/home.js'
     export default home
 </script>
-<style scoped src="@/theme/home.css"></style>
+<style scoped src="@/renderer/theme/home.css"></style>
 <style scoped></style>

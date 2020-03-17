@@ -31,48 +31,8 @@
     </el-container>
 </template>
 <script>
-    const {shell, ipcRenderer, remote} = require('electron')
-
-    import {getPackageVersion, disableZoom, getSystemInfo,POST_LOG_URL} from '@/utils/utils'
-
-    export default {
-        components: {},
-        data() {
-            return {
-                version: "-",
-                statisticsImg: "",
-                serial_number: "--",
-                os_version: "",
-            }
-        },
-        mounted() {
-            this.statistics();
-            disableZoom(require('electron').webFrame);
-            this.version = getPackageVersion();
-        },
-        methods: {
-            openMainsite() {
-                shell.openExternal("https://www.ntfstool.com")
-            },
-            openGitHub() {
-                shell.openExternal("https://github.com/ntfstool/ntfstool")
-            },
-            statistics() {
-                getSystemInfo().then(json => {
-                    var pasysteminfo_parmrams = Object.keys(json).map(function (key) {
-                        return encodeURIComponent(key) + "=" + encodeURIComponent(json[key]);
-                    }).join("&");
-                    this.serial_number = json.serial_number;
-                    this.os_version = json.os_version;
-
-                    console.warn(pasysteminfo_parmrams, "pasysteminfo_parmrams");
-
-                    this.statisticsImg = POST_LOG_URL + ".gif?APIVersion=0.6.0&altype=start&" + pasysteminfo_parmrams;
-                });
-            }
-        }
-    }
-
+    import about from '@/renderer/lib/about.js'
+    export default about
 </script>
 
 <style scoped>

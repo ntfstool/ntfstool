@@ -18,116 +18,47 @@
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
 
-import {app, BrowserWindow, Menu, Tray, ipcMain,globalShortcut,crashReporter,screen} from 'electron'
-const Store = require('electron-store');
-const devMod = process.env.NODE_ENV === 'development' ? true : false;
-const store = new Store();
+// import {app, BrowserWindow, Menu, Tray, ipcMain,globalShortcut,crashReporter,screen} from 'electron'
+
+import {app,ipcMain} from 'electron'
+const saveLog = require('electron-log');
+
+
+import {checkNeedInitStore,setDefaultStore} from '../common/utils/AlfwStore.js'
+import {openPages,openPageByName,toggleTrayMenu,exitAll} from '../main/lib/PageConfig.js'
+
+
 app.disableHardwareAcceleration();//disable gpu
+
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = '1';
-var settingPageHandle = null,aboutPageHandle=null,dialogPageHandle=null,feedBackPageHandle=null,trayPageHandle = null,devToolMod =false,tray = null,windowBounds=null,homeWinHandle,before_quit_status = true;//only one time to exit all
-
-const winURL = devMod ? `http://localhost:9080` : `file://${__dirname}/index.html`;
-
-if(!devMod){
-    global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
-}
-
-// devToolMod = devMod;
 
 try {
-    const default_store = {
-        name: "Alntfs",
-        auto_run: true,
-        theme: "",
-        lang: "en",
-        show_menu: true,
-        common: {
-            website_url: "",
-            install_bug_type: "auto_solve",
-            how_restart_window: "change_to_bacground",
-        },
-        message: {
-            mount_show_msg: "",
-            update_show_msg: "",
-            error_disk_msg: "",
-        },
-        disk_list: {
-            history_list: [],
-            ignore_list: [],
-        },
-        privacy_url: 'https://github.com',
-        update: {
-            auto_check: "",
-            auto_beta_update: "",
-            update_url: "",
-            update_beta_url: "",
-        },
-        sudoPwd: false,
-    };
-
     app.on('ready', () => {
-        if (!store.get("name") || store.get("name") == "undefined") {
-            initStore();
-        }
-
-        openHomePage();
-
-        openTrayPage();
-
-        setTimeout(function () {
-            // openAboutPage("hide");
-            openDialogPage("");
-            // openSettingPage("hide");
-            // openFeedBackPage("hide");
-        }, 5000)
-
-        globalShortcut.register('Command+Shift+J', () => {
-            let focusWin = BrowserWindow.getFocusedWindow()
-            focusWin && focusWin.toggleDevTools()
-        });
+        checkNeedInitStore();
+        openPages();
     })
 
     app.on('before-quit', () => {
-        if(before_quit_status){
-            before_quit_status = false;
-            exitAll();
-        }
+        exitAll();
     })
 
     //Main process listen message
     ipcMain.on('MainMsgFromRender', function (event, arg) {
-        console.warn(arg, "Main process listened the message")
-        if (arg == "openSettingPage") {
-            openSettingPage();
-        } else if (arg == "openAboutPage") {
-            openAboutPage();
-        }else if (arg == "openDialogPage") {
-            openDialogPage();
-        } else if (arg == "openFeedBackPage") {
-            openFeedBackPage();
-        } else if (arg == "openHomePage") {
-            openHomePage();
-        } else if (arg == "exitAll") {
+        console.warn(arg, "Main process listened the message");
+        if (arg == "exitAll") {
             exitAll();
         } else if (arg == "resetConf") {
-            store.set(default_store);
+            setDefaultStore();
             event.returnValue = 'succ';
         } else {
-            event.sender.send('RenderMsgFromMain', arg + " fail")
+            //TODO
+            openPageByName(arg);
         }
     })
 
-
     //listen the TrayMenu
     ipcMain.on('toggleTrayMenu', function (event, arg) {
-        if (tray !== null) {
-            tray.destroy();
-            tray = null;
-            event.returnValue = 'destroy';
-        } else {
-            openTrayMenu();
-            event.returnValue = 'newopen';
-        }
+        toggleTrayMenu();
     })
 
     //listen the lang change
@@ -138,438 +69,26 @@ try {
         }
     })
 
-    const initStore = () => {
-        store.set(default_store);
-        console.warn("initStore run");
-    }
-
-    const openHomePage = () => {
-        if (homeWinHandle == null) {
-            homeWinHandle = new BrowserWindow({
-                show: false,
-                fullscreen: false,
-                height: 600,
-                minHeight: 600,
-                minWidth: 800,
-                width: 900,
-                maxWidth: 1200,
-                useContentSize: true,
-                // center: true,
-                frame: false,
-                titleBarStyle: 'hidden',
-                webPreferences: {
-                    experimentalFeatures: true,
-                    nodeIntegration: true
-                },
-                // transparent: true
-            })
-
-            homeWinHandle.loadURL(winURL);
-
-            homeWinHandle.once('ready-to-show', () => {
-                _homeWinMenu();
-                homeWinHandle.show();
-                devToolMod && homeWinHandle.webContents.openDevTools();
-            })
-
-            homeWinHandle.on('close', (event) => {
-                console.error("homeWinHandle close start")
-                homeWinHandle.hide();
-                homeWinHandle.setSkipTaskbar(true);
-                app.dock.hide()
-                event.preventDefault();
-            });
-
-
-            homeWinHandle.on('closed', (event) => {
-                console.error("homeWinHandle closed")
-            });
-        } else {
-            homeWinHandle.show();
-            homeWinHandle.setSkipTaskbar(false);
-            app.dock.show()
-        }
-    }
-
-    const _homeWinMenu = () => {
-        var template = [
-            {
-                label: '关闭',
-                click: function () {
-                    win.close();
-                    console.log("关闭")
-                },
-                submenu: [
-                    {
-                        label: '关于',
-                        click: async () => {
-                            openAboutPage();
-                        }
-                    },
-                    {
-                        label: '分享给朋友',
-                        click: async () => {
-                            const {shell} = require('electron')
-                            await shell.openExternal("mailto:?cc=service@ntfstool.com&subject=I recommend using this NTFSTool to operate the extended disk&body=Hi!%0d%0a I\'m already using NtfsTool and I\'m really happy with it.%0d%0aFind more info here if you\'re interested:%0d%0ahttps://ntfstool.com/?tellfriends")
-                        }
-                    },
-                    {type: 'separator'},
-                    {
-                        label: '偏好设置',
-                        click: async () => {
-                            openSettingPage();
-                        }
-                    },
-                    {
-                        label: '检查更新',
-                        click: async () => {
-                            console.warn("检查更新");
-                        }
-                    },
-                    {role: 'services'},
-                    {
-                        label: '隐藏桌面',
-                        click: async () => {
-                            if(homeWinHandle){
-                                homeWinHandle.hide();
-                                homeWinHandle.setSkipTaskbar(true);
-                                app.dock.hide()
-                            }
-                        }
-                    },
-                    {
-                        label: '提交反馈',
-                        click: async () => {
-                            openFeedBackPage();
-                        }
-                    },
-                    {type: 'separator'},
-                    {
-                        label: '退出',
-                        accelerator: 'CmdOrCtrl+Q',
-                        role: 'quit'
-                    },
-                ],
-            },
-            {
-                label: 'Edit',
-                submenu: [
-                    { role: 'undo' },
-                    { role: 'redo' },
-                    { type: 'separator' },
-                    { role: 'cut' },
-                    { role: 'copy' },
-                    { role: 'paste' },
-                    { role: 'pasteandmatchstyle' },
-                    { role: 'delete' },
-                    { role: 'selectall' }
-                ]
-            },
-            {
-                label: 'View',
-                submenu: [
-                    { type: 'separator' },
-                    { role: 'togglefullscreen' }
-                ]
-            },
-            {
-                role: 'window',
-                submenu: [
-                    { role: 'minimize' },
-                    { role: 'close' }
-                ]
-            },
-            {
-                role: 'help',
-                submenu: [
-                    {
-                        label: 'Learn More',
-                        click() { require('electron').shell.openExternal('https://ntfstool.com') }
-                    }
-                ]
-            }
-        ];
-
-        Menu.setApplicationMenu(Menu.buildFromTemplate(template));
-    }
-
-    //default tray menu
-    const openTrayPage = () => {
-        if (trayPageHandle == null) {
-            trayPageHandle = new BrowserWindow({
-                height: 100,
-                width: 360,
-                frame: false,
-                resizable: false,
-                show: false,
-                transparent: true,
-                webPreferences: {
-                    nodeIntegration: true,
-                    backgroundThrottling: false
-                }
-            })
-
-            trayPageHandle.loadURL(winURL + "#tray")
-
-            trayPageHandle.once('ready-to-show', () => {
-                windowBounds = trayPageHandle.getBounds();
-                openTrayMenu();
-                devToolMod && trayPageHandle.webContents.openDevTools();
-            })
-
-            trayPageHandle.on('closed', () => {
-                trayPageHandle = null
-            })
-
-            trayPageHandle.on('blur', () => {
-                if(!devMod){
-                    //TODO
-                    trayPageHandle.hide();
-                }
-
-            })
-        } else {
-            trayPageHandle.show()
-        }
-    }
-
-    //right tray menu
-    const openTrayMenu = () => {
-        const path = require('path');
-
-        const iconUrl = process.env.NODE_ENV === 'development' ?  path.join(__dirname, '../../static/menu/AINTFS18.png') :
-            path.join(__dirname, 'static/menu/AINTFS18.png')
-
-        tray = new Tray(iconUrl);
-
-        tray.setPressedImage(iconUrl);
-
-        tray.setIgnoreDoubleClickEvents(true);//Very important to increase click speed
-
-        tray.on('click', (event,trayBounds) => {
-           if(trayPageHandle){
-               if(trayPageHandle.isVisible()){
-                   trayPageHandle.hide();
-               }else{
-                   trayPageHandle.setPosition(
-                       Math.round(trayBounds.x + (trayBounds.width / 2) - (windowBounds.width / 2)),
-                       Math.round(trayBounds.y + trayBounds.height + 4), false)
-                   trayPageHandle.show()
-               }
-           }else{
-               //Todo log error
-               exitAll();
-           }
-        })
-    }
-
-    const openSettingPage = (show_force) => {
-        if (settingPageHandle == null) {
-            settingPageHandle = new BrowserWindow({
-                fullscreen: false,
-                height: 500,
-                width: 750,
-                useContentSize: true,
-                center: true,
-                frame: false,
-                titleBarStyle: 'hidden',
-                show: false,
-                resizable: false,
-                minimizable: false,
-                maximizable: false,
-                skipTaskbar: true,
-                webPreferences: {
-                    nodeIntegration: true
-                }
-            })
-
-            settingPageHandle.loadURL(winURL + "#setting")
-
-            settingPageHandle.once('ready-to-show', () => {
-                if (show_force !== "hide") {
-                    settingPageHandle.show()
-                }
-
-                devToolMod && settingPageHandle.webContents.openDevTools();
-            })
-
-            settingPageHandle.on('close', (event) => {
-                settingPageHandle.hide();
-                event.preventDefault();
-            });
-
-            settingPageHandle.on('closed', () => {
-                settingPageHandle = null
-            })
-        } else {
-            settingPageHandle.show()
-        }
-    }
-
-    const openAboutPage = (show_force) => {
-        if (aboutPageHandle == null) {
-            //已下为插入内容
-            aboutPageHandle = new BrowserWindow({
-                title: "",
-                fullscreen: false,
-                height: 265,
-                width: 400,
-                show: false,
-                backgroundColor: 'rgb(243, 243, 243)',
-                resizable: false,
-                minimizable: false,
-                maximizable: false,
-                // skipTaskbar: true,
-                webPreferences: {
-                    nodeIntegration: true
-                }
-            })
-
-            aboutPageHandle.loadURL(winURL + "#about")
-
-            aboutPageHandle.once('ready-to-show', () => {
-                if (show_force !== "hide") {
-                    aboutPageHandle.show()
-                }
-
-                devToolMod && aboutPageHandle.webContents.openDevTools();
-            })
-
-            aboutPageHandle.on('close', (event) => {
-                aboutPageHandle.hide();
-                event.preventDefault();
-            });
-
-            aboutPageHandle.on('closed', () => {
-                aboutPageHandle = null
-            });
-
-            aboutPageHandle.on('close', (event) => {
-                aboutPageHandle.hide();
-                event.preventDefault();
-            });
-        } else {
-            aboutPageHandle.show()
-        }
-    }
-
-    const openDialogPage = (show_force) => {
-        if (dialogPageHandle == null) {
-            //已下为插入内容
-            dialogPageHandle = new BrowserWindow({
-                title: "系统设置",
-                fullscreen: false,
-                height: 210,
-                width: 500,
-                show: false,
-                backgroundColor: 'rgb(243, 243, 243)',
-                resizable: false,
-                minimizable: false,
-                maximizable: false,
-                alwaysOnTop:true,
-                webPreferences: {
-                    nodeIntegration: true
-                }
-            })
-
-            dialogPageHandle.loadURL(winURL + "#dialog")
-
-            dialogPageHandle.once('ready-to-show', () => {
-                if (show_force !== "hide") {
-                    dialogPageHandle.show()
-                }
-
-                dialogPageHandle.webContents.openDevTools()
-
-                devToolMod && dialogPageHandle.webContents.openDevTools();
-            })
-
-            dialogPageHandle.on('close', (event) => {
-                dialogPageHandle.hide();
-                event.preventDefault();
-            });
-
-            dialogPageHandle.on('closed', () => {
-                dialogPageHandle = null
-            });
-
-            dialogPageHandle.on('close', (event) => {
-                dialogPageHandle.hide();
-                event.preventDefault();
-            });
-        } else {
-            dialogPageHandle.show()
-        }
-    }
-
-    const openFeedBackPage = (show_force) => {
-        if (feedBackPageHandle == null) {
-            feedBackPageHandle = new BrowserWindow({
-                fullscreen: false,
-                height: 500,
-                width: 700,
-                useContentSize: true,
-                center: true,
-                frame: false,
-                titleBarStyle: 'hidden',
-                show: false,
-                resizable: false,
-                minimizable: false,
-                maximizable: false,
-                skipTaskbar: true,
-                webPreferences: {
-                    nodeIntegration: true
-                }
-            })
-
-            feedBackPageHandle.loadURL(winURL + "#feedBack")
-
-            feedBackPageHandle.once('ready-to-show', () => {
-                if (show_force !== "hide") {
-                    feedBackPageHandle.show()
-                }
-
-                devToolMod && feedBackPageHandle.webContents.openDevTools();
-            })
-
-            feedBackPageHandle.on('close', (event) => {
-                feedBackPageHandle.hide();
-                event.preventDefault();
-            });
-
-            feedBackPageHandle.on('closed', () => {
-                feedBackPageHandle = null
-            })
-        } else {
-            feedBackPageHandle.show()
-        }
-    }
-
-    const exitAll = () => {
-        //submit the statistics
-
+    //listen and send the device event
+    ipcMain.on('DesktopAppEvent', function (event, arg) {
+        console.warn("DesktopAppEvent", arg);
         if (homeWinHandle) {
-            homeWinHandle.destroy();
+            homeWinHandle.send("DesktopAppEvent", arg);
         }
-        if (tray) {
-            tray.destroy();
+        if (trayPageHandle) {
+            trayPageHandle.send("DesktopAppEvent", arg);
         }
-        if (settingPageHandle) {
-            settingPageHandle.destroy();
-        }
-        if (aboutPageHandle) {
-            aboutPageHandle.destroy();
-        }
-        if (dialogPageHandle) {
-            dialogPageHandle.destroy();
-        }
-        if (feedBackPageHandle) {
-            feedBackPageHandle.destroy();
-        }
-        app.quit(0);
-    }
+    })
 
+    //sudo pwd event
+    ipcMain.on('SudoPwdEvent', function (event, arg) {
+        console.warn("SudoPwdEvent", arg);
+        if (dialogPageHandle) {
+            dialogPageHandle.send("SudoPwdEvent", arg);
+        }
+    })
 }catch (e) {
+    saveLog.error(e,"mainError exitAll");
     exitAll();
 }
 

@@ -18,7 +18,20 @@
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
 const {shell,ipcRenderer,remote} = require('electron')
-import {openLog,noticeTheSystemError} from '@/utils/utils'
+// import {openLog,noticeTheSystemError} from '@/utils/utils'
+
+
+import {getPackageVersion, disableZoom, getSystemInfo,noticeTheSystemError} from '@/common/utils/AlfwCommon.js'
+
+import {
+    getDiskList,
+    getDiskFullInfo,
+    uMountDisk,
+    mountDisk,
+    openInFinder} from '@/common/utils/AlfwDisk.js'
+import {alEvent} from '@/common/utils/alevent.js'
+
+
 
 export default {
     components: {},
