@@ -8,8 +8,8 @@ var feedBackPageHandle=null;
 var trayPageHandle = null;
 var tray = null;
 var windowBounds=null;
-var aboutPageHandle = null;
 var exitAllStatus = true;
+const MaxBrowserWindowLimits = 50;
 
 if(isDev()){
     winURL =  `http://localhost:9080`;
@@ -18,26 +18,47 @@ if(isDev()){
     global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
 }
 
+export function doChangeLangEvent(arg) {
+    console.warn("ChangeLangEvent", arg);
+    if (homeWinHandle) {
+        homeWinHandle.send("ChangeLangEvent", arg);
+    }
+}
+
+export function doSudoPwdEvent(arg) {
+    // console.warn("SudoPwdEvent", arg);
+    // if (dialogPageHandle) {
+    //     dialogPageHandle.send("SudoPwdEvent", arg);
+    // }
+}
+
+
+export function doDesktopAppEvent(args) {
+    console.warn("DesktopAppEvent", arg);
+    if (homeWinHandle) {
+        homeWinHandle.send("DesktopAppEvent", arg);
+    }
+    if (trayPageHandle) {
+        trayPageHandle.send("DesktopAppEvent", arg);
+    }
+}
 
 export function openPages(){
-    openHomePage();
-
-    openTrayPage();
-
-    openAboutPage();//测试用
-
-    setTimeout(function () {
-        openAboutPage("hide");
-        openDialogPage("");
-        openSettingPage("hide");
-        openFeedBackPage("hide");
-    }, 5000)
-
     //shortcut to toggle debug window
     globalShortcut.register('Command+Shift+J', () => {
         let focusWin = BrowserWindow.getFocusedWindow()
         focusWin && focusWin.toggleDevTools()
     });
+
+    openHomePage();
+
+    openTrayPage();
+
+    setTimeout(function () {
+        openDialogPage("hide");
+        openSettingPage("hide");
+        openFeedBackPage("hide");
+    }, 5000)
 }
 
 
@@ -45,9 +66,15 @@ export function openPageByName(name){
     if (name == "openSettingPage") {
         openSettingPage();
     } else if (name == "openAboutPage") {
-        openAboutPage();
+        if(!dialogPageHandle){
+            openDialogPage();
+        }
+        dialogPageHandle.send("ShowDialogEvent", "showAbout");
     }else if (name == "openDialogPage") {
-        openDialogPage();
+        if(!dialogPageHandle){
+            openDialogPage();
+        }
+        dialogPageHandle.send("ShowDialogEvent", "showSudo");
     } else if (name == "openFeedBackPage") {
         openFeedBackPage();
     } else if (name == "openHomePage") {
@@ -74,9 +101,6 @@ export function exitAll(){
     if (settingPageHandle) {
         settingPageHandle.destroy();
     }
-    if (aboutPageHandle) {
-        aboutPageHandle.destroy();
-    }
     if (dialogPageHandle) {
         dialogPageHandle.destroy();
     }
@@ -99,6 +123,7 @@ export function toggleTrayMenu(){
 
 const openHomePage = () => {
     if (homeWinHandle == null) {
+        console.warn("create new openHomePage")
         homeWinHandle = new BrowserWindow({
             show: false,
             fullscreen: false,
@@ -120,9 +145,14 @@ const openHomePage = () => {
 
         homeWinHandle.loadURL(winURL);
 
+        homeWinHandle.setMaxListeners(MaxBrowserWindowLimits)
+
         homeWinHandle.once('ready-to-show', () => {
             _homeWinMenu();
             homeWinHandle.show();
+            if(isDev()){
+                homeWinHandle.webContents.openDevTools()
+            }
         })
 
         homeWinHandle.on('close', (event) => {
@@ -148,6 +178,7 @@ const openHomePage = () => {
 //default tray menu
 const openTrayPage = () => {
     if (trayPageHandle == null) {
+        console.warn("create new trayPageHandle")
         trayPageHandle = new BrowserWindow({
             height: 100,
             width: 360,
@@ -162,6 +193,8 @@ const openTrayPage = () => {
         })
 
         trayPageHandle.loadURL(winURL + "#tray")
+
+        trayPageHandle.setMaxListeners(MaxBrowserWindowLimits)
 
         trayPageHandle.once('ready-to-show', () => {
             windowBounds = trayPageHandle.getBounds();
@@ -212,6 +245,7 @@ const openTrayMenu = () => {
 
 const openSettingPage = (show_force) => {
     if (settingPageHandle == null) {
+        console.warn("create new settingPageHandle")
         settingPageHandle = new BrowserWindow({
             fullscreen: false,
             height: 500,
@@ -232,6 +266,8 @@ const openSettingPage = (show_force) => {
 
         settingPageHandle.loadURL(winURL + "#setting")
 
+        settingPageHandle.setMaxListeners(MaxBrowserWindowLimits)
+
         settingPageHandle.once('ready-to-show', () => {
             if (show_force !== "hide") {
                 settingPageHandle.show()
@@ -251,59 +287,15 @@ const openSettingPage = (show_force) => {
     }
 }
 
-const openAboutPage = (show_force) => {
-    if (aboutPageHandle == null) {
-        //已下为插入内容
-        aboutPageHandle = new BrowserWindow({
-            title: "",
-            fullscreen: false,
-            height: 265,
-            width: 400,
-            show: false,
-            backgroundColor: 'rgb(243, 243, 243)',
-            resizable: false,
-            minimizable: false,
-            maximizable: false,
-            // skipTaskbar: true,
-            webPreferences: {
-                nodeIntegration: true
-            }
-        })
-
-        aboutPageHandle.loadURL(winURL + "#about")
-
-        aboutPageHandle.once('ready-to-show', () => {
-            if (show_force !== "hide") {
-                aboutPageHandle.show()
-            }
-        })
-
-        aboutPageHandle.on('close', (event) => {
-            aboutPageHandle.hide();
-            event.preventDefault();
-        });
-
-        aboutPageHandle.on('closed', () => {
-            aboutPageHandle = null
-        });
-
-        aboutPageHandle.on('close', (event) => {
-            aboutPageHandle.hide();
-            event.preventDefault();
-        });
-    } else {
-        aboutPageHandle.show()
-    }
-}
-
 const openDialogPage = (show_force) => {
     if (dialogPageHandle == null) {
+        console.warn("create new dialogPageHandle")
         //已下为插入内容
         dialogPageHandle = new BrowserWindow({
             title: "系统设置",
             fullscreen: false,
-            height: 210,
-            width: 500,
+            height: 300,
+            width: 300,
             show: false,
             backgroundColor: 'rgb(243, 243, 243)',
             resizable: false,
@@ -317,12 +309,12 @@ const openDialogPage = (show_force) => {
 
         dialogPageHandle.loadURL(winURL + "#dialog")
 
+        dialogPageHandle.setMaxListeners(MaxBrowserWindowLimits)
+
         dialogPageHandle.once('ready-to-show', () => {
             if (show_force !== "hide") {
                 dialogPageHandle.show()
             }
-
-            dialogPageHandle.webContents.openDevTools()
         })
 
         dialogPageHandle.on('close', (event) => {
@@ -345,6 +337,7 @@ const openDialogPage = (show_force) => {
 
 const openFeedBackPage = (show_force) => {
     if (feedBackPageHandle == null) {
+        console.warn("create new feedBackPageHandle")
         feedBackPageHandle = new BrowserWindow({
             fullscreen: false,
             height: 500,
@@ -364,6 +357,8 @@ const openFeedBackPage = (show_force) => {
         })
 
         feedBackPageHandle.loadURL(winURL + "#feedBack")
+
+        feedBackPageHandle.setMaxListeners(MaxBrowserWindowLimits)
 
         feedBackPageHandle.once('ready-to-show', () => {
             if (show_force !== "hide") {
@@ -398,7 +393,7 @@ const _homeWinMenu = () => {
                 {
                     label: '关于',
                     click: async () => {
-                        openAboutPage();
+                        openPageByName("openAboutPage");
                     }
                 },
                 {

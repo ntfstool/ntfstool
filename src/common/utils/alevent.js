@@ -19,3 +19,4 @@
  */
 import Vue from 'vue';
 export const alEvent = new Vue();
+// export const alEvent = {}

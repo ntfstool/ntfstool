@@ -63,7 +63,6 @@ export default {
     },
     mounted() {
 
-        return;
         this.fsListenMount();
         this.refreshDevice();
         this.setVersion();

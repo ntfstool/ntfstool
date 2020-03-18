@@ -17,7 +17,11 @@
  * along with this program (in the main directory of the NTFS Tool
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
+const saveLog = require('electron-log');
 const Store = require('electron-store');
+import {exec} from 'child_process'
+import {t} from 'element-ui/lib/locale'
+
 const store = new Store();
 
 export function savePassword(password) {
@@ -42,6 +46,14 @@ function getSudoPwd() {
         noticeTheSystemError("getSudoPwdError");
         return false;
     }
+}
+
+export function systemName() {
+    return new Promise((resolve, reject) => {
+        execShell("whoami").then(res => {
+            resolve(res ? res : "root")
+        });
+    })
 }
 
 export function execShell(shell) {
@@ -120,7 +132,7 @@ export function execShellSudo(shell, force = false) {
  * @returns {boolean}
  */
 function checkIncorrectPasswordStr(stderr) {
-    try{
+    try {
         var errorPwd = false;
         if (stderr) {
             if (stderr.toLowerCase().indexOf("password") >= 0) {
@@ -131,7 +143,7 @@ function checkIncorrectPasswordStr(stderr) {
         }
 
         return errorPwd;
-    }catch (e) {
+    } catch (e) {
         saveLog.error(e, "checkIncorrectPasswordStr error");
     }
 }
@@ -155,11 +167,10 @@ export function checkSudoPassword(setPwd = false) {
                 }, "checkSudoPassword res");
 
                 if (checkIncorrectPasswordStr(stderr)) {
-                    //
+                    //Todo
 
-                    alEvent.$emit('SudoPWDEvent');//Send the refresh event
-                    saveLog.warn("checkSudoPassword error password")
-
+                    // alEvent.$emit('SudoPWDEvent');//Send the refresh event
+                    // saveLog.warn("checkSudoPassword error password")
 
 
                     resolve(false);

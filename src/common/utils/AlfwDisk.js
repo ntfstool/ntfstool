@@ -17,7 +17,11 @@
  * along with this program (in the main directory of the NTFS Tool
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
+import {savePassword,execShell,execShellSudo,checkSudoPassword} from '@/common/utils/AlfwShell'
+const saveLog = require('electron-log');
+
 var reMountLock = [];//global lock
+
 
 /**
  * _ignore

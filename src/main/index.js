@@ -20,12 +20,13 @@
 
 // import {app, BrowserWindow, Menu, Tray, ipcMain,globalShortcut,crashReporter,screen} from 'electron'
 
-import {app,ipcMain} from 'electron'
+import {app,ipcMain,ipcRenderer} from 'electron'
 const saveLog = require('electron-log');
 
 
 import {checkNeedInitStore,setDefaultStore} from '../common/utils/AlfwStore.js'
-import {openPages,openPageByName,toggleTrayMenu,exitAll} from '../main/lib/PageConfig.js'
+import {openPages,openPageByName,toggleTrayMenu,exitAll,doChangeLangEvent,doDesktopAppEvent,doSudoPwdEvent} from '../main/lib/PageConfig.js'
+
 
 
 app.disableHardwareAcceleration();//disable gpu
@@ -65,29 +66,17 @@ try {
 
     //listen the lang change
     ipcMain.on('ChangeLangEvent', function (event, arg) {
-        console.warn("ChangeLangEvent", arg);
-        if (homeWinHandle) {
-            homeWinHandle.send("ChangeLangEvent", arg);
-        }
+        doChangeLangEvent(arg);
     })
 
     //listen and send the device event
     ipcMain.on('DesktopAppEvent', function (event, arg) {
-        console.warn("DesktopAppEvent", arg);
-        if (homeWinHandle) {
-            homeWinHandle.send("DesktopAppEvent", arg);
-        }
-        if (trayPageHandle) {
-            trayPageHandle.send("DesktopAppEvent", arg);
-        }
+        doDesktopAppEvent(arg);
     })
 
     //sudo pwd event
     ipcMain.on('SudoPwdEvent', function (event, arg) {
-        console.warn("SudoPwdEvent", arg);
-        if (dialogPageHandle) {
-            dialogPageHandle.send("SudoPwdEvent", arg);
-        }
+        doSudoPwdEvent(arg);
     })
 }catch (e) {
     saveLog.error(e,"mainError exitAll");

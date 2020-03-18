@@ -17,23 +17,9 @@
  * along with this program (in the main directory of the NTFS Tool
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
-// import {getDiskList, listenSudoPwd, getDiskFullInfo, uMountDisk, mountDisk, openInFinder,getPackageVersion,disableZoom} from '@/utils/utils'
-
-
 import {getPackageVersion, disableZoom, getSystemInfo} from '@/common/utils/AlfwCommon.js'
 
-import {
-    getDiskList,
-    getDiskFullInfo,
-    uMountDisk,
-    mountDisk,
-    openInFinder} from '@/common/utils/AlfwDisk.js'
-import {alEvent} from '@/common/utils/alevent.js'
-
-
-
 import {ipcRenderer,shell} from 'electron'
-// import { alEvent } from '@/utils/alevent.js';
 const Store = require('electron-store');
 const store = new Store();
 const {remote} = require('electron')

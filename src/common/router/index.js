@@ -22,7 +22,6 @@ import Router from 'vue-router'
 import Home from '@/renderer/page/Home'
 import Setting from '@/renderer/page/Setting'
 import Tray from '@/renderer/page/Tray'
-import About from '@/renderer/page/About'
 import Dialog from '@/renderer/page/Dialog'
 import FeedBack from '@/renderer/page/FeedBack'
 Vue.use(Router)
@@ -38,11 +37,6 @@ export default new Router({
       path: '/setting',
       name: 'Setting',
       component:Setting
-    },
-    {
-      path: '/about',
-      name: 'About',
-      component:About
     },
     {
       path: '/dialog',

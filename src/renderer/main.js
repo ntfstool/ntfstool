@@ -30,13 +30,13 @@ import '@/renderer/theme/ntfstool.css'
 import messages from '@/common/lang/index'
 import ElementLocale from 'element-ui/lib/locale'
 import VueI18n from 'vue-i18n'
-import {alEvent} from '@/common/utils/alevent';
 const Store = require('electron-store');
 const store = new Store();
 
 Vue.use(ElementUI)
 Vue.use(VueI18n)
 let langNow = store.get("lang", "en");
+
 
 const i18n = new VueI18n({locale: langNow,fallbackLocale: "en",messages});
 
@@ -47,7 +47,7 @@ if (!process.env.IS_WEB) Vue.use(require('vue-electron'))
 Vue.http = Vue.prototype.$http = axios
 
 Vue.config.productionTip = false
-
+Vue.config.devtools = false;
 
 new Vue({
     components: {App},

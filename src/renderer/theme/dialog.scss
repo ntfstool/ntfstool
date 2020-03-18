@@ -1,4 +1,4 @@
-.sudo-box {
+.sudo_box {
   display: flex;
   background: #efefef;
   justify-content: space-between;
@@ -75,7 +75,6 @@
     }
   }
 }
-
 .promotion_expenses {
   border: 0px solid #FA5D5D;
   background-color: white;
@@ -107,3 +106,22 @@
   -webkit-transform: scale(.5);
   -webkit-transform-origin: 0 0;
 }
+
+.about_box {
+        background: #f1f1f1;
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        padding-top: 10px;
+    }
+
+.main_about div {
+  display: flex;
+  justify-content: center;
+  margin: 5px;
+  font-size: 14px;
+  user-select: text;
+}
+
+

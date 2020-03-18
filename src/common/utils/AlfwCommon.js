@@ -19,7 +19,6 @@
  */
 // import {exec} from 'child_process'
 import {t} from 'element-ui/lib/locale'
-// import {alEvent} from '@/utils/alevent.js';
 import {remote} from 'electron'
 
 const {shell} = require('electron')
