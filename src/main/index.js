@@ -32,6 +32,8 @@ app.disableHardwareAcceleration();//disable gpu
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = '1';
 
+app.allowRendererProcessReuse = true;
+
 try {
     app.on('ready', () => {
         checkNeedInitStore();
