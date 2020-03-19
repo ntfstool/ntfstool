@@ -17,6 +17,9 @@
  * along with this program (in the main directory of the NTFS Tool
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
-import Vue from 'vue';
-export const alEvent = new Vue();
-// export const alEvent = {}
+var events = require('events');
+var event = null;
+
+export function alEvent(){
+    return event === null ? (event = new events.EventEmitter()) : event;
+}
