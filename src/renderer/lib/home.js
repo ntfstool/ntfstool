@@ -28,10 +28,12 @@ import {
     uMountDisk,
     mountDisk,
     openInFinder} from '@/common/utils/AlfwDisk.js'
-import {alEvent} from '@/common/utils/alevent.js'
+import {alEvent} from '@/common/utils/alEvent.js'
 
-const log = require('electron-log');
-const fs = require('fs');
+
+import {fsListenMount,test} from '@/renderer/lib/diskMonitor'
+
+
 export default {
     components: {},
     data() {
@@ -63,7 +65,16 @@ export default {
     },
     mounted() {
 
-        this.fsListenMount();
+
+        //background event
+        fsListenMount();
+
+
+
+
+        // fsListenMount();   move to dialog
+
+
         this.refreshDevice();
         this.setVersion();
         disableZoom(require('electron').webFrame);
@@ -74,14 +85,14 @@ export default {
             })
         });
 
-        //Admin password
-        alEvent.$on('SudoPWDEvent', args => {
-            this.changePwdEvent(args);
-        });
-
-        alEvent.$on('doRefreshEvent', filename => {
-            this.refreshDevice();
-        });
+        // //Admin password
+        // alEvent.$on('SudoPWDEvent', args => {
+        //     this.changePwdEvent(args);
+        // });
+        //
+        // alEvent.$on('doRefreshEvent', filename => {
+        //     this.refreshDevice();
+        // });
 
         //监听语言切换
         ipcRenderer.on("ChangeLangEvent", (e, lang) => {
@@ -113,24 +124,24 @@ export default {
             }
         },
         refreshDevice() {
-            try {
-                this.loading = -1;
-                //更新列表
-                getDiskList().then((diskList) => {
-                    console.log(diskList, "getDiskList");
-                    this.diskList = diskList;
-                    if (!this.select_disk_key) {
-                        try {
-                            this.choseDisk(diskList["inner"][0]);
-                        } catch (e) {
-                            log.warn(e, "refreshDevice choseDisk");
-                        }
-                    }
-                    this.loading = 0;
-                });
-            } catch (e) {
-                log.warn(e, "refreshDevice");
-            }
+            // try {
+            //     this.loading = -1;
+            //     //更新列表
+            //     getDiskList().then((diskList) => {
+            //         console.log(diskList, "getDiskList");
+            //         this.diskList = diskList;
+            //         if (!this.select_disk_key) {
+            //             try {
+            //                 this.choseDisk(diskList["inner"][0]);
+            //             } catch (e) {
+            //                 console.warn(e, "refreshDevice choseDisk");
+            //             }
+            //         }
+            //         this.loading = 0;
+            //     });
+            // } catch (e) {
+            //     console.warn(e, "refreshDevice");
+            // }
         },
         changeVolumeName(select_item) {
             this.$prompt('请输入新名称', '', {
@@ -193,7 +204,7 @@ export default {
                 this.select_item = item;
                 this.select_disk_key = item.index;
             } else {
-                log.warn(item, "choseDisk Error");
+                console.warn(item, "choseDisk Error");
             }
         },
         openDisk(item) {
@@ -233,19 +244,7 @@ export default {
         setVersion() {
             this.version = getPackageVersion();
         },
-        fsListenMount() {
-            var _this = this;
-            //监听挂载事件
-            try {
-                var path = '/Volumes/';
-                fs.watch(path, function (event, filename) {
-                    console.warn(filename, "home watch Volumes")
-                    _this.refreshDevice();
-                });
-            } catch (e) {
-                log.warn(e, "watch Volumes");
-            }
-        },
+
         changePwdEvent(args) {
             if (_this.sudoDialog) {
                 return;
