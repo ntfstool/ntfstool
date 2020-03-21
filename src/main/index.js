@@ -20,14 +20,12 @@
 
 // import {app, BrowserWindow, Menu, Tray, ipcMain,globalShortcut,crashReporter,screen} from 'electron'
 
-import {app,ipcMain,ipcRenderer} from 'electron'
+import {app,ipcMain,ipcRenderer,Notification} from 'electron'
 const saveLog = require('electron-log');
 
 
 import {checkNeedInitStore,setDefaultStore} from '../common/utils/AlfwStore.js'
 import {openPages,openPageByName,toggleTrayMenu,exitAll,doChangeLangEvent,doDesktopAppEvent,doSudoPwdEvent} from '../main/lib/PageConfig.js'
-
-
 
 app.disableHardwareAcceleration();//disable gpu
 
@@ -44,6 +42,14 @@ try {
     app.on('before-quit', () => {
         exitAll();
     })
+
+    //for ctrl + c exit
+    process.on("SIGINT", function () {
+        console.log('WTF')
+        exitAll();
+        process.exit(0)
+
+    });
 
     //Main process listen message
     ipcMain.on('MainMsgFromRender', function (event, arg) {
@@ -77,6 +83,12 @@ try {
     //sudo pwd event
     ipcMain.on('SudoPwdEvent', function (event, arg) {
         doSudoPwdEvent(arg);
+    })
+
+    //sudo pwd event
+    ipcMain.on('NoticeEvent', function (event, arg) {
+        console.warn(arg,"MainProcessNotice")
+        new Notification(arg).show();
     })
 }catch (e) {
     saveLog.error(e,"mainError exitAll");

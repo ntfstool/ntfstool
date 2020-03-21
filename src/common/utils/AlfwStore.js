@@ -1,5 +1,7 @@
 const saveLog = require('electron-log');
 const Store = require('electron-store');
+import {alEvent} from '@/common/utils/alEvent'
+import {AlConst} from '@/common/utils/AlfwConst'
 const store = new Store();
 
 
@@ -45,4 +47,24 @@ export function setDefaultStore() {
     store.set(alfwStore);
     saveLog.info("initStore alfwStore");
 }
+
+export function setStore(key,value) {
+    store.set(key,value);
+}
+
+export function getStore(key) {
+    store.get(key);
+}
+
+
+export function setStoreForDiskList(value) {
+    console.warn("setStoreForDiskList",value)
+    store.set(AlConst.DiskList,value);
+    alEvent().emit(AlConst.DiskListEvent,"SADASFDS");//update the DiskListEvent
+}
+
+export function getStoreForDiskList() {
+    return store.get(AlConst.DiskList);
+}
+
 

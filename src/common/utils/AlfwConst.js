@@ -18,3 +18,10 @@
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
 export const POST_LOG_URL = 'https://ntfstool.cn-hongkong.log.aliyuncs.com/logstores/ntfstool/track';
+
+export const AlConst = {
+    DiskListEvent : "DiskListEvent",
+    DiskList:"DiskList"
+
+
+};

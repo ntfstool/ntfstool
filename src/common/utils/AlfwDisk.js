@@ -23,6 +23,10 @@ const saveLog = require('electron-log');
 var reMountLock = [];//global lock
 
 
+
+
+
+
 /**
  * _ignore
  * @param disk_list

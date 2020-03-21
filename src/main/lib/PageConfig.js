@@ -1,5 +1,6 @@
-import {app, BrowserWindow, Menu, Tray, ipcMain,globalShortcut,crashReporter,screen} from 'electron'
+import {app, BrowserWindow, Menu, Tray, ipcMain,globalShortcut,crashReporter,screen,Notification} from 'electron'
 import {isDev} from "@/common/utils/AlfwCommon";
+var usbDetect = require('usb-detection');
 var winURL;
 var homeWinHandle =null;
 var settingPageHandle = null;
@@ -54,6 +55,8 @@ export function openPages(){
 
     openTrayPage();
 
+    monitorUsb();
+
     setTimeout(function () {
         openDialogPage("hide");
         openSettingPage("hide");
@@ -107,6 +110,10 @@ export function exitAll(){
     if (feedBackPageHandle) {
         feedBackPageHandle.destroy();
     }
+
+    // console.warn("usbDetect.stopMonitoring")
+    // usbDetect.stopMonitoring();
+
     app.quit(0);
 }
 
@@ -481,4 +488,50 @@ const _homeWinMenu = () => {
     ];
 
     Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+
+const  monitorUsb  =  function(){
+    return;
+    usbDetect.startMonitoring();
+
+    usbDetect.on('add', function(device) {
+        // add {
+        //     locationId: 340787200,
+        //         vendorId: 9129,
+        //         productId: 61208,
+        //         deviceName: 'CoolFlash USB3.1',
+        //         manufacturer: 'Teclast',
+        //         serialNumber: 'HJ18070000000284',
+        //         deviceAddress: 17
+        // }
+
+
+
+        new Notification({
+            title: `设备已连接`,
+            body: `${device.deviceName}`,
+        }).show();
+
+
+        console.log('add', device);
+    });
+
+    usbDetect.on('remove', function(device) {
+        new Notification({
+            title: `${device.deviceName}`,
+            body: `设备已断开`
+
+        }).show();
+
+        console.log('remove', device);
+    });
+
+    // usbDetect.on('change', function(device) {
+    //     console.log('change', device);
+    // });
+    //
+    usbDetect.find(function(err, devices) {
+        console.log('find', devices, err);
+    });
 }
