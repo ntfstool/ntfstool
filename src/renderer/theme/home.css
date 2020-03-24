@@ -183,6 +183,7 @@
     flex-direction: column;
     padding: 20px;
     justify-content: center;
+    width: 25%;
 }
 
 .rmain_l_box{
@@ -199,7 +200,7 @@
 }
 
 .rmain_r {
-    flex:1;
+    width: 75%;
     display: flex;
     flex-direction: column;
     justify-content: center;
