@@ -1,6 +1,7 @@
 import {app, BrowserWindow, Menu, Tray, ipcMain,globalShortcut,crashReporter,screen,Notification} from 'electron'
 import {isDev} from "@/common/utils/AlfwCommon";
-var usbDetect = require('usb-detection');
+import {AlConst} from "@/common/utils/AlfwConst";
+// var usbDetect = require('usb-detection');
 var winURL;
 var homeWinHandle =null;
 var settingPageHandle = null;
@@ -25,6 +26,18 @@ export function doChangeLangEvent(arg) {
         homeWinHandle.send("ChangeLangEvent", arg);
     }
 }
+
+export function doUpdateViewEvent(event,args) {
+    if (homeWinHandle) {
+        homeWinHandle.send(AlConst.GlobalViewUpdate);
+    }
+
+    if (trayPageHandle) {
+        trayPageHandle.send(AlConst.GlobalViewUpdate);
+    }
+}
+
+
 
 export function doSudoPwdEvent(arg) {
     // console.warn("SudoPwdEvent", arg);
@@ -69,15 +82,14 @@ export function openPageByName(name){
     if (name == "openSettingPage") {
         openSettingPage();
     } else if (name == "openAboutPage") {
-        if(!dialogPageHandle){
-            openDialogPage();
-        }
+        openDialogPage();
         dialogPageHandle.send("ShowDialogEvent", "showAbout");
-    }else if (name == "openDialogPage") {
-        if(!dialogPageHandle){
-            openDialogPage();
-        }
+    }else if (name == "openSudoPage") {
+        openDialogPage();
         dialogPageHandle.send("ShowDialogEvent", "showSudo");
+    }else if (name == "openInstallFusePage") {
+        openDialogPage();
+        dialogPageHandle.send("ShowDialogEvent", "showInstallFuse");
     } else if (name == "openFeedBackPage") {
         openFeedBackPage();
     } else if (name == "openHomePage") {

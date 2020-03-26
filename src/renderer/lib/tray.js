@@ -1,3 +1,5 @@
+import {AlConst} from "@/common/utils/AlfwConst";
+
 /**
  * @author   service@ntfstool.com
  * Copyright (c) 2020 ntfstool.com
@@ -20,7 +22,14 @@
 const {shell,ipcRenderer,remote} = require('electron')
 
 import {getPackageVersion, disableZoom, getSystemInfo,noticeTheSystemError} from '@/common/utils/AlfwCommon.js'
-
+import {getStoreForDiskList} from "@/common/utils/AlfwStore";
+import {
+    getDiskList,
+    getDiskFullInfo,
+    uMountDisk,
+    mountDisk,
+    openInFinder} from '@/common/utils/AlfwDisk'
+import {updateDisklist} from '@/renderer/lib/diskMonitor'
 
 export default {
     components: {},
@@ -28,6 +37,7 @@ export default {
         return {
             title:"NTFS Tool",
             menu_box1:false,
+            diskList:[],
             showDebugMenu: process.env.NODE_ENV === 'development' ? true : false,
         }
     },
@@ -44,12 +54,69 @@ export default {
 
 
 
+        remote.getCurrentWindow().on('focus', function() {
+            console.warn("TrayWindow focus");
+            var _this = this;
+            updateDisklist(function () {
 
+            });
+        })
 
+        ipcRenderer.on(AlConst.GlobalViewUpdate, () => {
+            this.diskList = getStoreForDiskList();
+            console.warn(`${AlConst.GlobalViewUpdate} come tray ...`,this.diskList);
+            this.resetSize();
+        });
 
 
     },
     methods: {
+        uMountDisk(item) {
+            var _this = this;
+            console.warn(item, "select_item");
+            if (item.group == 'inner') {
+                alert(this.$i18n.t('Internaldiskcannotbeunmounted') + ":" + item.name);
+                return;
+            }
+
+
+            var confirm_status = confirm(this.$i18n.t('OKtounmountthedisk') + ":" + item.name)
+            console.warn(confirm_status, "confirm confirm_status")
+
+            if (confirm_status) {
+                uMountDisk(item).then(res => {
+                    console.warn("uMountDisk res", res);
+                    let option = {
+                        title: "NTFSTool",
+                        body: item.name + " 磁盘推出成功",
+                    };
+                    new window.Notification(option.title, option);
+                    _this.refreshDevice();
+                })
+            }
+        },
+        mountDisk(item) {
+            var _this = this;
+            mountDisk(item).then(res => {
+                console.warn("mountDisk res", res)
+                let option = {
+                    title: "NTFSTool",
+                    body: item.name + " 磁盘挂载成功",
+                };
+                new window.Notification(option.title, option);
+                _this.refreshDevice();
+            })
+        },
+        openDisk(item) {
+            console.warn("dbclick ", item);
+            if (!item.info.mountpoint) {
+                alert("该磁盘没有挂载");
+                return;
+            }
+            openInFinder(item.info.mountpoint).catch(() => {
+                alert("openDisk fail!");
+            });
+        },
         test(){
           console.warn("ASDFASFDSF")
         },
@@ -68,11 +135,11 @@ export default {
             let height0 = this.$refs.trayref_h.offsetHeight;  //100
             let height = this.$refs.trayref.offsetHeight;  //100
             console.warn(height, "traywin height");
-
             remote.getCurrentWindow().setSize(380, height0 + height + 30)
         },
         pushAll: () => {
-            alert("ok");
+            alert("Developing...");
+            return;
 
             let option = {
                 title: "title",
