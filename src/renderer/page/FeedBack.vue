@@ -13,6 +13,10 @@
                             <span>系列号</span>
                             <span>{{serial_number}}</span>
                         </div>
+
+                        <div style="cursor: pointer;" class="spans" @click="addGroup()">
+                            <span>🇨🇳官方技术交流群</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -101,6 +105,9 @@
         methods: {
             openMainsite() {
                 shell.openExternal("https://www.ntfstool.com")
+            },
+            addGroup(){
+                shell.openExternal("https://ntfstool.com/static/image/NTFSTool_group.png")
             },
             reDefault() {
                 this.fb_name = "";

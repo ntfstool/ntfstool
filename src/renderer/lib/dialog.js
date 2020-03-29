@@ -20,9 +20,11 @@
 const {shell, ipcRenderer, remote} = require('electron')
 const saveLog = require('electron-log');
 import {disableZoom, noticeTheSystemError, getSystemInfo, getPackageVersion} from '@/common/utils/AlfwCommon'
-import {savePassword, checkSudoPassword, systemName} from '@/common/utils/AlfwShell'
+import {checkSudoPassword, systemName} from '@/common/utils/AlfwShell'
+import {savePassword} from '@/common/utils/AlfwStore'
 import {POST_LOG_URL} from '@/common/utils/AlfwConst'
-
+var fs= require("fs")
+const {fuse_pkg} = require('ntfstool')
 const CurWin = remote.getCurrentWindow();
 
 import {fsListenMount,test} from '@/renderer/lib/diskMonitor'
@@ -45,6 +47,16 @@ export default {
         }
     },
     mounted() {
+        var _this = this;
+
+        remote.getCurrentWindow().on('focus', function() {
+            //check fuse installed and hide()
+            if(_this.show_index == "install_fuse" && fs.existsSync("/Library/Frameworks/OSXFUSE.framework")){
+                remote.getCurrentWindow().hide();
+            }
+        })
+
+
         disableZoom(require('electron').webFrame);
 
         // //background event
@@ -54,9 +66,13 @@ export default {
         ipcRenderer.on("ShowDialogEvent", (event, arg) => {
             saveLog.info(arg, "Dialog ShowDialogEvent");
             if (arg == "showSudo") {
-                this.showSudo();
+                _this.showSudo();
+            }else if(arg == "showInstallFuse"){
+                if(!fs.existsSync("/Library/Frameworks/OSXFUSE.framework")){
+                    _this.showInstallFuse();
+                }
             } else {
-                this.showAbout();
+                _this.showAbout();
             }
         });
     },
@@ -73,8 +89,20 @@ export default {
             CurWin.setAlwaysOnTop(false);
             CurWin.show();
         },
+        showInstallFuse() {
+            this.show_index = "install_fuse";
+
+            CurWin.setSize(500, 160);
+            CurWin.setAlwaysOnTop(false);
+            CurWin.show();
+        },
         showSudo() {
-            console.warn("start showSudo")
+            console.warn("start showSudo");
+            if(remote.getCurrentWindow().isVisible() && this.show_index == "sudo_box"){
+                console.warn("password Win isVisible")
+                return;
+            }
+
             this.show_index = "sudo_box";
 
             systemName().then(name => {
@@ -86,13 +114,15 @@ export default {
             CurWin.center();
 
             //Todo
-            CurWin.show();
+            // CurWin.show();
 
             checkSudoPassword().then(res => {
                 if (!res) {
                     CurWin.show();
                 } else {
                     console.log("ShowSudo password corrent!")
+                    //reload win
+                    //TODO
                 }
             })
         },
@@ -135,6 +165,9 @@ export default {
                 this.btnDisable = false;
             }, 10000);
 
+
+            console.warn(this.workpwd,"this.workpwd")
+
             checkSudoPassword(this.workpwd).then(res => {
                 this.btnDisable = false;
                 if (!res) {
@@ -155,6 +188,7 @@ export default {
                 shell.beep()
                 this.btnDisable = false;
                 this.sharkWin();
+                console.error(err,"dialog error")
                 noticeTheSystemError("dialog");
             })
         },
@@ -170,16 +204,32 @@ export default {
                 const moveArrry = [-10, 10, -7, 7, -3, 3, 0]
                 const routeArray = moveArrry.map(item => ({x: item + startX}))
                 let _index = 0
-                this.animate(_index, routeArray, curWin)
+                this.animate(_index, routeArray, curWin,startY)
             }
         },
-        animate(_index, routeArray, curWin) {
+        animate(_index, routeArray, curWin,startY) {
             if (_index === routeArray.length) return
             setTimeout(() => {
                 curWin.setPosition(routeArray[_index].x, startY)
                 _index++
-                this.animate(_index, routeArray, curWin)
+                this.animate(_index, routeArray, curWin,startY)
             }, 60)
+        },
+        goFuseWebSite(){
+            shell.openExternal("https://osxfuse.github.io/")
+        },
+        installfuse(){
+            console.warn(fuse_pkg,"fuse_pkgB")
+            if (fs.existsSync(fuse_pkg)) {
+                shell.openItem(fuse_pkg)
+            }else{
+                alert("暂未发现Fuse安装包,准备前往官网手动下载");
+                shell.openExternal("https://osxfuse.github.io/")
+            }
+
+        },
+        cancel_installfuse(){
+            remote.getCurrentWindow().hide();
         }
     }
 }

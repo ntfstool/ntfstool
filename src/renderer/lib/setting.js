@@ -18,7 +18,6 @@
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
 import {getPackageVersion, disableZoom, getSystemInfo} from '@/common/utils/AlfwCommon.js'
-
 import {ipcRenderer,shell} from 'electron'
 const Store = require('electron-store');
 const store = new Store();
@@ -149,9 +148,8 @@ export default {
         },
         changeAutoRun(){
             store.set("auto_run",this.auto_run);
+            ipcRenderer.send('AutoRunEvent',this.auto_run);
         },
-
-
         changeMountShowMsg() {
             store.set("message.mount_show_msg",this.mount_show_msg);
         },

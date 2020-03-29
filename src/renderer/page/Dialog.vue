@@ -34,6 +34,32 @@
             </div>
         </div>
 
+        <div class="install_fuse" v-show="show_index == 'install_fuse'">
+            <div>
+                <div class="iboxh">
+                     <img style="height: 80px;user-select: none;"
+                          src="../../../static/osxfuse-home.png">
+                    <div class="iboxh_text">
+                        <div>检测到系统缺少Fuse磁盘内核依赖,请点击确认并正常安装,方可继续使用本软件.</div>
+                        <div style="margin-top: 5px;">
+                            <i class="iconfont iconjump06" style="font-size: 16px;color: black;"  @click="goFuseWebSite">
+                                &#xe648;
+                                <span style="    font-size: 12px;font-family: cursive;vertical-align: middle;">
+                                    Fuse介绍
+                                </span>
+                            </i>
+                        </div>
+                    </div>
+                </div>
+                <div class="btn-box" style="display: flex;justify-content: flex-end;margin: 0 20px;">
+                    <span :class="[btnDisable ? 'btn-disable' : 'btn-default']" @click="cancel_installfuse()">取消</span>
+
+                    <button :class="[btnDisable ? 'btn-active-disable' :  'btn-active']" @click="installfuse()">确定
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div class="about_box" v-show="show_index == 'about_box'">
             <div class="main_about">
                 <div>
@@ -47,9 +73,9 @@
                     NTFSTool for MAC
                 </div>
 
-                <div @click="test()" style="font-weight: bold;">
-                    Flash Test
-                </div>
+                <!--<div @click="test()" style="font-weight: bold;">-->
+                    <!--Flash Test-->
+                <!--</div>-->
 
                 <div style="font-size: 10px;">
                     系统 {{os_version}}
