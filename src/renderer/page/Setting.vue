@@ -47,36 +47,34 @@
                     <div class="main-from_div_1">
                         <div class="main-from_div_1_1">
                             <div class="mb10">
-                                <span>AlNtfs for Mac {{$t('menu')}}</span>
+                                <span>NTFSTool for Mac {{$t('menu')}}</span>
                             </div>
 
                             <div class="main-from_div_1_1-div mb10">
-                                <div class="main-from_div_1_1-div_1">
-                                    <div style="display: flex;flex-direction: column;justify-content: center">
-                                        <i  v-if="show_menu" class="iconfont icondot" style=" font-size: 10px;color: #67c23a">&#xe607;</i>
-                                        <i  v-if="!show_menu" class="iconfont icondot" style=" font-size: 10px;color: orangered">&#xe607;</i>
-                                    </div>
+                                <!--<div class="main-from_div_1_1-div_1">-->
+                                    <!--<div style="display: flex;flex-direction: column;justify-content: center">-->
+                                        <!--<i  v-if="show_menu" class="iconfont icondot" style=" font-size: 10px;color: #67c23a">&#xe607;</i>-->
+                                        <!--<i  v-if="!show_menu" class="iconfont icondot" style=" font-size: 10px;color: orangered">&#xe607;</i>-->
+                                    <!--</div>-->
 
-                                    <div style="display: flex;flex-direction: column;justify-content: center">
-                                        <!--已启用 已关闭-->
-                                        <span v-if="show_menu" class="main-from_div_1_1-div_1span" style="">{{$t('activated')}}</span>
-                                        <span v-if="!show_menu" class="main-from_div_1_1-div_1span" style="color: orangered">{{$t('closed')}}</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div style="display: flex;flex-direction: column;justify-content: center">
-                                        <el-button v-if="show_menu" @click="setToggleTrayMenu">{{$t('disable')}}</el-button>
-                                        <el-button v-if="!show_menu" @click="setToggleTrayMenu">{{$t('enable')}}</el-button>
-                                    </div>
-                                </div>
+                                    <!--<div style="display: flex;flex-direction: column;justify-content: center">-->
+                                        <!--&lt;!&ndash;已启用 已关闭&ndash;&gt;-->
+                                        <!--<span v-if="show_menu" class="main-from_div_1_1-div_1span" style="">{{$t('activated')}}</span>-->
+                                        <!--<span v-if="!show_menu" class="main-from_div_1_1-div_1span" style="color: orangered">{{$t('closed')}}</span>-->
+                                    <!--</div>-->
+                                <!--</div>-->
+                                <!--<div>-->
+                                    <!--<div style="display: flex;flex-direction: column;justify-content: center">-->
+                                        <!--<el-button v-if="show_menu" @click="setToggleTrayMenu">{{$t('disable')}}</el-button>-->
+                                        <!--<el-button v-if="!show_menu" @click="setToggleTrayMenu">{{$t('enable')}}</el-button>-->
+                                    <!--</div>-->
+                                <!--</div>-->
                             </div>
 
-                            <div class="font12 mb20">
-                                <!--警告: 禁用后您将无法直接菜单栏操作卷宗-->
-                                <span v-if="show_menu">{{$t('notice_cannot_do_disk01')}}</span>
-                                <!--提示: 开启后将在右上角显示快捷操作菜单-->
-                                <span v-if="!show_menu">{{$t('notice_cannot_do_disk02')}}</span>
-                            </div>
+                            <!--<div class="font12 mb20">-->
+                                <!--<span v-if="show_menu">{{$t('notice_cannot_do_disk01')}}</span>-->
+                                <!--<span v-if="!show_menu">{{$t('notice_cannot_do_disk02')}}</span>-->
+                            <!--</div>-->
 
                             <div style="position: absolute;bottom: 0;">
                                 <!--跟随系统启动-->
@@ -196,7 +194,7 @@
             <el-form class="main-from main-from-b4" v-if="select_block == 4">
                 <div>
                      <!--收集的所有数据均可在更新后的隐私政策中查看-->
-                    <span> AlNtfs {{$t('Alldatacollectedcanbeviewedintheupdatedprivacypolicy')}}</span>
+                    <span style="font-size: 14px;"> NtfsTool {{$t('Alldatacollectedcanbeviewedintheupdatedprivacypolicy')}}</span>
                 </div>
 
                 <div class="main-from_div_1_1-div_1" @click="openPrivacyUrl">
