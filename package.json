@@ -1,6 +1,6 @@
 {
   "name": "ntfs-tool",
-  "version": "1.0.5",
+  "version": "2.0.0",
   "description": "Aile Mac OS NTFS Tools",
   "homepage": "https://ntfstool.com",
   "author": {
@@ -27,6 +27,9 @@
   "build": {
     "productName": "NTFSTool",
     "appId": "com.ntfstool.aile",
+    "asarUnpack": [
+      "**/ntfstool/node_modules/ntfstool/*"
+    ],
     "directories": {
       "output": "build"
     },
@@ -61,16 +64,12 @@
   "dependencies": {
     "axios": "^0.19.2",
     "electron-log": "^4.0.7",
-    "electron-middle-sass": "^1.0.2",
-    "electron-rebuild": "^1.10.1",
     "electron-store": "^5.0.0",
     "element-ui": "2.13.0",
     "lodash": "^4.17.15",
-    "node-watch": "^0.6.3",
     "ntfstool": "latest",
     "diskutil": "latest",
     "watch-mac": "latest",
-    "usb-detection": "^4.7.0",
     "vue": "^2.6.11",
     "vue-electron": "^1.0.6",
     "vue-i18n": "^8.15.3",
@@ -78,6 +77,8 @@
     "vuex": "^3.1.2"
   },
   "devDependencies": {
+    "electron-middle-sass": "^1.0.2",
+    "electron-rebuild": "^1.10.1",
     "@babel/plugin-proposal-object-rest-spread": "^7.8.3",
     "babel-core": "^6.25.0",
     "babel-loader": "^7.1.1",

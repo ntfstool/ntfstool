@@ -21,7 +21,10 @@ export const POST_LOG_URL = 'https://ntfstool.cn-hongkong.log.aliyuncs.com/logst
 
 export const AlConst = {
     DiskListEvent : "DiskListEvent",
-    DiskList:"DiskList"
+    DiskList:"DiskList",
+    SudoPwdEvent:"SudoPwdEvent",
+    InstallFuseEvent:"InstallFuseEvent",
+    GlobalViewUpdate:"GlobalViewUpdate",
 
 
 };

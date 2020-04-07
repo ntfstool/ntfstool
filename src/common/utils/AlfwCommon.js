@@ -20,7 +20,7 @@
 // import {exec} from 'child_process'
 import {t} from 'element-ui/lib/locale'
 import {remote} from 'electron'
-
+import {ignoreItem,delIgnoreItem} from '@/common/utils/AlfwStore'
 const {shell} = require('electron')
 const {getAspInfo} = require('ntfstool')
 const {_} = require('lodash')
@@ -62,17 +62,17 @@ export function getSystemInfo() {
                 ]
             }, (error, stdout) => {
                 if (error) throw error;
-                console.warn(stdout,"getSystemInfo stdout");
+                console.warn(stdout, "getSystemInfo stdout");
 
                 var sysinfo = {
-                    os_version:_.get(stdout,'SPSoftwareDataType.os_version'),
-                    user_name:_.get(stdout,'SPSoftwareDataType.user_name'),
-                    machine_name:_.get(stdout,'SPHardwareDataType.machine_name'),
-                    physical_memory:_.get(stdout,'SPHardwareDataType.physical_memory'),
-                    serial_number:_.get(stdout,'SPHardwareDataType.serial_number'),
+                    os_version: _.get(stdout, 'SPSoftwareDataType.os_version'),
+                    user_name: _.get(stdout, 'SPSoftwareDataType.user_name'),
+                    machine_name: _.get(stdout, 'SPHardwareDataType.machine_name'),
+                    physical_memory: _.get(stdout, 'SPHardwareDataType.physical_memory'),
+                    serial_number: _.get(stdout, 'SPHardwareDataType.serial_number'),
                 };
 
-                saveLog.warn(sysinfo,"getSystemInfo sysinfo");
+                saveLog.warn(sysinfo, "getSystemInfo sysinfo");
 
                 resolve(sysinfo, error)
             });
@@ -111,10 +111,10 @@ export function noticeTheSystemError(_error, setOption) {
         dialog_save_err: 10011,
         savePassword: 10020,
         savePassword2: 10021,
-        getSudoPwdError:10031,
-        checkSudoPasswordError:10041,
+        getSudoPwdError: 10031,
+        checkSudoPasswordError: 10041,
         opendevmod: 10030,
-        FEEDBACK_ERROR:10040
+        FEEDBACK_ERROR: 10040
     };
     var error = (typeof _error != "undefined") ? _error : "system";
     console.warn(error, "error")
@@ -155,12 +155,12 @@ export function disableZoom(webFrame) {
  * In a time_snap,call one,exec one,call n(n>1),exec the start,and exec the time_snap end.
  * @param callback
  */
-export function unitTimesToRun(run_type,callback,time_snap){
-    if(typeof time_snap == "undefined"){
+export function unitTimesToRun(run_type, callback, time_snap) {
+    if (typeof time_snap == "undefined") {
         time_snap = 1000;
     }
 
-    if(typeof global[run_type] == "undefined"){
+    if (typeof global[run_type] == "undefined") {
         global[run_type] = 0;
     }
 
@@ -168,19 +168,19 @@ export function unitTimesToRun(run_type,callback,time_snap){
         callback();
     }
 
-    if(global[run_type] == 0){
+    if (global[run_type] == 0) {
         execHandle();
         global[run_type]++;
         setTimeout(function () {
-            if(global[run_type] >= 2){
+            if (global[run_type] >= 2) {
                 execHandle();
             }
 
             global[run_type] = 0;
-        },time_snap);
-    }else{
+        }, time_snap);
+    } else {
         global[run_type]++;
-        console.warn(global[run_type],"unitTimesToRun more times,exec nothing...")
+        console.warn(global[run_type], "unitTimesToRun more times,exec nothing...")
     }
 }
 
@@ -191,59 +191,113 @@ export function unitTimesToRun(run_type,callback,time_snap){
  * @param callback
  * @param timeout
  */
-export function queueExec(type,callback,timeout) {
+export function queueExec(type, callback, timeout) {
     var global_key = "queueExec_" + type;
-    if(typeof global[global_key] == "undefined"){
+    if (typeof global[global_key] == "undefined") {
         global[global_key] = [];
     }
-    if(typeof timeout != "undefined"){
+    if (typeof timeout != "undefined") {
         global["queueExec_Timeout"] = timeout;
     }
 
-    if(typeof global["queueExec_Timeout"] == "undefined"){
-        global["queueExec_Timeout"] = 3000;//3秒钟执行不完毕，新建执行
+    if (typeof global["queueExec_Timeout"] == "undefined") {
+        global["queueExec_Timeout"] = 1000 * 60;//1 minute
     }
 
-    if(callback === null){
+    if (callback === null) {
         var _callback = global[global_key].pop();
-        if(typeof _callback == "function"){
+        if (typeof _callback == "function") {
             _callback(function () {
                 clearTimeout(global["queueExec_TimeoutHandle"]);
 
-                queueExec(type,null)
+                queueExec(type, null)
             });
 
             clearTimeout(global["queueExec_TimeoutHandle"]);
             global["queueExec_TimeoutHandle"] = setTimeout(function () {
                 clearTimeout(global["queueExec_TimeoutHandle"]);
 
-                queueExec(type,null)
-            },global["queueExec_Timeout"])
+                queueExec(type, null)
+            }, global["queueExec_Timeout"])
 
-        }else{
+        } else {
             global["queueExecStatus"] = 0;
         }
-    }else{
-        if(typeof global["queueExecStatus"] == "undefined" || global["queueExecStatus"] == 0){
+    } else {
+        if (typeof global["queueExecStatus"] == "undefined" || global["queueExecStatus"] == 0) {
             global["queueExecStatus"] = 1;
 
             callback(function () {
                 clearTimeout(global["queueExec_TimeoutHandle"]);
 
-                queueExec(type,null)
+                queueExec(type, null)
             });
 
             clearTimeout(global["queueExec_TimeoutHandle"]);
             global["queueExec_TimeoutHandle"] = setTimeout(function () {
                 clearTimeout(global["queueExec_TimeoutHandle"]);
 
-                queueExec(type,null)
-            },global["queueExec_Timeout"])
+                queueExec(type, null)
+            }, global["queueExec_Timeout"])
 
 
-        }else{
+        } else {
             global["queueExecStatus"]++;
             global[global_key].push(callback);
         }
+    }
+}
+
+/**
+ * filterNtfsReadonlyByDiskList
+ * @param diskList
+ * @returns {Array}
+ */
+export function filterNtfsNeedMountByDiskList(diskList) {
+    var ignoreItemList = ignoreItem();
+    console.warn(ignoreItemList,"ignoreItemList")
+
+    var ret = [];
+    if (typeof diskList != "undefined" && typeof diskList["ext"] != "undefined" && diskList["ext"].length > 0) {
+        for (var i in diskList["ext"]) {
+            if(_.indexOf( ignoreItemList,diskList["ext"][i]["index"]) === -1){
+                console.warn({list:diskList["ext"][i],ignorelist:ignoreItemList},
+                    "ignoreChose false");
+
+                //NTFS needs to be remounted
+                if (_.get(diskList["ext"][i], "info.typebundle") == "ntfs") {
+                    if (_.get(diskList["ext"][i], "info.readonly") == true || _.get(diskList["ext"][i], "info.mounted") == false) {
+                        ret.push(diskList["ext"][i]);
+                    }
+                }
+            }else{
+               console.warn({list:diskList["ext"][i],ignorelist:ignoreItemList},
+                   "ignoreChose true");
+            }
+        }
+    }
+    return ret;
+}
+
+/**
+ * chose the default node
+ * @returns {Array}
+ */
+export function choseDefaultNode(diskList) {
+    var ret = [];
+    try {
+        loop:
+            for (var i in diskList) {
+                for (var j in diskList[i]) {
+                    if (typeof diskList[i][j] != "undefined" && diskList[i][j]) {
+                        ret = diskList[i][j];
+                        break loop;
+                    }
+                }
+            }
+        return ret;
+    } catch (e) {
+        saveLog.info(diskList, "choseDefaultNode diskList");
+        saveLog.error(e, "choseDefaultNode error");
     }
 }
