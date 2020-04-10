@@ -18,36 +18,17 @@
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
 const saveLog = require('electron-log');
-const Store = require('electron-store');
 import {exec} from 'child_process'
 import {t} from 'element-ui/lib/locale'
+import {ipcRenderer, remote} from 'electron'
+import {noticeTheSystemError} from '@/common/utils/AlfwCommon'
+import {savePassword,getSudoPwd} from '@/common/utils/AlfwStore'
+import {AlConst} from '@/common/utils/AlfwConst'
 
-const store = new Store();
-
-export function savePassword(password) {
-    try {
-        store.set("sudoPwd", password);
-        if (password != store.get("sudoPwd")) {
-            noticeTheSystemError("savePassword");
-            return false;
-        } else {
-            return true;
-        }
-    } catch (e) {
-        noticeTheSystemError("savePassword2");
-        return false;
-    }
-}
-
-function getSudoPwd() {
-    try {
-        return store.get("sudoPwd");
-    } catch (e) {
-        noticeTheSystemError("getSudoPwdError");
-        return false;
-    }
-}
-
+/**
+ * get the system name
+ * @returns {Promise<any>}
+ */
 export function systemName() {
     return new Promise((resolve, reject) => {
         execShell("whoami").then(res => {
@@ -56,6 +37,11 @@ export function systemName() {
     })
 }
 
+/**
+ * exec the shell code by common user
+ * @param shell
+ * @returns {Promise<any>}
+ */
 export function execShell(shell) {
     return new Promise((resolve, reject) => {
         try {
@@ -83,7 +69,8 @@ export function execShell(shell) {
 
 
 /**
- * force 强制不论结果
+ * exec the shell code by root
+ * force Ignore result
  * @param shell
  * @param force
  * @returns {Promise}
@@ -92,7 +79,8 @@ export function execShellSudo(shell, force = false) {
     return new Promise((resolve, reject) => {
         var password = getSudoPwd();
         try {
-            exec(`echo ${password}|sudo -S ${shell}`, (error, stdout, stderr) => {
+            exec(`echo ${password}|sudo  -S ${shell}`, (error, stdout, stderr) => {
+                stderr = stderr.replace( /^Password:/gi , '')
                 saveLog.warn("execShellSudo", {
                     code: "[SUDO]" + shell,
                     stdout: stdout,
@@ -104,13 +92,15 @@ export function execShellSudo(shell, force = false) {
                     return;
                 }
                 if (stderr) {
-                    if (stderr.toLowerCase().indexOf("password") >= 0) {
+                    if (checkIncorrectPasswordStr(stderr)) {
                         checkSudoPassword().then(res => {
                             if (!res) {
                                 reject(stderr);
                                 return;
                             }
                         });
+                    }else if(!checkFuseStr(stderr)){
+                        ipcRenderer.send(AlConst.InstallFuseEvent,"");
                     } else {
                         reject(stderr);
                         return;
@@ -149,6 +139,28 @@ function checkIncorrectPasswordStr(stderr) {
 }
 
 /**
+ * Check for fuse install
+ * @param stderr
+ * @returns {boolean}
+ */
+function checkFuseStr(stderr) {
+    try {
+        var fuseStatus = true;
+        if (stderr) {
+            if (stderr.toLowerCase().indexOf("fuse") >= 0) {
+                if (stderr.toLowerCase().indexOf("not") >= 0) {
+                    fuseStatus = false;
+                }
+            }
+        }
+
+        return fuseStatus;
+    } catch (e) {
+        saveLog.error(e, "checkFuseStr error");
+    }
+}
+
+/**
  * check the {{work}} password
  * @returns {Promise}
  */
@@ -172,6 +184,8 @@ export function checkSudoPassword(setPwd = false) {
                     // alEvent.$emit('SudoPWDEvent');//Send the refresh event
                     // saveLog.warn("checkSudoPassword error password")
 
+                    console.warn("start send SudoPWDEvent >>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+                    ipcRenderer.send(AlConst.SudoPwdEvent,"");
 
                     resolve(false);
                 } else {
