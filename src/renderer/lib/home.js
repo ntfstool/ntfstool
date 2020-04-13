@@ -20,18 +20,20 @@
 
 import {ipcRenderer, remote} from 'electron'
 
-import {getPackageVersion, disableZoom, getSystemInfo} from '@/common/utils/AlfwCommon.js'
+import {getPackageVersion, disableZoom,choseDefaultNode,getSystemInfo} from '@/common/utils/AlfwCommon.js'
+import {clearPwd,getStoreForDiskList,getMountType} from '@/common/utils/AlfwStore'
 
 import {
     getDiskList,
     getDiskFullInfo,
     uMountDisk,
     mountDisk,
-    openInFinder} from '@/common/utils/AlfwDisk.js'
-import {alEvent} from '@/common/utils/alEvent.js'
+    openInFinder} from '@/common/utils/AlfwDisk'
+import {alEvent} from '@/common/utils/alEvent'
 
 
-import {fsListenMount,test} from '@/renderer/lib/diskMonitor'
+import {fsListenMount,updateDisklist,test} from '@/renderer/lib/diskMonitor'
+import {AlConst} from "@/common/utils/AlfwConst";
 
 
 export default {
@@ -64,20 +66,24 @@ export default {
         }
     },
     mounted() {
-
-
-        //background event
-        fsListenMount();
-
-
-
-
-        // fsListenMount();   move to dialog
-
+        var _this = this;
+        console.warn("getMountType",getMountType());
 
         this.refreshDevice();
         this.setVersion();
         disableZoom(require('electron').webFrame);
+
+
+
+        //background event [past it in dialog]
+        fsListenMount();
+
+        ipcRenderer.on(AlConst.GlobalViewUpdate, () => {
+            console.warn(`${AlConst.GlobalViewUpdate} come home ...`);
+            this.diskList = getStoreForDiskList();
+        });
+
+
 
         window.addEventListener('beforeunload', ()=>{
             remote.getCurrentWindow().on('blur', () => {
@@ -85,29 +91,18 @@ export default {
             })
         });
 
-        // //Admin password
-        // alEvent.$on('SudoPWDEvent', args => {
-        //     this.changePwdEvent(args);
-        // });
-        //
-        // alEvent.$on('doRefreshEvent', filename => {
-        //     this.refreshDevice();
+
+
+        // //监听语言切换
+        // ipcRenderer.on("ChangeLangEvent", (e, lang) => {
+        //     console.warn("main wind ChangeLangEvent", lang);
+        //     this.$i18n.locale = lang;
         // });
 
-        //监听语言切换
-        ipcRenderer.on("ChangeLangEvent", (e, lang) => {
-            console.warn("main wind ChangeLangEvent", lang);
-            this.$i18n.locale = lang;
-        });
-
-        //监听挂载事件
-        ipcRenderer.on("MountEvent", (e, filename) => {
-            console.warn("main wind acive MountEvent", filename);
-            this.refreshDevice();
-        });
 
         remote.getCurrentWindow().on('focus', function() {
-           console.warn("currentWindow focus");
+           console.warn("currentWindow focus[todo: check diskutils <=> mount]");
+            _this.refreshDevice();
         })
     },
     methods: {
@@ -124,6 +119,27 @@ export default {
             }
         },
         refreshDevice() {
+            try {
+                var _this = this;
+                _this.loading = -1;
+                updateDisklist(function () {
+                    _this.loading = 0;
+                });
+                // var diskList = getStoreForDiskList();
+                // this.diskList = diskList;
+                // console.warn(this.diskList,"home disklist")
+                //
+                // //chose the default node
+                // if (!this.select_disk_key && diskList) {
+                //     this.choseDisk(choseDefaultNode(diskList));
+                // }
+
+
+            } catch (e) {
+                console.warn(e, "refreshDevice");
+            }
+
+
             // try {
             //     this.loading = -1;
             //     //更新列表
@@ -173,8 +189,11 @@ export default {
                 alert(this.$i18n.t('Internaldiskcannotbeunmounted') + ":" + item.name);
                 return;
             }
+
+
             var confirm_status = confirm(this.$i18n.t('OKtounmountthedisk') + ":" + item.name)
             console.warn(confirm_status, "confirm confirm_status")
+
             if (confirm_status) {
                 uMountDisk(item).then(res => {
                     console.warn("uMountDisk res", res);
@@ -184,6 +203,8 @@ export default {
                     };
                     new window.Notification(option.title, option);
                     _this.refreshDevice();
+                }).catch(err => {
+                    alert("推出失败");
                 })
             }
         },
@@ -244,30 +265,6 @@ export default {
         setVersion() {
             this.version = getPackageVersion();
         },
-
-        changePwdEvent(args) {
-            if (_this.sudoDialog) {
-                return;
-            }
-            _this.sudoDialog = true;
-
-            var title = '磁盘挂载需要管理员权限,请输入密码';
-            if (args == "invalid password") {
-                title = '密码验证错误,请重新输入';
-            }
-            this.$prompt(title, '', {
-                showClose: false,
-                inputType: "password",
-                confirmButtonText: '确定',
-                cancelButtonText: '取消',
-            }).then(({value}) => {
-                _this.sudoDialog = false;
-                alEvent.$emit('setPWDEvent', value);//发送刷新事件
-                _this.refreshDevice();
-            }).catch(err => {
-                _this.sudoDialog = false;
-            })
-        },
         openMenuBox(id) {
             this[id] = this[id] ? false : true
         },
@@ -286,6 +283,10 @@ export default {
         exitAll(){
             this.menu_box1 = false;
             ipcRenderer.send('MainMsgFromRender', 'exitAll')
+        },
+        clearPwd(){
+            clearPwd();
+            this.menu_box1 = false;
         }
     }
 }

@@ -24,8 +24,9 @@ import {app,ipcMain,ipcRenderer,Notification} from 'electron'
 const saveLog = require('electron-log');
 
 
-import {checkNeedInitStore,setDefaultStore} from '../common/utils/AlfwStore.js'
-import {openPages,openPageByName,toggleTrayMenu,exitAll,doChangeLangEvent,doDesktopAppEvent,doSudoPwdEvent} from '../main/lib/PageConfig.js'
+import {checkNeedInitStore,setDefaultStore,InitSystemInfo} from '../common/utils/AlfwStore.js'
+import {openPages,openPageByName,toggleTrayMenu,exitAll,doChangeLangEvent,doDesktopAppEvent,doSudoPwdEvent,doUpdateViewEvent} from '../main/lib/PageConfig.js'
+import {AlConst} from "@/common/utils/AlfwConst";
 
 app.disableHardwareAcceleration();//disable gpu
 
@@ -35,7 +36,18 @@ app.allowRendererProcessReuse = true;
 
 try {
     app.on('ready', () => {
-        checkNeedInitStore();
+        InitSystemInfo();
+        if(checkNeedInitStore()){
+            //first run
+            try{
+                app.setLoginItemSettings({
+                    openAtLogin: true,
+                    openAsHidden: true
+                })
+            }catch (e) {
+                console.error(e,"changeAutoRun Error0");
+            }
+        }
         openPages();
     })
 
@@ -80,10 +92,38 @@ try {
         doDesktopAppEvent(arg);
     })
 
-    //sudo pwd event
-    ipcMain.on('SudoPwdEvent', function (event, arg) {
-        doSudoPwdEvent(arg);
+    //listen and send the device event
+    ipcMain.on('AutoRunEvent', function (event, status) {
+        console.warn(status,"Main AutoRunEvent");
+        try{
+            app.setLoginItemSettings({
+                openAtLogin: status,
+                openAsHidden: status
+            })
+        }catch (e) {
+            console.error(e,"changeAutoRun Error");
+        }
     })
+
+    //sudo pwd event
+    ipcMain.on(AlConst.SudoPwdEvent, function (event, arg) {
+        console.warn("Main SudoPwdEvent Start >>>>>>>>>>>>>>>>>>>>")
+        openPageByName("openSudoPage");
+    })
+
+    ipcMain.on(AlConst.InstallFuseEvent, function (event, arg) {
+        console.warn("Main InstallFuseEvent Start >>>>>>>>>>>>>>>>>>>>")
+        openPageByName("openInstallFusePage");
+    })
+
+
+
+    ipcMain.on(AlConst.GlobalViewUpdate, function (event, arg) {
+        console.warn("Main GlobalViewUpdate Start >>>>>>>>>>>>>>>>>>>>")
+        doUpdateViewEvent();
+    })
+
+
 
     //sudo pwd event
     ipcMain.on('NoticeEvent', function (event, arg) {

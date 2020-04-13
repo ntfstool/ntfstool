@@ -24,9 +24,9 @@
                          v-on:dblclick="(select_disk_key == item.index) && openDisk(item)"
                     >
                         <div class="lm-block_1">
-                            <div v-if="typeof item.info != 'undefined' && typeof item.info.mounted != 'undefined' && item.info.mounted"
+                            <div v-if="typeof item.info != 'undefined' && typeof item.info.mounted != 'undefined' && item.info.mounted == true"
                                  @click="uMountDisk(item)" @click.stop>
-                                <i class="iconfont iconpush" style="color: rgb(110, 110, 112);">&#xe608;</i>
+                                <i class="iconfont iconpush" style="color: rgb(110, 110, 112);">&#xe769;</i>
                             </div>
 
                             <div v-else @click="mountDisk(item)" @click.stop>
@@ -63,7 +63,14 @@
                                             <span v-else class="block_3n_d_1_sdp unmounted_dot"></span>
                                         </div>
 
-                                        <span class="block_3n_d_1_sp">{{item.name.length > 16 ? (item.name.substring(0,16) + "...") : item.name}}</span>
+
+                                        <span v-if="typeof item.status != 'undefined' && (item.status == 0)" class="block_3n_d_1_sp">
+                                            mounting...
+                                        </span>
+
+                                        <span v-else class="block_3n_d_1_sp">{{item.name.length > 16 ? (item.name.substring(0,16) + "...") : item.name}}</span>
+
+
                                     </div>
 
                                     <div class="lm-block_3n_d_1_fdf">
@@ -74,22 +81,31 @@
                                     </div>
                                 </div>
 
-                                <div class="lm-block_3n_d_2"
-                                     v-if="typeof item.info != 'undefined' && typeof item.info.readonly !='undefined' && !item.info.readonly && typeof item.info.percentage !='undefined'">
-                                    <span v-if="item.info.percentage >= 90"
-                                          v-bind:style="{ width: item.info.percentage + '%', backgroundColor: 'rgb(131, 192, 253)' }"></span>
 
-                                    <span v-else-if="item.info.percentage < 90"
-                                          v-bind:style="{ width: item.info.percentage + '%', backgroundColor: 'rgb(131, 192, 253)' }"></span>
+                                <div v-if="typeof item.info != 'undefined' && typeof item.info.mounted != 'undefined' && item.info.mounted == true"
+                                >
+                                    <div v-if="typeof item.info != 'undefined' && typeof item.info.readonly !='undefined' && item.info.readonly">
+                                        <span class="readonly">Readonly</span>
+                                    </div>
 
-                                    <span v-else="item.info.percentage < 50"
-                                          v-bind:style="{ width: item.info.percentage + '%', backgroundColor: 'rgb(131, 192, 253)' }"></span>
+                                    <div class="lm-block_3n_d_2"
+                                         v-if="typeof item.info != 'undefined' && typeof item.info.readonly !='undefined' && !item.info.readonly && typeof item.info.percentage !='undefined'">
+                                        <span v-if="item.info.percentage >= 90"
+                                              v-bind:style="{ width: item.info.percentage + '%', backgroundColor: 'rgb(131, 192, 253)' }"></span>
+
+                                        <span v-else-if="item.info.percentage < 90"
+                                              v-bind:style="{ width: item.info.percentage + '%', backgroundColor: 'rgb(131, 192, 253)' }"></span>
+
+                                        <span v-else="item.info.percentage < 50"
+                                              v-bind:style="{ width: item.info.percentage + '%', backgroundColor: 'rgb(131, 192, 253)' }"></span>
+                                    </div>
                                 </div>
 
-                                <div v-if="typeof item.info != 'undefined' && typeof item.info.readonly !='undefined' && item.info.readonly">
-                                    <span class="readonly">Readonly</span>
-
+                                <div v-else>
+                                    <span class="readonly">未挂载</span>
                                 </div>
+
+
                             </div>
                         </div>
                     </div>
@@ -202,7 +218,8 @@
                                       v-bind:style="{ width: select_item.info.percentage + '%', backgroundColor: '#fdbc40' }"></span>
 
                                 <span v-if="select_item.info.percentage < 50"
-                                      v-bind:style="{ width: select_item.info.percentage + '%', backgroundColor: '#34c84a' }"></span>
+                                      v-bind:style="{ width: (select_item.info.percentage ? select_item.info.percentage : '0') + '%', backgroundColor: '#34c84a' }">
+                                </span>
                             </div>
                         </div>
 
@@ -271,7 +288,7 @@
                 <div class="mright-dir"
                      v-if="typeof select_item.info.mounted != 'undefined' && select_item.info.mounted">
                     <div class="goods">
-                        <img @click="openDisk(select_item)" src="../assets/opendisk.svg">
+                        <img @click="openDisk(select_item)" src="../assets/opendisk.svg" title="点击打开磁盘">
                     </div>
                 </div>
             </el-main>
@@ -290,6 +307,7 @@
                         <div @click="openFeedBackPage">提交反馈</div>
                         <div @click="openSettingPage">偏好设置</div>
                         <span class="line"></span>
+                        <div @click="clearPwd">清除密码</div>
                         <div @click="openAboutPage">关于</div>
                     </div>
                 </div>

@@ -22,19 +22,21 @@
 //
 // import {getDiskList,getDiskInfo} from 'diskutil'
 
-const {getDiskInfo,getDiskList} = require('diskutil')
-const {setStoreForDiskList,getStoreForDiskList} = require("@/common/utils/AlfwStore")
-
+const {getDiskInfo, getDiskList} = require('diskutil')
+const {setStoreForDiskList, getStoreForDiskList,watchStatus} = require("@/common/utils/AlfwStore")
+const {autoMountNtfsDisk} = require("@/common/utils/AlfwDisk")
+import {unitTimesToRun, queueExec, filterNtfsNeedMountByDiskList} from '@/common/utils/AlfwCommon.js'
 import {alEvent} from '@/common/utils/alEvent'
 import {AlConst} from '@/common/utils/AlfwConst'
-const watch = require('node-watch');
+const {_} = require('lodash')
+
 import {ipcRenderer, remote} from 'electron'
-const fs = require('fs');
+
 const watchmac = require("watch-mac")
 
 
 export function test() {
-    console.warn(getStoreForDiskList(),"getStoreForDiskList")
+    console.warn(getStoreForDiskList(), "getStoreForDiskList")
     //
     // getDiskList().then((diskList) => {
     //     console.log(diskList, "getDiskList");
@@ -43,58 +45,77 @@ export function test() {
 
 export function fsListenMount() {
     var path = '/Volumes/';
-    watchmac(path,function (data) {
-        console.warn(data,"watchmac")
-        if(typeof data.Event != "undefined" && data.Event == "CreteFileEvent"){
-            getDiskList().then((diskList) => {
-                console.log(diskList, "getDiskList");
-                setStoreForDiskList(diskList);
-            });
+    watchmac(path, function (data) {
+        if(watchStatus() === true){
+            console.warn(data, "watchmac")
+            updateDisklist();
+        }else{
+            console.warn("watchmac ignore[watchStatus False]");
         }
-
     })
 
-    diskLiskChange();
-
-    return;
-    //
-    // try {
-    //     fs.watch(path, function (event, filename) {
-    //         console.warn(filename, "Fs watch Volumes")
-    //     });
-    // } catch (e) {
-    //     getDiskList().then((diskList) => {
-    //         console.log(diskList, "getDiskList");
-    //         setStoreForDiskList(diskList);
-    //     });
-    // }
-    //
-    //
-    // try {
-    //     var monitorPath = '/Volumes/';
-    //     watch(monitorPath, {recursive: false}, function (evt, name) {
-    //         console.log("evt=%s|name=%s \n", evt, name);
-    //         name = name.replace(monitorPath, "");
-    //         if (evt != "remove") {
-    //             //add new volume
-    //             getDiskList().then((diskList) => {
-    //                 console.log(diskList, "getDiskList");
-    //                 setStoreForDiskList(diskList);
-    //             });
-    //         }
-    //     });
-    // } catch (e) {
-    //     console.warn(e, "fsListenMount");
-    // }
 }
 
-export function diskLiskChange() {
-    console.warn("diskLiskChange listen")
-    alEvent().on(AlConst.DiskListEvent,function (data) {
-        console.warn(AlConst.DiskListEvent + " DiskListEvent")
-        //send the global view update
+
+export function updateDisklist(callback) {
+    unitTimesToRun("getDiskList", function () {
+
+        getDiskList().then((diskList) => {
+            //filter inner unmounted
+            if(typeof diskList.inner != "undefined") {
+                diskList.inner = diskList.inner.filter(function (item) {
+                    if(_.get(item, "info.readonly") === true){
+                        item.info.readonly = false;
+                    }
+                    if (_.get(item, "info.typebundle") === "apfs" && _.get(item, "info.mountpoint").indexOf("/System/Volumes/") >= 0) {
+                        return false;
+                    } else {
+                        return true;
+                    }
+                });
+            }
 
 
-        //filter the ntfs to remount
+            //filter image unmounted
+            if(typeof diskList.image != "undefined") {
+                diskList.image = diskList.image.filter(function (item) {
+                    if (_.get(item, "info.mounted") === false) {
+                        return false;
+                    } else {
+                        return true;
+                    }
+                });
+            }
+
+            console.log(diskList, "getDiskList");
+            setStoreForDiskList(diskList, function () {
+                if(typeof callback == "function") callback()
+                //send the global view update
+                ipcRenderer.send(AlConst.GlobalViewUpdate, "");
+
+                // if (typeof data.Event != "undefined" && data.Event == "CreteFileEvent") {
+                //filter the ntfs to remount
+                var needReMountList = filterNtfsNeedMountByDiskList(diskList);
+                console.warn(needReMountList, "needReMountList");
+                if (needReMountList && needReMountList.length > 0) {
+                    for (var i in needReMountList) {
+                        //exec one by one
+                        queueExec("autoMountNtfsDisk", function (cb) {
+                            autoMountNtfsDisk(needReMountList[i], function () {
+                                cb();
+                            });
+                        })
+                    }
+                }
+            });
+        });
     })
 }
+
+// export function globalUpdate() {
+//     ipcRenderer.on("GlobalUpdateExent", (event, arg) => {
+//         saveLog.info(arg, "GlobalUpdateExent Come");
+//         var diskList = getStoreForDiskList();
+//
+//     });
+// }
