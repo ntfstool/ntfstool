@@ -223,7 +223,7 @@ export default {
             if (fs.existsSync(fuse_pkg)) {
                 shell.openItem(fuse_pkg)
             }else{
-                alert("暂未发现Fuse安装包,准备前往官网手动下载");
+                alert($t('NoFuseinstallation'));
                 shell.openExternal("https://osxfuse.github.io/")
             }
 

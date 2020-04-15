@@ -31,7 +31,7 @@ export default {
             for (let i = 1; i <= 15; i++) {
                 data.push({
                     key: i,
-                    label: `磁盘 ${i}`,
+                    label: `Disk ${i}`,
                     disabled: i % 4 === 0
                 });
             }
@@ -62,7 +62,7 @@ export default {
             privacy_url: store.get("privacy_url") != "undefined" ? store.get("privacy_url") : "",
             update_beta_url: store.get("update.update_beta_url") != "undefined" ? store.get("update.update_beta_url") : "",
 
-            lang_list:this.$t('languages'),//多语言列表
+            lang_list:this.$t('languages'),
 
 
             remote_size: [],
@@ -111,7 +111,7 @@ export default {
                     this.remote_size = [625, 495];
                     break;
                 case 4:
-                    this.remote_size = [650, 185];
+                    this.remote_size = [680, 185];
                     break;
                 case 5:
                     this.remote_size = [530, 330];
@@ -131,7 +131,7 @@ export default {
         changeTheme() {
             console.warn("set theme",this.theme);
             store.set("theme",this.theme);
-            this.$refs.carouselObj.setActiveItem(this.theme);//轮播图切换
+            this.$refs.carouselObj.setActiveItem(this.theme);
         },
         changeLang() {
             store.set("lang",this.lang);
@@ -170,17 +170,17 @@ export default {
             shell.openExternal(this.privacy_url);
         },
         checkSoftUpdate(){
-            alert("检查更新");
+            alert($t('Checkforupdates'));
         },
         resetConf(){
-            var confirm_status = confirm("确认重置所有配置为默认?")
+            var confirm_status = confirm($t('ConfirmConfigtoreset'))
             if (confirm_status) {
                 if(ipcRenderer.sendSync('MainMsgFromRender',"resetConf") == "succ" ? true : false){
-                    alert("重置成功,请重新开启配置页面");
+                    alert($t('Theresetissuccessful'));
                     remote.getCurrentWindow();
                     remote.getCurrentWindow().close();
                 }else{
-                    alert("重置失败");
+                    alert($t('Resetfailed'));
                 }
             }
         }

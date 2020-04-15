@@ -88,7 +88,7 @@ export default {
                     console.warn("uMountDisk res", res);
                     let option = {
                         title: "NTFSTool",
-                        body: item.name + " 磁盘推出成功",
+                        body: item.name + " " + $t('Diskuninstallsucceeded'),
                     };
                     new window.Notification(option.title, option);
                     _this.refreshDevice();
@@ -101,7 +101,7 @@ export default {
                 console.warn("mountDisk res", res)
                 let option = {
                     title: "NTFSTool",
-                    body: item.name + " 磁盘挂载成功",
+                    body: item.name + " " + $t('Diskmountedsuccessfully'),
                 };
                 new window.Notification(option.title, option);
                 _this.refreshDevice();
@@ -110,7 +110,7 @@ export default {
         openDisk(item) {
             console.warn("dbclick ", item);
             if (!item.info.mountpoint) {
-                alert("该磁盘没有挂载");
+                alert($t('Thediskisnotmounted'));
                 return;
             }
             openInFinder(item.info.mountpoint).catch(() => {
@@ -148,10 +148,8 @@ export default {
                 href: 'https://www.ntfstool.com'
             };
 
-            // 创建通知并保存
             let hhwNotication = new window.Notification(option.title, option);
 
-            // 当通知被点击时, 用默认浏览器打开链接
             hhwNotication.onclick = function () {
                 shell.openExternal(option.href)
             }

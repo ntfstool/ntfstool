@@ -48,10 +48,10 @@ const languages_select = {
             text: "日本語",
             val: 'ja'
         }, {
-            text: "Korea",//韩语
+            text: "Korea",
             val: 'ko'
         }, {
-            text: "Espanol",//西班牙语
+            text: "Espanol",
             val: 'es'
         }
 

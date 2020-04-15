@@ -1,6 +1,5 @@
 <template>
     <el-container class="al-main">
-        <!--小三角-->
         <div ref="trayref_h" class="topsj">
             <div>
                 <i class="iconfont ico_color">&#xe666;</i>
@@ -8,12 +7,11 @@
         </div>
 
         <div ref="trayref" class="trayref" @blur="test('aaa')">
-            <!--头部-->
             <div class="trayref_h">
                 <div class="trayref_h_1">
                     <div class="trayref_h_1_1">
                         <div class="trayref_h_1_1sub_1">
-                            <i @click="pushAll" class="iconfont mr10 ico_color" @mouseover="setTitle('全部推出')"
+                            <i @click="pushAll" class="iconfont mr10 ico_color" @mouseover="setTitle('PushAll')"
                                @mouseout="setTitle()">&#xe769;</i>
                             <i class="iconfont" style="transform: scaleX(-1);color: transparent;">&#xe601;</i>
                         </div>
@@ -28,22 +26,22 @@
 
                     <div class="trayref_h_1_3">
                         <div class="trayref_h_1_3_1" style="position: relative">
-                            <i class="iconfont mr10 ico_color"  @click="openHomePage" @mouseover="setTitle('打开桌面')" @mouseout="setTitle()">&#xe8e2;</i>
+                            <i class="iconfont mr10 ico_color"  @click="openHomePage" @mouseover="setTitle('Open Desktop')" @mouseout="setTitle()">&#xe8e2;</i>
                             <i class="iconfont ico_color"
                                @click="openMenuBox('menu_box1')"
 
-                               @mouseover="setTitle('打开菜单')" @mouseout="setTitle()"
+                               @mouseover="setTitle('Open Menu')" @mouseout="setTitle()"
                                style="transform: scaleX(-1);">&#xe601;</i>
 
 
                             <div class="menu_box" v-show="menu_box1">
-                                <div @click="openAboutPage">关于</div>
+                                <div @click="openAboutPage">{{$t('About')}}</div>
                                 <span class="line"></span>
-                                <div @click="openHomePage">打开桌面</div>
-                                <div @click="openSettingPage">偏好设置</div>
-                                <div @click="openFeedBackPage">提交反馈</div>
+                                <div @click="openHomePage">{{$t('Opendesktop')}}</div>
+                                <div @click="openSettingPage">{{$t('preferences')}}</div>
+                                <div @click="openFeedBackPage">{{$t('Submitfeedback')}}</div>
                                 <span class="line"></span>
-                                <div @click="exitAll">退出</div>
+                                <div @click="exitAll"> {{$t('Quit')}}</div>
 
                                 <!--<span v-show="showDebugMenu" class="line"></span>-->
                                 <!--<div v-show="showDebugMenu" @click="openDialog">Dialog</div>-->

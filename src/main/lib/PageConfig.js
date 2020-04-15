@@ -309,9 +309,7 @@ const openSettingPage = (show_force) => {
 const openDialogPage = (show_force) => {
     if (dialogPageHandle == null) {
         console.warn("create new dialogPageHandle")
-        //已下为插入内容
         dialogPageHandle = new BrowserWindow({
-            title: "系统设置",
             fullscreen: false,
             height: 300,
             width: 300,
@@ -359,7 +357,7 @@ const openFeedBackPage = (show_force) => {
         console.warn("create new feedBackPageHandle")
         feedBackPageHandle = new BrowserWindow({
             fullscreen: false,
-            height: 500,
+            height: 560,
             width: 700,
             useContentSize: true,
             center: true,
@@ -403,20 +401,19 @@ const openFeedBackPage = (show_force) => {
 const _homeWinMenu = () => {
     var template = [
         {
-            label: '关闭',
+            label: 'Close',
             click: function () {
                 win.close();
-                console.log("关闭")
             },
             submenu: [
                 {
-                    label: '关于',
+                    label: 'About',
                     click: async () => {
                         openPageByName("openAboutPage");
                     }
                 },
                 {
-                    label: '分享给朋友',
+                    label: 'Share',
                     click: async () => {
                         const {shell} = require('electron')
                         await shell.openExternal("mailto:?cc=service@ntfstool.com&subject=I recommend using this NTFSTool to operate the extended disk&body=Hi!%0d%0a I\'m already using NtfsTool and I\'m really happy with it.%0d%0aFind more info here if you\'re interested:%0d%0ahttps://ntfstool.com/?tellfriends")
@@ -424,20 +421,20 @@ const _homeWinMenu = () => {
                 },
                 {type: 'separator'},
                 {
-                    label: '偏好设置',
+                    label: 'preferences',
                     click: async () => {
                         openSettingPage();
                     }
                 },
                 {
-                    label: '检查更新',
+                    label: 'Check update',
                     click: async () => {
-                        console.warn("检查更新");
+                        console.warn("Checkforupdates");
                     }
                 },
                 {role: 'services'},
                 {
-                    label: '隐藏桌面',
+                    label: 'Hide Desktop',
                     click: async () => {
                         if(homeWinHandle){
                             homeWinHandle.hide();
@@ -447,14 +444,14 @@ const _homeWinMenu = () => {
                     }
                 },
                 {
-                    label: '提交反馈',
+                    label: 'Submit feedback',
                     click: async () => {
                         openFeedBackPage();
                     }
                 },
                 {type: 'separator'},
                 {
-                    label: '退出',
+                    label: 'Quit',
                     accelerator: 'CmdOrCtrl+Q',
                     role: 'quit'
                 },
@@ -521,7 +518,7 @@ const  monitorUsb  =  function(){
 
 
         new Notification({
-            title: `设备已连接`,
+            title: `device is connected`,
             body: `${device.deviceName}`,
         }).show();
 
@@ -532,7 +529,7 @@ const  monitorUsb  =  function(){
     usbDetect.on('remove', function(device) {
         new Notification({
             title: `${device.deviceName}`,
-            body: `设备已断开`
+            body: `device is disconnected`
 
         }).show();
 

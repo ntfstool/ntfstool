@@ -102,7 +102,7 @@
                                 </div>
 
                                 <div v-else>
-                                    <span class="readonly">未挂载</span>
+                                    <span class="readonly">{{$t('Unmounted')}}</span>
                                 </div>
 
 
@@ -288,7 +288,7 @@
                 <div class="mright-dir"
                      v-if="typeof select_item.info.mounted != 'undefined' && select_item.info.mounted">
                     <div class="goods">
-                        <img @click="openDisk(select_item)" src="../assets/opendisk.svg" title="点击打开磁盘">
+                        <img @click="openDisk(select_item)" src="../assets/opendisk.svg" :title="$t('Clicktoopenthedisk')">
                     </div>
                 </div>
             </el-main>
@@ -302,13 +302,13 @@
                     </div>
 
                     <div class="menu_box" v-show="menu_box1">
-                        <div @click="exitAll">退出</div>
+                        <div @click="exitAll">{{$t('Quit')}}</div>
                         <span class="line"></span>
-                        <div @click="openFeedBackPage">提交反馈</div>
-                        <div @click="openSettingPage">偏好设置</div>
+                        <div @click="openFeedBackPage">{{$t('Submitfeedback')}}</div>
+                        <div @click="openSettingPage"> {{$t('preferences')}}</div>
                         <span class="line"></span>
-                        <div @click="clearPwd">清除密码</div>
-                        <div @click="openAboutPage">关于</div>
+                        <div @click="clearPwd">{{$t('Clearpassword')}}</div>
+                        <div @click="openAboutPage"> {{$t('About')}}</div>
                     </div>
                 </div>
             </el-footer>

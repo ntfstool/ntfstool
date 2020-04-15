@@ -2,38 +2,32 @@
     <el-container class="al-main">
         <el-header class="rheader rheaderd">
             <div class="rheaderd_div">
-                <!--偏好设置-->
                 <span>{{$t('preferences')}}</span>
             </div>
             <div class="rheader_1">
                 <div class="rheader_1_t" v-bind:class="{'tab_active':(select_block == 1)}" @click="chose_block(1)">
                     <div class="rheader_imgd"><img src="../assets/general.png"></div>
-                    <!--常规-->
                     <span>{{$t('general')}}</span>
                 </div>
 
                 <div class="rheader_1_t" v-bind:class="{'tab_active':(select_block == 2)}" @click="chose_block(2)">
                     <div class="rheader_imgd"><img src="../assets/notification.png"></div>
-                    <!--消息通知-->
                     <span>{{$t('notification')}}</span>
                 </div>
 
                 <!--<div class="rheader_1_t" v-bind:class="{'tab_active':(select_block == 3)}" @click="chose_block(3)">-->
                     <!--<div class="rheader_imgd"><img src="../assets/ignoredisk.png"></div>-->
-                    <!--忽略磁盘-->
                     <!--<span>{{$t('ignoredisk')}}</span>-->
                 <!--</div>-->
 
                 <div class="rheader_1_t" v-bind:class="{'tab_active':(select_block == 4)}" @click="chose_block(4)">
                     <div class="rheader_imgd"><img src="../assets/privacy.png"></div>
-                    <!--隐私-->
                     <span>{{$t('privacy')}}</span>
                 </div>
 
 
                 <div class="rheader_1_t" v-bind:class="{'tab_active':(select_block == 5)}" @click="chose_block(5)">
                     <div class="rheader_imgd"><img src="../assets/update.png"></div>
-                    <!--更新-->
                     <span>{{$t('update')}}</span>
                 </div>
 
@@ -58,7 +52,6 @@
                                     <!--</div>-->
 
                                     <!--<div style="display: flex;flex-direction: column;justify-content: center">-->
-                                        <!--&lt;!&ndash;已启用 已关闭&ndash;&gt;-->
                                         <!--<span v-if="show_menu" class="main-from_div_1_1-div_1span" style="">{{$t('activated')}}</span>-->
                                         <!--<span v-if="!show_menu" class="main-from_div_1_1-div_1span" style="color: orangered">{{$t('closed')}}</span>-->
                                     <!--</div>-->
@@ -77,7 +70,6 @@
                             <!--</div>-->
 
                             <div style="position: absolute;bottom: 0;">
-                                <!--跟随系统启动-->
                                 <el-checkbox v-model="auto_run"  @change="changeAutoRun()"  :label="$t('Followthesystemstartup')" name="type"></el-checkbox>
                             </div>
                         </div>
@@ -123,11 +115,9 @@
                             </tr>
 
                             <tr>
-                                <!--如何处理安装坏卷-->
                                 <td><span class="mr20">{{$t('Howtodealwithmountingbadvolumes')}}</span></td>
                                 <td>
                                     <select class="al_select al_select_lang" v-model="install_bug_type" @change="changeInstallBugType()">
-                                        <!--自动处理-->
                                         <option value="auto_solve">{{$t('Automaticprocessing')}}</option>
                                         <option value="tip_solve">{{$t('Promptbeforeprocessing')}}</option>
                                         <option value="no_solve">{{$t('Donothing')}}</option>
@@ -136,7 +126,6 @@
                             </tr>
 
                             <tr>
-                                <!--如何处理休眠-->
                                 <td><span class="mr20">{{$t('Howtodealwithhibernation')}} Windows</span></td>
                                 <td>
                                     <select class="al_select al_select_lang" v-model="how_restart_window" @change="changeHowRestartWindow()">
@@ -156,20 +145,15 @@
             <el-form class="main-from" v-if="select_block == 2">
 
                 <el-form-item :label="$t('notice') + ':'" class="mb20">
-                    <!--挂载和推出时显示通知-->
                     <el-checkbox v-model="mount_show_msg"  @change="changeMountShowMsg()"  class="mb20" :label="$t('Shownotificationswhenmountedandlaunched')" name="type"></el-checkbox>
 
-                    <!--有更新时显示通知-->
                     <el-checkbox v-model="update_show_msg"  @change="changeUpdateShowMsg()"  :label="$t('Shownotificationswhenupdatesareavailable')" name="type"></el-checkbox>
                     <span class="sub_form_title">
-                        <!--官方存在更新版本时显示通知-->
                         {{$t('Shownotificationswhenanupdatedversionisofficiallyavailable')}}
                     </span>
                     <div class="mb20"></div>
-                    <!--磁盘卷宗存在异常时通知-->
                     <el-checkbox v-model="error_disk_msg"  @change="changeErrorDiskMsg()"  :label="$t('Notifywhendiskvolumeisabnormal')" name="type"></el-checkbox>
                     <span class="sub_form_title">
-                        <!--磁盘卷宗可能因为异常断开造成数据异常-->
                         {{$t('Diskvolumemaybeabnormalduetoabnormaldisconnection')}}
                     </span>
                 </el-form-item>
@@ -177,7 +161,7 @@
 
             <el-form class="main-from" v-if="select_block == 3">
                 <div style="margin: 20px 0">
-                    <span>忽略列表里的磁盘将不再出现在磁盘列表</span>
+                    <span>{{$t('Disksintheignore')}}</span>
                 </div>
 
 
@@ -185,7 +169,7 @@
                     <el-transfer
                             v-model="value"
                             :data="data"
-                            :titles="['磁盘', '忽略列表']"
+                            :titles="['Disk', 'IgnoreList']"
                     ></el-transfer>
                 </div>
             </el-form>
@@ -193,7 +177,6 @@
 
             <el-form class="main-from main-from-b4" v-if="select_block == 4">
                 <div>
-                     <!--收集的所有数据均可在更新后的隐私政策中查看-->
                     <span style="font-size: 14px;"> NtfsTool {{$t('Alldatacollectedcanbeviewedintheupdatedprivacypolicy')}}</span>
                 </div>
 
@@ -201,7 +184,6 @@
                     <div style="display: flex;flex-direction: column;justify-content: center">
                         <i class="iconfont iconjump06" style="font-size: 16px;color: black;">
                             &#xe648;
-                            <!--阅读隐私政策            -->
                             <span style="    font-size: 12px;font-family: cursive;
     vertical-align: middle;
     margin-left: 3px;">{{$t('Readtheprivacypolicy')}}</span>
@@ -215,18 +197,15 @@
                     <el-checkbox  v-model="auto_check"  @change="changeAutoCheck()"  :label="$t('Checkforupdatesautomatically')" name="type"></el-checkbox>
                     <el-checkbox  v-model="auto_beta_update"  @change="changeAutoBetaUpdate()"  :label="$t('DetectBetaversionupdates')" name="type"></el-checkbox>
                     <span class="sub_form_title">
-                        <!--请谨慎更新到测试版本,因为它们包含实验性的功能.这些功能不稳定,也可能造成数据丢失.-->
                         {{$t('Pleaseupdatetothebetaversion1')}}
                     </span>
                     <div>
                         <el-button @click="checkSoftUpdate">{{$t('Checkforupdates')}}</el-button>
-                        <!--重置所有配置-->
                         <el-button @click="resetConf">{{$t('Resetallconfiguration')}}</el-button>
                     </div>
 
 
                     <div>
-                        <!--上次检查时间-->
                         <span style="font-size: 12px;">{{$t('Lastchecktime')}} : 2020.2.12 14:36</span>
                     </div>
                 </el-form-item>

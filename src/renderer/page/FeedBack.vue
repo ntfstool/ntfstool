@@ -1,7 +1,7 @@
 <template>
     <el-container class="main-box">
         <header class="header">
-            <div>NTFS Tool 反馈</div>
+            <div>NTFS Tool {{$t('feedback')}}</div>
         </header>
 
         <div class="contain">
@@ -10,28 +10,31 @@
                     <img @click="openMainsite()" src="../assets/logo.png">
                     <div class="sn">
                         <div class="spans">
-                            <span>系列号</span>
+                            <span>{{$t('SerialNumber')}}</span>
                             <span>{{serial_number}}</span>
                         </div>
 
-                        <div style="cursor: pointer;" class="spans" @click="addGroup()">
-                            <span>🇨🇳官方技术交流群</span>
+                        <div v-show="lang == 'zhCN' || lang == 'zhTW'" style="cursor: pointer;" class="spans" @click="addGroup()">
+                            <span>🇨🇳{{$t('OfficialTechnologyExchangeGroup')}}</span>
+                        </div>
+
+                        <div style="cursor: pointer;" class="spans" @click="sendEmail()">
+                            <span>🔔 Send Email for help</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="fd_form">
-                <div style="font-size: 25px;">反馈表单</div>
+                <div style="font-size: 25px;">{{$t('Feedbackform')}}</div>
 
-                <div style="font-size: 14px;">请提供关于您问题的详细描述、建议、漏洞报告或者您的疑问,以便我们对您的诉求有了清晰的认识之后才能给您最有效的答复。</div>
+                <div style="font-size: 14px;">{{$t('Pleaseprovidedescription')}}</div>
                 <div>
                     <select class="al_select al_select_lang"
                             v-model="fb_back_type">
-                        <!--自动处理-->
-                        <option value="feedback">反馈</option>
-                        <option value="help">支持请求</option>
-                        <option value="report">错误报告</option>
+                        <option value="feedback">{{$t('feedback')}}</option>
+                        <option value="help">{{$t('Supportrequest')}}</option>
+                        <option value="report">{{$t('errorreport')}}</option>
                     </select>
                 </div>
                 <div style="    display: flex;">
@@ -52,12 +55,12 @@
 
                 <div style="font-size: 12px;">
                     <el-checkbox v-model="agreement" name="type"></el-checkbox>
-                    提交运行数据、日志等信息，从而帮助了解您的设备信息并改善我们的应用
+                    {{$t('Submitoperatingdata')}}
                 </div>
 
                 <div style="text-align: right;margin-top: 10px;">
                     <button style="margin-right: 0;" :class="[btnDisable ? 'btn-active-disable' :  'btn-active']"
-                            @click="sumbit_feedback">发送反馈
+                            @click="sumbit_feedback">{{$t('sendfeedback')}}
                     </button>
                 </div>
             </div>
@@ -69,7 +72,8 @@
     const axios = require('axios')
     const fs = require("fs")
     const saveLog = require('electron-log');
-
+    const Store = require('electron-store');
+    const store = new Store();
     import {getPackageVersion, disableZoom, getSystemInfo,noticeTheSystemError} from '@/common/utils/AlfwCommon.js'
 
     import {POST_LOG_URL} from '@/common/utils/AlfwConst.js'
@@ -79,6 +83,7 @@
         components: {},
         data() {
             return {
+                lang: store.get("lang") != "undefined" ? store.get("lang") : "english",
                 version: "-",
                 serial_number: "--",
                 os_version: "",
@@ -103,6 +108,9 @@
             });
         },
         methods: {
+            sendEmail(){
+                shell.openExternal("mailto:service@ntfstool.com")
+            },
             openMainsite() {
                 shell.openExternal("https://www.ntfstool.com")
             },
@@ -125,11 +133,11 @@
                 }, 10000);
 
                 if (!this.agreement) {
-                    var confirm_status = confirm("建议您勾选提交运行数据、日志等信息...")
+                    var confirm_status = confirm($t('Itisrecommended'))
                     if (confirm_status) {
                         this.agreement = true;
                     } else {
-                        confirm_status = confirm("您已放弃提交运行数据、日志等信息,我们可能无法复原您的问题,确定继续提交?")
+                        confirm_status = confirm($t('Youhavegivenupsu'))
                         if (!confirm_status) {
                             return;
                         }
@@ -184,13 +192,13 @@
                     _this.btnDisable = false;
                     console.log(response);
                     _this.reDefault();
-                    alert("提交信息成功");
+                    alert($t('Submitinformation'));
                     remote.getCurrentWindow().hide();
                 }).catch(function (error) {
                     _this.btnDisable = false;
                     saveLog.error(error.message, "FEEDBACK_ERROR_CONTENT");
                     noticeTheSystemError("FEEDBACK_ERROR");
-                    alert("提交信息失败");
+                    alert($t('Failedtosubmitinformation'));
                 });
             }
         }

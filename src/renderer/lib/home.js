@@ -20,19 +20,20 @@
 
 import {ipcRenderer, remote} from 'electron'
 
-import {getPackageVersion, disableZoom,choseDefaultNode,getSystemInfo} from '@/common/utils/AlfwCommon.js'
-import {clearPwd,getStoreForDiskList,getMountType} from '@/common/utils/AlfwStore'
+import {getPackageVersion, disableZoom, choseDefaultNode, getSystemInfo} from '@/common/utils/AlfwCommon.js'
+import {clearPwd, getStoreForDiskList, getMountType} from '@/common/utils/AlfwStore'
 
 import {
     getDiskList,
     getDiskFullInfo,
     uMountDisk,
     mountDisk,
-    openInFinder} from '@/common/utils/AlfwDisk'
+    openInFinder
+} from '@/common/utils/AlfwDisk'
 import {alEvent} from '@/common/utils/alEvent'
 
 
-import {fsListenMount,updateDisklist,test} from '@/renderer/lib/diskMonitor'
+import {fsListenMount, updateDisklist, test} from '@/renderer/lib/diskMonitor'
 import {AlConst} from "@/common/utils/AlfwConst";
 
 
@@ -67,12 +68,11 @@ export default {
     },
     mounted() {
         var _this = this;
-        console.warn("getMountType",getMountType());
+        console.warn("getMountType", getMountType());
 
         this.refreshDevice();
         this.setVersion();
         disableZoom(require('electron').webFrame);
-
 
 
         //background event [past it in dialog]
@@ -84,38 +84,35 @@ export default {
         });
 
 
-
-        window.addEventListener('beforeunload', ()=>{
+        window.addEventListener('beforeunload', () => {
             remote.getCurrentWindow().on('blur', () => {
                 this.menu_box1 = false;
             })
         });
 
 
-
-        // //监听语言切换
-        // ipcRenderer.on("ChangeLangEvent", (e, lang) => {
-        //     console.warn("main wind ChangeLangEvent", lang);
-        //     this.$i18n.locale = lang;
-        // });
+        ipcRenderer.on("ChangeLangEvent", (e, lang) => {
+            console.warn("main wind ChangeLangEvent", lang);
+            this.$i18n.locale = lang;
+        });
 
 
-        remote.getCurrentWindow().on('focus', function() {
-           console.warn("currentWindow focus[todo: check diskutils <=> mount]");
+        remote.getCurrentWindow().on('focus', function () {
+            console.warn("currentWindow focus[todo: check diskutils <=> mount]");
             _this.refreshDevice();
         })
     },
     methods: {
 
         help() {
-            var confirm_status = confirm("提交NTFSTool应用的运行日志，从而帮助开发者改善他们的应用")
+            var confirm_status = confirm($t('Submittherunninglog'))
             if (confirm_status) {
-                var confirm_status = confirm("分析数据已提交,即将跳转在线帮助页面...")
+                var confirm_status = confirm($t('Theanalysisdata'))
                 if (confirm_status) {
 
                 }
             } else {
-                alert("您已放弃提交分析数据,暂无法提供免费技术支持");
+                alert($t('Youhavegivenup'));
             }
         },
         refreshDevice() {
@@ -125,53 +122,22 @@ export default {
                 updateDisklist(function () {
                     _this.loading = 0;
                 });
-                // var diskList = getStoreForDiskList();
-                // this.diskList = diskList;
-                // console.warn(this.diskList,"home disklist")
-                //
-                // //chose the default node
-                // if (!this.select_disk_key && diskList) {
-                //     this.choseDisk(choseDefaultNode(diskList));
-                // }
-
-
             } catch (e) {
                 console.warn(e, "refreshDevice");
             }
-
-
-            // try {
-            //     this.loading = -1;
-            //     //更新列表
-            //     getDiskList().then((diskList) => {
-            //         console.log(diskList, "getDiskList");
-            //         this.diskList = diskList;
-            //         if (!this.select_disk_key) {
-            //             try {
-            //                 this.choseDisk(diskList["inner"][0]);
-            //             } catch (e) {
-            //                 console.warn(e, "refreshDevice choseDisk");
-            //             }
-            //         }
-            //         this.loading = 0;
-            //     });
-            // } catch (e) {
-            //     console.warn(e, "refreshDevice");
-            // }
         },
         changeVolumeName(select_item) {
-            this.$prompt('请输入新名称', '', {
+            this.$prompt($t('Pleaseenteranewname'), '', {
                 showClose: false,
                 inputValue: select_item.volume_name,
-                confirmButtonText: '确定',
-                cancelButtonText: '取消',
+                confirmButtonText: $t('Confirm'),
+                cancelButtonText: $t('Cancel'),
             }).then(({value}) => {
                 this.$alert("ok " + value);
             })
         },
         clearDisk(item) {
             console.warn("clearDisk click", this.$i18n.t('Erasingthediskwilldelete'))
-            // 抹掉磁盘将删除 的所有资料
             var confirm_status = confirm(this.$i18n.t('Erasingthediskwilldelete') + " (" + item.name + ")")
             console.warn(confirm_status, "confirm confirm_status")
             if (confirm_status) {
@@ -199,12 +165,12 @@ export default {
                     console.warn("uMountDisk res", res);
                     let option = {
                         title: "NTFSTool",
-                        body: item.name + " 磁盘推出成功",
+                        body: item.name + " " + $t('Diskuninstallsucceeded'),
                     };
                     new window.Notification(option.title, option);
                     _this.refreshDevice();
                 }).catch(err => {
-                    alert("推出失败");
+                    alert($t('Uninstallfailed'));
                 })
             }
         },
@@ -214,7 +180,7 @@ export default {
                 console.warn("mountDisk res", res)
                 let option = {
                     title: "NTFSTool",
-                    body: item.name + " 磁盘挂载成功",
+                    body: item.name + " "+$t('Diskmountedsuccessfully'),
                 };
                 new window.Notification(option.title, option);
                 _this.refreshDevice();
@@ -231,7 +197,7 @@ export default {
         openDisk(item) {
             console.warn("dbclick ", item);
             if (!item.info.mountpoint) {
-                alert("该磁盘没有挂载");
+                alert($t('Thediskisnotmounted'));
                 return;
             }
             openInFinder(item.info.mountpoint).catch(() => {
@@ -280,11 +246,11 @@ export default {
             this.menu_box1 = false;
             ipcRenderer.send('MainMsgFromRender', 'openFeedBackPage')
         },
-        exitAll(){
+        exitAll() {
             this.menu_box1 = false;
             ipcRenderer.send('MainMsgFromRender', 'exitAll')
         },
-        clearPwd(){
+        clearPwd() {
             clearPwd();
             this.menu_box1 = false;
         }
