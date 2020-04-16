@@ -43,9 +43,9 @@
                                 <span class="line"></span>
                                 <div @click="exitAll"> {{$t('Quit')}}</div>
 
-                                <!--<span v-show="showDebugMenu" class="line"></span>-->
-                                <!--<div v-show="showDebugMenu" @click="openDialog">Dialog</div>-->
-                                <!--<div v-show="showDebugMenu" @click="openLog">openLog</div>-->
+                                <span v-show="showDebugMenu" class="line"></span>
+                                <div v-show="showDebugMenu" @click="openDialog">Dialog</div>
+                                <div v-show="showDebugMenu" @click="openLog">openLog</div>
                             </div>
                         </div>
                     </div>

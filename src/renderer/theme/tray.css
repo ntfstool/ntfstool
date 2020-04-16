@@ -34,7 +34,7 @@ html, body, #app {
     background: rgb(243, 243, 243);
     border-radius: 8px;
     padding-bottom: 15px;
-    overflow: hidden;
+    /*overflow: hidden;*/
 }
 
 .trayref_h {

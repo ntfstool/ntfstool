@@ -1,6 +1,6 @@
 {
   "name": "ntfs-tool",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Aile Mac OS NTFS Tools",
   "homepage": "https://ntfstool.com",
   "author": {
@@ -51,6 +51,12 @@
         }
       ]
     },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://store.alfw.com/ntfstool/update"
+      }
+    ],
     "mac": {
       "icon": "build/icons/icon.icns",
       "extendInfo": {
@@ -63,18 +69,20 @@
   },
   "dependencies": {
     "axios": "^0.19.2",
+    "diskutil": "latest",
     "electron-log": "^4.0.7",
     "electron-store": "^5.0.0",
+    "electron-updater": "^4.2.5",
     "element-ui": "2.13.0",
+    "get": "^1.4.0",
     "lodash": "^4.17.15",
     "ntfstool": "latest",
-    "diskutil": "latest",
-    "watch-mac": "latest",
     "vue": "^2.6.11",
     "vue-electron": "^1.0.6",
     "vue-i18n": "^8.15.3",
     "vue-router": "^3.1.5",
-    "vuex": "^3.1.2"
+    "vuex": "^3.1.2",
+    "watch-mac": "latest"
   },
   "devDependencies": {
     "electron-middle-sass": "^1.0.2",

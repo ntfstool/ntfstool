@@ -21,7 +21,7 @@ import {AlConst} from "@/common/utils/AlfwConst";
  */
 const {shell,ipcRenderer,remote} = require('electron')
 
-import {getPackageVersion, disableZoom, getSystemInfo,noticeTheSystemError} from '@/common/utils/AlfwCommon.js'
+import {openLog,getPackageVersion} from '@/common/utils/AlfwCommon.js'
 import {getStoreForDiskList} from "@/common/utils/AlfwStore";
 import {
     getDiskList,
@@ -183,6 +183,7 @@ export default {
             ipcRenderer.send('MainMsgFromRender', 'exitAll')
         },
         startDebug() {
+            console.warn("click startDebug");
             var cur_time = new Date().getTime();
 
             if (cur_time - this.atest_lasttime > 1000) {
@@ -194,9 +195,10 @@ export default {
 
                 if (this.atest_times > 5) {
                     this.atest_times = 0;
-                    remote.getCurrentWindow().webContents.openDevTools();
                     this.showDebugMenu = true;
-                    noticeTheSystemError("opendevmod");
+                    // remote.getCurrentWindow().webContents.openDevTools();
+                    // this.showDebugMenu = true;
+                    // noticeTheSystemError("opendevmod");
                 }
             }
             this.atest_lasttime = cur_time;

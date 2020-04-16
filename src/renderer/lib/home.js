@@ -18,11 +18,9 @@
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
 
-import {ipcRenderer, remote} from 'electron'
-
+import {app,ipcRenderer, remote} from 'electron'
 import {getPackageVersion, disableZoom, choseDefaultNode, getSystemInfo} from '@/common/utils/AlfwCommon.js'
 import {clearPwd, getStoreForDiskList, getMountType} from '@/common/utils/AlfwStore'
-
 import {
     getDiskList,
     getDiskFullInfo,
@@ -35,7 +33,6 @@ import {alEvent} from '@/common/utils/alEvent'
 
 import {fsListenMount, updateDisklist, test} from '@/renderer/lib/diskMonitor'
 import {AlConst} from "@/common/utils/AlfwConst";
-
 
 export default {
     components: {},
@@ -68,6 +65,9 @@ export default {
     },
     mounted() {
         var _this = this;
+
+
+
         console.warn("getMountType", getMountType());
 
         this.refreshDevice();

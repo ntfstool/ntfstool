@@ -18,6 +18,7 @@
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
 // import {exec} from 'child_process'
+import {execShell,execShellSudo} from '@/common/utils/AlfwShell'
 import {t} from 'element-ui/lib/locale'
 import {remote} from 'electron'
 import {ignoreItem,delIgnoreItem} from '@/common/utils/AlfwStore'
