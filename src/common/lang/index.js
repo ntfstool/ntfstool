@@ -24,6 +24,7 @@ import zhTW from './zhTW'
 import ja from './ja'
 import ko from './ko'
 import es from './es'
+import ru from './ru'
 
 import enLocale from 'element-ui/lib/locale/lang/en'
 import zhcnLocale from 'element-ui/lib/locale/lang/zh-CN'
@@ -31,6 +32,7 @@ import zhtwLocale from 'element-ui/lib/locale/lang/zh-TW'
 import koLocale from 'element-ui/lib/locale/lang/ko'
 import jaLocale from 'element-ui/lib/locale/lang/ja'
 import esLocale from 'element-ui/lib/locale/lang/es'
+import ruLocale from 'element-ui/lib/locale/lang/ru-RU'
 
 const languages_select = {
     languages: [
@@ -53,6 +55,9 @@ const languages_select = {
         }, {
             text: "Espanol",
             val: 'es'
+        }, {
+            text: "Русский",
+            val: 'ru'
         }
 
     ]
@@ -65,4 +70,5 @@ export default {
     ja: {...ja, ...languages_select, ...jaLocale},
     ko: {...ko, ...languages_select, ...koLocale},
     es: {...es, ...languages_select, ...esLocale},
+    ru: {...ru, ...languages_select, ...ruLocale},
 }
