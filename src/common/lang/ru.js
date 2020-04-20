@@ -134,7 +134,7 @@ export default {
     AlreadyUsing:"Я использую NtfsTool и очень им доволен.",
     FindMore:"Здесь можно найти больше информации:",
     RecommendUsing:"Рекомендую использовать NTFSTool для работы с дисками",
-    SendEmailForHelp:"Отправить письмо для помощи",
+    SendEmailForHelp:"Написать в техподдержку",
     Viewthetranslation:"Просмотрите файл перевода и отправьте обновленный контент перевода на электронную почту",
     Helpsoftwaretranslation:"Помогите программе улучшить языковой перевод",
     new_device_event:"Откройте для себя новые устройства",
