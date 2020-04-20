@@ -78,7 +78,7 @@
                 <!--</div>-->
 
                 <div style="font-size: 10px;">
-                    {{$t('system')}} {{os_version}}
+                    {{$t('OS')}} {{os_version}}
                 </div>
 
                 <div style="font-size: 10px;">

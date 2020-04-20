@@ -135,6 +135,7 @@ export default {
     FindMore:"如果你感興趣,在這裡發現更多的信息:",
     RecommendUsing:"我推薦使用NTFSTool工具去操作MAC系統NTFS磁盤",
     SendEmailForHelp:"發送郵件尋求幫助",
+    OS: "系統",
     Viewthetranslation:"查看翻譯文件,並將更新翻譯後的內容以郵件的方式發送到",
     Helpsoftwaretranslation:"幫助軟件完善語言翻譯",
 }
