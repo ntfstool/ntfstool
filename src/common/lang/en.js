@@ -129,4 +129,11 @@ export default {
     ConfirmConfigtoreset: "Confirm to reset all configurations to default",
     Theresetissuccessful: "Reset was successful, please reopen the configuration page",
     Resetfailed: "Reset failed",
+
+    Mounting:"Mounting",
+    Readonly:"Readonly",
+    AlreadyUsing:"I'm already using NtfsTool and I'm really happy with it.",
+    FindMore:"Find more info here if you're interested:",
+    RecommendUseing:"I recommend using this NTFSTool to operate the mac extended disk",
+    SendEmailForHelp:"Send Email for help",
 }

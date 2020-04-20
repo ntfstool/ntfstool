@@ -28,8 +28,8 @@ const alfwStore = {
     },
     privacy_url: 'https://github.com/ntfstool/ntfstool',
     update: {
-        auto_check: "",
-        auto_beta_update: "",
+        auto_check: true,
+        auto_beta_update: true,
         update_url: "",
         update_beta_url: "",
     },
@@ -57,7 +57,7 @@ export function setStore(key,value) {
 }
 
 export function getStore(key) {
-    store.get(key);
+    return store.get(key);
 }
 
 export function clearPwd() {

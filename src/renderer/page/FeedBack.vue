@@ -19,7 +19,7 @@
                         </div>
 
                         <div style="cursor: pointer;" class="spans" @click="sendEmail()">
-                            <span>🔔 Send Email for help</span>
+                            <span>🔔 {{$t('SendEmailForHelp')}}</span>
                         </div>
                     </div>
                 </div>
@@ -133,11 +133,11 @@
                 }, 10000);
 
                 if (!this.agreement) {
-                    var confirm_status = confirm($t('Itisrecommended'))
+                    var confirm_status = confirm(_this.$i18n.t('Itisrecommended'))
                     if (confirm_status) {
                         this.agreement = true;
                     } else {
-                        confirm_status = confirm($t('Youhavegivenupsu'))
+                        confirm_status = confirm(_this.$i18n.t('Youhavegivenupsu'))
                         if (!confirm_status) {
                             return;
                         }
@@ -165,6 +165,7 @@
                     "__logs__": [{
                         atype: "FeedBack",
                         asn: this.serial_number,
+                        ntfstool_version:  this.version,
                         os_version: this.os_version,
                         fb_back_type: this.fb_back_type,
                         fb_name: this.fb_name,
@@ -192,13 +193,13 @@
                     _this.btnDisable = false;
                     console.log(response);
                     _this.reDefault();
-                    alert($t('Submitinformation'));
+                    alert(_this.$i18n.t('Submitinformation'));
                     remote.getCurrentWindow().hide();
                 }).catch(function (error) {
                     _this.btnDisable = false;
                     saveLog.error(error.message, "FEEDBACK_ERROR_CONTENT");
                     noticeTheSystemError("FEEDBACK_ERROR");
-                    alert($t('Failedtosubmitinformation'));
+                    alert(_this.$i18n.t('Failedtosubmitinformation'));
                 });
             }
         }

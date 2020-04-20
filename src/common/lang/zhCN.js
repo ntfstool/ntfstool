@@ -129,4 +129,10 @@ export default {
     ConfirmConfigtoreset: "确认重置所有配置为默认",
     Theresetissuccessful: "重置成功,请重新开启配置页面",
     Resetfailed: "重置失败",
+    Mounting:"正在加载",
+    Readonly:"只读",
+    AlreadyUsing:"我正在使用Ntfstool工具,我很喜欢他.",
+    FindMore:"如果你感兴趣,在这里发现更多的信息:",
+    RecommendUseing:"我推荐使用NTFSTool工具去操作MAC系统NTFS磁盘",
+    SendEmailForHelp:"发送邮件寻求帮助",
 }

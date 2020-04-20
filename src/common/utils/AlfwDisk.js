@@ -82,10 +82,15 @@ function reMountNtfs(index, force = false) {
            //  }
 
             if(_.get(info,"mounted") == true){
+                if(force === false && _.get(info,"readonly") != true){
+                    reMountLock[index] = false;
+                    console.warn("succ[" + index + "] is Already Moubted!");
+                    resolve("succ[" + index + "] is Already Moubted!");
+                    return ;
+                }
+
                 await execShellSudo("diskutil unmount " + link_dev);
             }
-
-
 
 
             // here should deeply notice the recursive for the watch for the [/Volumes]
@@ -105,7 +110,7 @@ function reMountNtfs(index, force = false) {
                 var run_res = await execShellSudo(`mount_ntfs -o rw,auto,nobrowse,noowners,noatime ${link_dev} ${mount_path}`);
             }else{
                 console.warn("UseMountType:Outer")
-                var run_res = await execShellSudo(`${ntfstool_bin} ${link_dev} ${mount_path} -o volname=${volumename}  -olocal -oallow_other   -o auto_xattr`);
+                var run_res = await execShellSudo(`${ntfstool_bin} ${link_dev} ${mount_path} -o volname=${volumename}  -olocal -oallow_other   -o auto_xattr -o hide_hid_files`);
             }
 
             watchStatus(true);

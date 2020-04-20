@@ -130,4 +130,10 @@ export default {
     ConfirmConfigtoreset: "すべての構成をデフォルトにリセットすることを確認します",
     Theresetissuccessful: "リセットに成功しました。設定ページを再度開いてください",
     Resetfailed: "リセットに失敗しました",
+    Mounting:"取り付け",
+    Readonly:"読み取り専用",
+    AlreadyUsing:"私はすでにNtfsToolを使用しており、本当に満足しています。",
+    FindMore:"興味がある場合は、こちらで詳細をご覧ください:",
+    RecommendUseing:"このNTFSToolを使用してMac拡張ディスクを操作することをお勧めします",
+    SendEmailForHelp:"助けを求めるメールを送る",
 }

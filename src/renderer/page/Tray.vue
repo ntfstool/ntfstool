@@ -11,9 +11,9 @@
                 <div class="trayref_h_1">
                     <div class="trayref_h_1_1">
                         <div class="trayref_h_1_1sub_1">
-                            <i @click="pushAll" class="iconfont mr10 ico_color" @mouseover="setTitle('PushAll')"
-                               @mouseout="setTitle()">&#xe769;</i>
-                            <i class="iconfont" style="transform: scaleX(-1);color: transparent;">&#xe601;</i>
+                            <i @click="openWebsite" class="iconfont mr10 ico_color" @mouseover="setTitle('openWebsite')"
+                               @mouseout="setTitle()">&#xe617;</i>
+                            <i class="iconfont" style="transform: scaleX(-1);color: transparent;">&#xe600;</i>
                         </div>
                     </div>
 

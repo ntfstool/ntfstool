@@ -19,25 +19,26 @@ import {AlConst} from "@/common/utils/AlfwConst";
  * along with this program (in the main directory of the NTFS Tool
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
-const {shell,ipcRenderer,remote} = require('electron')
+const {shell, ipcRenderer, remote} = require('electron')
 
-import {openLog,getPackageVersion} from '@/common/utils/AlfwCommon.js'
+import {openLog, getPackageVersion} from '@/common/utils/AlfwCommon.js'
 import {getStoreForDiskList} from "@/common/utils/AlfwStore";
 import {
     getDiskList,
     getDiskFullInfo,
     uMountDisk,
     mountDisk,
-    openInFinder} from '@/common/utils/AlfwDisk'
+    openInFinder
+} from '@/common/utils/AlfwDisk'
 import {updateDisklist} from '@/renderer/lib/diskMonitor'
 
 export default {
     components: {},
     data() {
         return {
-            title:"NTFS Tool",
-            menu_box1:false,
-            diskList:[],
+            title: "NTFS Tool",
+            menu_box1: false,
+            diskList: [],
             showDebugMenu: process.env.NODE_ENV === 'development' ? true : false,
         }
     },
@@ -53,8 +54,7 @@ export default {
         // });
 
 
-
-        remote.getCurrentWindow().on('focus', function() {
+        remote.getCurrentWindow().on('focus', function () {
             console.warn("TrayWindow focus");
             var _this = this;
             updateDisklist(function () {
@@ -64,8 +64,12 @@ export default {
 
         ipcRenderer.on(AlConst.GlobalViewUpdate, () => {
             this.diskList = getStoreForDiskList();
-            console.warn(`${AlConst.GlobalViewUpdate} come tray ...`,this.diskList);
+            console.warn(`${AlConst.GlobalViewUpdate} come tray ...`, this.diskList);
             this.resetSize();
+        });
+
+        ipcRenderer.on("OpenShare", () => {
+            this.openShare();
         });
 
 
@@ -88,7 +92,7 @@ export default {
                     console.warn("uMountDisk res", res);
                     let option = {
                         title: "NTFSTool",
-                        body: item.name + " " + $t('Diskuninstallsucceeded'),
+                        body: item.name + " " + _this.$i18n.t('Diskuninstallsucceeded'),
                     };
                     new window.Notification(option.title, option);
                     _this.refreshDevice();
@@ -101,7 +105,7 @@ export default {
                 console.warn("mountDisk res", res)
                 let option = {
                     title: "NTFSTool",
-                    body: item.name + " " + $t('Diskmountedsuccessfully'),
+                    body: item.name + " " + _this.$i18n.t('Diskmountedsuccessfully'),
                 };
                 new window.Notification(option.title, option);
                 _this.refreshDevice();
@@ -110,23 +114,23 @@ export default {
         openDisk(item) {
             console.warn("dbclick ", item);
             if (!item.info.mountpoint) {
-                alert($t('Thediskisnotmounted'));
+                alert(this.$i18n.t('Thediskisnotmounted'));
                 return;
             }
             openInFinder(item.info.mountpoint).catch(() => {
                 alert("openDisk fail!");
             });
         },
-        test(){
-          console.warn("ASDFASFDSF")
+        test() {
+            console.warn("ASDFASFDSF")
         },
-        openMenuBox(id){
+        openMenuBox(id) {
             this[id] = this[id] ? false : true
         },
-        setTitle(title){
-            if(typeof title != "undefined"){
+        setTitle(title) {
+            if (typeof title != "undefined") {
                 this.title = title;
-            }else{
+            } else {
                 this.title = this._title;
             }
         },
@@ -137,48 +141,34 @@ export default {
             console.warn(height, "traywin height");
             remote.getCurrentWindow().setSize(380, height0 + height + 30)
         },
-        pushAll: () => {
-            alert("Developing...");
-            return;
-
-            let option = {
-                title: "title",
-                body: "body",
-                icon: "../static/hhw.ico",
-                href: 'https://www.ntfstool.com'
-            };
-
-            let hhwNotication = new window.Notification(option.title, option);
-
-            hhwNotication.onclick = function () {
-                shell.openExternal(option.href)
-            }
+        openWebsite: () => {
+            shell.openExternal("http://www.ntfstool.com")
         },
-        openSettingPage(){
+        openSettingPage() {
             this.menu_box1 = false;
             ipcRenderer.send('MainMsgFromRender', 'openSettingPage')
         },
-        openDialog(){
+        openDialog() {
             this.menu_box1 = false;
             ipcRenderer.send('MainMsgFromRender', 'openDialogPage')
         },
-        openLog(){
+        openLog() {
             this.menu_box1 = false;
             openLog();
         },
-        openAboutPage(){
+        openAboutPage() {
             this.menu_box1 = false;
             ipcRenderer.send('MainMsgFromRender', 'openAboutPage')
         },
-        openFeedBackPage(){
+        openFeedBackPage() {
             this.menu_box1 = false;
             ipcRenderer.send('MainMsgFromRender', 'openFeedBackPage')
         },
-        openHomePage(){
+        openHomePage() {
             this.menu_box1 = false;
             ipcRenderer.send('MainMsgFromRender', 'openHomePage')
         },
-        exitAll(){
+        exitAll() {
             this.menu_box1 = false;
             ipcRenderer.send('MainMsgFromRender', 'exitAll')
         },
@@ -203,5 +193,11 @@ export default {
             }
             this.atest_lasttime = cur_time;
         },
+        openShare() {
+            let subject = this.$i18n.t('RecommendUseing');
+            let body = "Hi!%0d%0a "+this.$i18n.t('AlreadyUsing')+"%0d%0a"+this.$i18n.t('FindMore')
+                +"%0d%0ahttps://ntfstool.com/?tellfriends";
+            shell.openExternal("mailto:?cc=service@ntfstool.com&subject=" + subject + "&body=" + body)
+        }
     }
 }

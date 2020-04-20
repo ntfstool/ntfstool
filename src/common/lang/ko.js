@@ -130,4 +130,10 @@ export default {
     ConfirmConfigtoreset: "모든 구성을 기본값으로 재설정합니다",
     Theresetissuccessful: "재설정에 성공했습니다. 구성 페이지를 다시여십시오",
     Resetfailed: "재설정 실패",
+    Mounting:"설치",
+    Readonly:"읽기 전용",
+    AlreadyUsing:"이미 NtfsTool을 사용하고 있으며 정말 기쁩니다.",
+    FindMore:"관심이 있으시면 여기에서 자세한 정보를 찾으십시오.",
+    RecommendUseing:"이 NTFS 도구를 사용하여 Mac 확장 디스크를 작동하는 것이 좋습니다",
+    SendEmailForHelp:"도움을 받으려면 이메일을 보내십시오",
 }

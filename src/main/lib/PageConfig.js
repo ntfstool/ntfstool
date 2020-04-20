@@ -1,7 +1,7 @@
 import {app, BrowserWindow, Menu, Tray, ipcMain,globalShortcut,crashReporter,screen,Notification} from 'electron'
 import {isDev} from "@/common/utils/AlfwCommon";
 import {AlConst} from "@/common/utils/AlfwConst";
-// var usbDetect = require('usb-detection');
+var fs= require("fs")
 var winURL;
 var homeWinHandle =null;
 var settingPageHandle = null;
@@ -37,6 +37,15 @@ export function doUpdateViewEvent(event,args) {
     }
 }
 
+export function doCreteFileEvent(event,args) {
+    if (homeWinHandle) {
+        homeWinHandle.send("CreteFileEvent");
+    }
+
+    if (trayPageHandle) {
+        trayPageHandle.send("CreteFileEvent");
+    }
+}
 
 
 export function doSudoPwdEvent(arg) {
@@ -74,9 +83,8 @@ export function openPages(){
         openDialogPage("hide");
         openSettingPage("hide");
         openFeedBackPage("hide");
-    }, 5000)
+    }, 3000)
 }
-
 
 export function openPageByName(name){
     if (name == "openSettingPage") {
@@ -168,7 +176,14 @@ const openHomePage = () => {
 
         homeWinHandle.once('ready-to-show', () => {
             _homeWinMenu();
-            homeWinHandle.show();
+
+            var loginItemSettings = app.getLoginItemSettings();
+            if(loginItemSettings && typeof loginItemSettings.wasOpenedAtLogin != "undefined" && loginItemSettings.wasOpenedAtLogin == true){
+                homeWinHandle.hide();
+            }else{
+                homeWinHandle.show();
+            }
+
             if(isDev()){
                 homeWinHandle.webContents.openDevTools()
             }
@@ -329,6 +344,11 @@ const openDialogPage = (show_force) => {
         dialogPageHandle.setMaxListeners(MaxBrowserWindowLimits)
 
         dialogPageHandle.once('ready-to-show', () => {
+            if(!fs.existsSync("/Library/Frameworks/OSXFUSE.framework")){
+                dialogPageHandle.send("ShowDialogEvent", "showInstallFuse");
+                dialogPageHandle.show()
+            }
+
             if (show_force !== "hide") {
                 dialogPageHandle.show()
             }
@@ -414,9 +434,8 @@ const _homeWinMenu = () => {
                 },
                 {
                     label: 'Share',
-                    click: async () => {
-                        const {shell} = require('electron')
-                        await shell.openExternal("mailto:?cc=service@ntfstool.com&subject=I recommend using this NTFSTool to operate the extended disk&body=Hi!%0d%0a I\'m already using NtfsTool and I\'m really happy with it.%0d%0aFind more info here if you\'re interested:%0d%0ahttps://ntfstool.com/?tellfriends")
+                    click:() => {
+                        trayPageHandle.send("OpenShare");
                     }
                 },
                 {type: 'separator'},

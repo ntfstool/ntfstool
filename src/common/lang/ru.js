@@ -129,4 +129,10 @@ export default {
     ConfirmConfigtoreset: "Подтвердите сброс настроек",
     Theresetissuccessful: "Сброс произведен, перезапустите окно настроек",
     Resetfailed: "Не удалось сбросить настройки",
+    Mounting:"монтаж",
+    Readonly:"Только для чтения",
+    AlreadyUsing:"Я уже использую NtfsTool, и я действительно доволен этим.",
+    FindMore:"Найти больше информации здесь, если вы заинтересованы:",
+    RecommendUseing:"Я рекомендую использовать этот NTFSTool для работы с расширенным диском Mac",
+    SendEmailForHelp:"Отправить письмо для помощи",
 }

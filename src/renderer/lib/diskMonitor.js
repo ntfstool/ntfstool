@@ -26,7 +26,6 @@ const {getDiskInfo, getDiskList} = require('diskutil')
 const {setStoreForDiskList, getStoreForDiskList,watchStatus} = require("@/common/utils/AlfwStore")
 const {autoMountNtfsDisk} = require("@/common/utils/AlfwDisk")
 import {unitTimesToRun, queueExec, filterNtfsNeedMountByDiskList} from '@/common/utils/AlfwCommon.js'
-import {alEvent} from '@/common/utils/alEvent'
 import {AlConst} from '@/common/utils/AlfwConst'
 const {_} = require('lodash')
 
@@ -46,6 +45,11 @@ export function test() {
 export function fsListenMount() {
     var path = '/Volumes/';
     watchmac(path, function (data) {
+        if(typeof data.Event != "undefined" && data.Event == "CreteFileEvent"){
+            console.warn("Start CreteFileEvent...");
+            ipcRenderer.send("CreteFileEvent");
+        }
+
         if(watchStatus() === true){
             console.warn(data, "watchmac")
             updateDisklist();
@@ -75,6 +79,20 @@ export function updateDisklist(callback) {
                 });
             }
 
+            //filter ext unmounted
+            if(typeof diskList.ext != "undefined") {
+                diskList.ext = diskList.ext.filter(function (item) {
+                    if(_.get(item, "info.volumename").replace(/\s+/g,"").indexOf("nofilesystem") > 0){
+                        return false;
+                    }
+
+                    if (_.get(item, "info.typebundle") == "efi" || _.get(item, "info.typebundle") == "msr") {
+                        return false;
+                    }
+
+                    return true;
+                });
+            }
 
             //filter image unmounted
             if(typeof diskList.image != "undefined") {

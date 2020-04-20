@@ -203,11 +203,6 @@
                         <el-button @click="checkSoftUpdate">{{$t('Checkforupdates')}}</el-button>
                         <el-button @click="resetConf">{{$t('Resetallconfiguration')}}</el-button>
                     </div>
-
-
-                    <div>
-                        <span style="font-size: 12px;">{{$t('Lastchecktime')}} : 2020.2.12 14:36</span>
-                    </div>
                 </el-form-item>
             </el-form>
         </el-main>

@@ -65,8 +65,7 @@
 
 
                                         <span v-if="typeof item.status != 'undefined' && (item.status == 0)" class="block_3n_d_1_sp">
-                                            <!-- TODO: add language strings for `mounting...` -->
-                                            mounting...
+                                            {{$t('Mounting')}}...
                                         </span>
 
                                         <span v-else class="block_3n_d_1_sp">{{item.name.length > 16 ? (item.name.substring(0,16) + "...") : item.name}}</span>
@@ -86,8 +85,9 @@
                                 <div v-if="typeof item.info != 'undefined' && typeof item.info.mounted != 'undefined' && item.info.mounted == true"
                                 >
                                     <div v-if="typeof item.info != 'undefined' && typeof item.info.readonly !='undefined' && item.info.readonly">
-                                        <!-- TODO: add language strings for `Readonly` -->
-                                        <span class="readonly">Readonly</span>
+                                        <span class="readonly">
+                                            {{$t('Readonly')}}
+                                        </span>
                                     </div>
 
                                     <div class="lm-block_3n_d_2"
@@ -138,12 +138,6 @@
                 <div class="rheader_1">
                     <span> {{select_item.name}}</span>
                 </div>
-
-                <!--<div class="help-block" @click="help()">-->
-                    <!--<div>-->
-                        <!--<i class="iconfont icondot" style=" font-size: 16px;">&#xe60d;</i> Help-->
-                    <!--</div>-->
-                <!--</div>-->
             </el-header>
 
 
@@ -212,7 +206,6 @@
 
                         <div class="rmain2_2">
                             <div class="rmain2_2_bar" v-if="typeof select_item.info.percentage !='undefined'">
-                                <!--background-color: #5586db;-->
                                 <span v-if="select_item.info.percentage >= 90"
                                       v-bind:style="{ width: select_item.info.percentage + '%', backgroundColor: '#fc615d' }"></span>
 
@@ -309,7 +302,7 @@
                         <div @click="openFeedBackPage">{{$t('Submitfeedback')}}</div>
                         <div @click="openSettingPage"> {{$t('preferences')}}</div>
                         <span class="line"></span>
-                        <div @click="clearPwd">{{$t('Clearpassword')}}</div>
+                        <!--<div @click="clearPwd">{{$t('Clearpassword')}}</div>-->
                         <div @click="openAboutPage"> {{$t('About')}}</div>
                     </div>
                 </div>

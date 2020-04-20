@@ -18,10 +18,13 @@
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
 import {getPackageVersion, disableZoom, getSystemInfo} from '@/common/utils/AlfwCommon.js'
-import {ipcRenderer,shell} from 'electron'
+import {ipcRenderer, shell} from 'electron'
+
 const Store = require('electron-store');
 const store = new Store();
 const {remote} = require('electron')
+var get = require('get');
+const saveLog = require('electron-log');
 
 export default {
     components: {},
@@ -39,10 +42,10 @@ export default {
         };
 
         return {
-            auto_run:store.get("auto_run") == false ? false : true,
+            auto_run: store.get("auto_run") == false ? false : true,
             theme: store.get("theme") != "undefined" ? store.get("theme") : 1,
             lang: store.get("lang") != "undefined" ? store.get("lang") : "english",
-            show_menu:store.get("show_menu") == false ? false : true,
+            show_menu: store.get("show_menu") == false ? false : true,
             install_bug_type: store.get("common.install_bug_type") != "undefined" ? store.get("common.install_bug_type") : "auto_solve",
             how_restart_window: store.get("common.how_restart_window") != "undefined" ? store.get("common.how_restart_window") : "change_to_bacground",
             //message
@@ -62,7 +65,7 @@ export default {
             privacy_url: store.get("privacy_url") != "undefined" ? store.get("privacy_url") : "",
             update_beta_url: store.get("update.update_beta_url") != "undefined" ? store.get("update.update_beta_url") : "",
 
-            lang_list:this.$t('languages'),
+            lang_list: this.$t('languages'),
 
 
             remote_size: [],
@@ -88,7 +91,7 @@ export default {
         disableZoom(require('electron').webFrame);
 
 
-        console.warn(this.lang_list,"lang_list")
+        console.warn(this.lang_list, "lang_list")
         // this.remote_size = remote.getCurrentWindow().getSize();
         // console.warn(this.remote_size,"remote_size");
         //
@@ -114,7 +117,7 @@ export default {
                     this.remote_size = [680, 185];
                     break;
                 case 5:
-                    this.remote_size = [530, 330];
+                    this.remote_size = [530, 250];
                     break;
             }
 
@@ -124,63 +127,135 @@ export default {
         onSubmit() {
             console.log('submit!');
         },
-        setToggleTrayMenu(){
+        setToggleTrayMenu() {
             this.show_menu = ipcRenderer.sendSync('toggleTrayMenu') == "destroy" ? false : true;
-            store.set("show_menu",this.show_menu);
+            store.set("show_menu", this.show_menu);
         },
         changeTheme() {
-            console.warn("set theme",this.theme);
-            store.set("theme",this.theme);
+            console.warn("set theme", this.theme);
+            store.set("theme", this.theme);
             this.$refs.carouselObj.setActiveItem(this.theme);
         },
         changeLang() {
-            store.set("lang",this.lang);
+            store.set("lang", this.lang);
             this.$i18n.locale = this.lang;
-            ipcRenderer.send('ChangeLangEvent',this.lang);
+            ipcRenderer.send('ChangeLangEvent', this.lang);
 
         },
         changeInstallBugType() {
-            console.warn(this.install_bug_type,"install_bug_type");
-            store.set('common.install_bug_type',this.install_bug_type);
+            console.warn(this.install_bug_type, "install_bug_type");
+            store.set('common.install_bug_type', this.install_bug_type);
         },
         changeHowRestartWindow() {
-            store.set("common.how_restart_window",this.how_restart_window);
+            store.set("common.how_restart_window", this.how_restart_window);
         },
-        changeAutoRun(){
-            store.set("auto_run",this.auto_run);
-            ipcRenderer.send('AutoRunEvent',this.auto_run);
+        changeAutoRun() {
+            store.set("auto_run", this.auto_run);
+            ipcRenderer.send('AutoRunEvent', this.auto_run);
         },
         changeMountShowMsg() {
-            store.set("message.mount_show_msg",this.mount_show_msg);
+            store.set("message.mount_show_msg", this.mount_show_msg);
         },
         changeUpdateShowMsg() {
-            store.set("message.update_show_msg",this.update_show_msg);
+            store.set("message.update_show_msg", this.update_show_msg);
         },
         changeErrorDiskMsg() {
-            store.set("message.error_disk_msg",this.error_disk_msg);
+            store.set("message.error_disk_msg", this.error_disk_msg);
         },
 
         changeAutoCheck() {
-            store.set("update.auto_check",this.auto_check);
+            store.set("update.auto_check", this.auto_check);
         },
         changeAutoBetaUpdate() {
-            store.set("update.auto_beta_update",this.auto_beta_update);
+            store.set("update.auto_beta_update", this.auto_beta_update);
         },
-        openPrivacyUrl(){
+        openPrivacyUrl() {
             shell.openExternal(this.privacy_url);
         },
-        checkSoftUpdate(){
-            alert($t('Checkforupdates'));
+        versionStringCompare(preVersion = '', lastVersion = '') {
+            var sources = preVersion.split('.');
+            var dests = lastVersion.split('.');
+            var maxL = Math.max(sources.length, dests.length);
+            var result = 0;
+            for (let i = 0; i < maxL; i++) {
+                let preValue = sources.length > i ? sources[i] : 0;
+                let preNum = isNaN(Number(preValue)) ? preValue.charCodeAt() : Number(preValue);
+                let lastValue = dests.length > i ? dests[i] : 0;
+                let lastNum = isNaN(Number(lastValue)) ? lastValue.charCodeAt() : Number(lastValue);
+                if (preNum < lastNum) {
+                    result = -1;
+                    break;
+                } else if (preNum > lastNum) {
+                    result = 1;
+                    break;
+                }
+            }
+            return result;
         },
-        resetConf(){
-            var confirm_status = confirm($t('ConfirmConfigtoreset'))
+        checkSoftUpdate() {
+            var _this = this;
+            var cur_version = getPackageVersion();
+            try {
+                get('https://ntfstool.com/version.json').asString(function (err, ret) {
+                    if (err) throw err;
+                    var data = {
+                        "version": "",
+                        "url": "https://ntfstool.com/",
+                        "title": "New Version Found",
+                        "detail": "update"
+                    };
+
+                    try {
+                        var getData = JSON.parse(ret);
+                        if (!getData || typeof getData.version == "undefined" || !getData.version) {
+                            saveLog.error("not found version!")
+                            return;
+                        }
+                        if (typeof getData.version != "undefined") {
+                            data.version = getData.version;
+                        }
+                        if (typeof getData.url != "undefined") {
+                            data.url = getData.url;
+                        }
+                        if (typeof getData.title != "undefined") {
+                            data.title = getData.title;
+                        }
+                        if (typeof getData.detail != "undefined") {
+                            data.detail = getData.detail;
+                        }
+                    } catch (e) {
+                        saveLog.warn("check version format error!", e)
+                    }
+
+                    if (typeof data.version != "undefined" && data.version) {
+                        saveLog.warn({
+                            cur_version: cur_version,
+                            check_version: data.version
+                        })
+                        if (cur_version != data.version && _this.versionStringCompare(cur_version, data.version) < 0) {
+                            var confirm_status = confirm(data.title + "(" + cur_version + "->" + data.version + ")" + "\n" + data.detail);
+                            if (confirm_status) {
+                                shell.openExternal(data.url);
+                            }
+                        } else {
+                            alert("Already the latest version!");
+                        }
+                    } else {
+                        saveLog.warn("check version format error!")
+                    }
+                });
+            } catch (e) {
+                saveLog.error("get update error!", e);
+            }
+        },
+        resetConf() {
+            var confirm_status = confirm(this.$i18n.t('ConfirmConfigtoreset'))
             if (confirm_status) {
-                if(ipcRenderer.sendSync('MainMsgFromRender',"resetConf") == "succ" ? true : false){
-                    alert($t('Theresetissuccessful'));
-                    remote.getCurrentWindow();
+                if (ipcRenderer.sendSync('MainMsgFromRender', "resetConf") == "succ" ? true : false) {
+                    alert(this.$i18n.t('Theresetissuccessful'));
                     remote.getCurrentWindow().close();
-                }else{
-                    alert($t('Resetfailed'));
+                } else {
+                    alert(this.$i18n.t('Resetfailed'));
                 }
             }
         }

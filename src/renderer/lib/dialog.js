@@ -221,12 +221,13 @@ export default {
         installfuse(){
             console.warn(fuse_pkg,"fuse_pkgB")
             if (fs.existsSync(fuse_pkg)) {
-                shell.openItem(fuse_pkg)
+                shell.openItem(fuse_pkg);
             }else{
-                alert($t('NoFuseinstallation'));
+                alert(this.$i18n.t('NoFuseinstallation'));
                 shell.openExternal("https://osxfuse.github.io/")
             }
 
+            remote.getCurrentWindow().hide();
         },
         cancel_installfuse(){
             remote.getCurrentWindow().hide();

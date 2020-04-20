@@ -25,6 +25,4 @@ export const AlConst = {
     SudoPwdEvent:"SudoPwdEvent",
     InstallFuseEvent:"InstallFuseEvent",
     GlobalViewUpdate:"GlobalViewUpdate",
-
-
 };

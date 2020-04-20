@@ -129,4 +129,11 @@ export default {
     ConfirmConfigtoreset: "Confirmar para restablecer todas las configuraciones a las predeterminadas",
     Theresetissuccessful: "El restablecimiento se realizó correctamente, vuelva a abrir la página de configuración",
     Resetfailed: "Error al restablecer",
+
+    Mounting:"Montaje",
+    Readonly:"Solo lectura",
+    AlreadyUsing:"Ya estoy usando NtfsTool y estoy muy contento con eso.",
+    FindMore:"Encuentre más información aquí si está interesado:",
+    RecommendUseing:"Recomiendo usar este NTFSTool para operar el disco extendido de Mac",
+    SendEmailForHelp:"Enviar correo electrónico para obtener ayuda",
 }

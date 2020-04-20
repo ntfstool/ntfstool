@@ -28,8 +28,7 @@ import {
     mountDisk,
     openInFinder
 } from '@/common/utils/AlfwDisk'
-import {alEvent} from '@/common/utils/alEvent'
-
+const {_} = require('lodash')
 
 import {fsListenMount, updateDisklist, test} from '@/renderer/lib/diskMonitor'
 import {AlConst} from "@/common/utils/AlfwConst";
@@ -66,8 +65,6 @@ export default {
     mounted() {
         var _this = this;
 
-
-
         console.warn("getMountType", getMountType());
 
         this.refreshDevice();
@@ -79,8 +76,32 @@ export default {
         fsListenMount();
 
         ipcRenderer.on(AlConst.GlobalViewUpdate, () => {
-            console.warn(`${AlConst.GlobalViewUpdate} come home ...`);
             this.diskList = getStoreForDiskList();
+            if(!_.get(this.select_item,"name") && !_.get(this.select_item,"type")){
+                if(_.get(this.diskList,"inner[0]")){
+                    this.select_item = _.get(this.diskList,"inner[0]");
+                    this.select_disk_key = _.get(this.diskList,"inner[0].index");
+                }
+            }
+        });
+
+        ipcRenderer.on("CreteFileEvent", () => {
+            console.warn("Home on CreteFileEvent...")
+            var _this = this;
+            setTimeout(function () {
+                console.warn("start CreteFileEvent refreshDevice ... (3)")
+                _this.refreshDevice();
+            },3000)
+
+            setTimeout(function () {
+                console.warn("start CreteFileEvent refreshDevice ... (8)")
+                _this.refreshDevice();
+            },8000)
+
+            setTimeout(function () {
+                console.warn("start CreteFileEvent refreshDevice ... (18)")
+                _this.refreshDevice();
+            },18000)
         });
 
 
@@ -105,14 +126,14 @@ export default {
     methods: {
 
         help() {
-            var confirm_status = confirm($t('Submittherunninglog'))
+            var confirm_status = confirm(this.$i18n.t('Submittherunninglog'))
             if (confirm_status) {
-                var confirm_status = confirm($t('Theanalysisdata'))
+                var confirm_status = confirm(this.$i18n.t('Theanalysisdata'))
                 if (confirm_status) {
 
                 }
             } else {
-                alert($t('Youhavegivenup'));
+                alert(this.$i18n.t('Youhavegivenup'));
             }
         },
         refreshDevice() {
@@ -127,11 +148,11 @@ export default {
             }
         },
         changeVolumeName(select_item) {
-            this.$prompt($t('Pleaseenteranewname'), '', {
+            this.$prompt(this.$i18n.t('Pleaseenteranewname'), '', {
                 showClose: false,
                 inputValue: select_item.volume_name,
-                confirmButtonText: $t('Confirm'),
-                cancelButtonText: $t('Cancel'),
+                confirmButtonText: this.$i18n.t('Confirm'),
+                cancelButtonText: this.$i18n.t('Cancel'),
             }).then(({value}) => {
                 this.$alert("ok " + value);
             })
@@ -152,12 +173,12 @@ export default {
             var _this = this;
             console.warn(item, "select_item");
             if (item.group == 'inner') {
-                alert(this.$i18n.t('Internaldiskcannotbeunmounted') + ":" + item.name);
+                alert(_this.$i18n.t('Internaldiskcannotbeunmounted') + ":" + item.name);
                 return;
             }
 
 
-            var confirm_status = confirm(this.$i18n.t('OKtounmountthedisk') + ":" + item.name)
+            var confirm_status = confirm(_this.$i18n.t('OKtounmountthedisk') + ":" + item.name)
             console.warn(confirm_status, "confirm confirm_status")
 
             if (confirm_status) {
@@ -165,12 +186,12 @@ export default {
                     console.warn("uMountDisk res", res);
                     let option = {
                         title: "NTFSTool",
-                        body: item.name + " " + $t('Diskuninstallsucceeded'),
+                        body: item.name + " " + _this.$i18n.t('Diskuninstallsucceeded'),
                     };
                     new window.Notification(option.title, option);
                     _this.refreshDevice();
                 }).catch(err => {
-                    alert($t('Uninstallfailed'));
+                    alert(_this.$i18n.t('Uninstallfailed'));
                 })
             }
         },
@@ -180,7 +201,7 @@ export default {
                 console.warn("mountDisk res", res)
                 let option = {
                     title: "NTFSTool",
-                    body: item.name + " "+$t('Diskmountedsuccessfully'),
+                    body: item.name + " "+_this.$i18n.t('Diskmountedsuccessfully'),
                 };
                 new window.Notification(option.title, option);
                 _this.refreshDevice();
@@ -197,7 +218,7 @@ export default {
         openDisk(item) {
             console.warn("dbclick ", item);
             if (!item.info.mountpoint) {
-                alert($t('Thediskisnotmounted'));
+                alert(this.$i18n.t('Thediskisnotmounted'));
                 return;
             }
             openInFinder(item.info.mountpoint).catch(() => {

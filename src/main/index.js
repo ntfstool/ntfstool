@@ -26,7 +26,7 @@ const saveLog = require('electron-log');
 import {autoUpdater} from "electron-updater"
 
 
-import {checkNeedInitStore, setDefaultStore, InitSystemInfo} from '../common/utils/AlfwStore.js'
+import {checkNeedInitStore, setDefaultStore, InitSystemInfo,getStore} from '../common/utils/AlfwStore.js'
 import {
     openPages,
     openPageByName,
@@ -35,7 +35,8 @@ import {
     doChangeLangEvent,
     doDesktopAppEvent,
     doSudoPwdEvent,
-    doUpdateViewEvent
+    doUpdateViewEvent,
+    doCreteFileEvent
 } from '../main/lib/PageConfig.js'
 import {AlConst} from "@/common/utils/AlfwConst";
 import {getPackageVersion} from "@/common/utils/AlfwCommon";
@@ -46,6 +47,138 @@ app.disableHardwareAcceleration();//disable gpu
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = '1';
 
 app.allowRendererProcessReuse = true;
+
+try {
+    app.on('ready', () => {
+        InitSystemInfo();
+        if (checkNeedInitStore()) {
+            //first run
+            try {
+                app.setLoginItemSettings({
+                    openAtLogin: true,
+                    openAsHidden: true
+                })
+            } catch (e) {
+                console.error(e, "changeAutoRun Error0");
+            }
+        }
+        if(getStore("update.auto_check")){
+            checkUpdate();
+        }
+        openPages();
+    })
+
+    app.on('before-quit', () => {
+        exitAll();
+    })
+
+    //for ctrl + c exit
+    process.on("SIGINT", function () {
+        console.log('WTF')
+        exitAll();
+        process.exit(0)
+
+    });
+
+    //Main process listen message
+    ipcMain.on('MainMsgFromRender', function (event, arg) {
+        console.warn(arg, "Main process listened the message");
+        if (arg == "exitAll") {
+            exitAll();
+        } else if (arg == "resetConf") {
+            setDefaultStore();
+            setTimeout(function () {
+                app.relaunch()
+                exitAll();
+            },1000);
+            event.returnValue = 'succ';
+        } else {
+            //TODO
+            openPageByName(arg);
+        }
+    })
+
+    //listen the TrayMenu
+    ipcMain.on('toggleTrayMenu', function (event, arg) {
+        toggleTrayMenu();
+    })
+
+    //listen the lang change
+    ipcMain.on('ChangeLangEvent', function (event, arg) {
+        doChangeLangEvent(arg);
+    })
+
+    //listen and send the device event
+    ipcMain.on('DesktopAppEvent', function (event, arg) {
+        doDesktopAppEvent(arg);
+    })
+
+    //listen and send the device event
+    ipcMain.on('AutoRunEvent', function (event, status) {
+        console.warn(status, "Main AutoRunEvent");
+        try {
+            app.setLoginItemSettings({
+                openAtLogin: status,
+                openAsHidden: true
+            })
+        } catch (e) {
+            console.error(e, "changeAutoRun Error");
+        }
+    })
+
+    //sudo pwd event
+    ipcMain.on(AlConst.SudoPwdEvent, function (event, arg) {
+        console.warn("Main SudoPwdEvent Start >>>>>>>>>>>>>>>>>>>>")
+        openPageByName("openSudoPage");
+    })
+
+    ipcMain.on(AlConst.InstallFuseEvent, function (event, arg) {
+        console.warn("Main InstallFuseEvent Start >>>>>>>>>>>>>>>>>>>>")
+        openPageByName("openInstallFusePage");
+    })
+
+
+    ipcMain.on(AlConst.GlobalViewUpdate, function (event, arg) {
+        console.warn("Main GlobalViewUpdate Start >>>>>>>>>>>>>>>>>>>>")
+        doUpdateViewEvent();
+    })
+
+    ipcMain.on("CreteFileEvent", function (event, arg) {
+        console.warn("Main CreteFileEvent Start >>>>>>>>>>>>>>>>>>>>")
+        doCreteFileEvent();
+    })
+
+
+    //sudo pwd event
+    ipcMain.on('NoticeEvent', function (event, arg) {
+        console.warn(arg, "MainProcessNotice")
+        new Notification(arg).show();
+    })
+} catch (e) {
+    saveLog.error(e, "mainError exitAll");
+    exitAll();
+}
+
+function versionStringCompare(preVersion='', lastVersion=''){
+    var sources = preVersion.split('.');
+    var dests = lastVersion.split('.');
+    var maxL = Math.max(sources.length, dests.length);
+    var result = 0;
+    for (let i = 0; i < maxL; i++) {
+        let preValue = sources.length>i ? sources[i]:0;
+        let preNum = isNaN(Number(preValue)) ? preValue.charCodeAt() : Number(preValue);
+        let lastValue = dests.length>i ? dests[i]:0;
+        let lastNum =  isNaN(Number(lastValue)) ? lastValue.charCodeAt() : Number(lastValue);
+        if (preNum < lastNum) {
+            result = -1;
+            break;
+        } else if (preNum > lastNum) {
+            result = 1;
+            break;
+        }
+    }
+    return result;
+}
 
 function checkUpdate() {
     var cur_version = process.env.NODE_ENV === 'development' ? process.env.npm_package_version : app.getVersion()
@@ -90,7 +223,7 @@ function checkUpdate() {
                     cur_version: cur_version,
                     check_version: data.version
                 })
-                if (cur_version != data.version) {
+                if (cur_version != data.version && versionStringCompare(cur_version,data.version) < 0) {
                     const dialogOpts = {
                         type: 'info',
                         buttons: ['Cancel', "OK"],
@@ -113,106 +246,5 @@ function checkUpdate() {
     } catch (e) {
         saveLog.error("get update error!", e);
     }
-}
-
-try {
-    app.on('ready', () => {
-        checkUpdate();
-
-        InitSystemInfo();
-        if (checkNeedInitStore()) {
-            //first run
-            try {
-                app.setLoginItemSettings({
-                    openAtLogin: true,
-                    openAsHidden: true
-                })
-            } catch (e) {
-                console.error(e, "changeAutoRun Error0");
-            }
-        }
-        openPages();
-    })
-
-    app.on('before-quit', () => {
-        exitAll();
-    })
-
-    //for ctrl + c exit
-    process.on("SIGINT", function () {
-        console.log('WTF')
-        exitAll();
-        process.exit(0)
-
-    });
-
-    //Main process listen message
-    ipcMain.on('MainMsgFromRender', function (event, arg) {
-        console.warn(arg, "Main process listened the message");
-        if (arg == "exitAll") {
-            exitAll();
-        } else if (arg == "resetConf") {
-            setDefaultStore();
-            event.returnValue = 'succ';
-        } else {
-            //TODO
-            openPageByName(arg);
-        }
-    })
-
-    //listen the TrayMenu
-    ipcMain.on('toggleTrayMenu', function (event, arg) {
-        toggleTrayMenu();
-    })
-
-    //listen the lang change
-    ipcMain.on('ChangeLangEvent', function (event, arg) {
-        doChangeLangEvent(arg);
-    })
-
-    //listen and send the device event
-    ipcMain.on('DesktopAppEvent', function (event, arg) {
-        doDesktopAppEvent(arg);
-    })
-
-    //listen and send the device event
-    ipcMain.on('AutoRunEvent', function (event, status) {
-        console.warn(status, "Main AutoRunEvent");
-        try {
-            app.setLoginItemSettings({
-                openAtLogin: status,
-                openAsHidden: status
-            })
-        } catch (e) {
-            console.error(e, "changeAutoRun Error");
-        }
-    })
-
-    //sudo pwd event
-    ipcMain.on(AlConst.SudoPwdEvent, function (event, arg) {
-        console.warn("Main SudoPwdEvent Start >>>>>>>>>>>>>>>>>>>>")
-        openPageByName("openSudoPage");
-    })
-
-    ipcMain.on(AlConst.InstallFuseEvent, function (event, arg) {
-        console.warn("Main InstallFuseEvent Start >>>>>>>>>>>>>>>>>>>>")
-        openPageByName("openInstallFusePage");
-    })
-
-
-    ipcMain.on(AlConst.GlobalViewUpdate, function (event, arg) {
-        console.warn("Main GlobalViewUpdate Start >>>>>>>>>>>>>>>>>>>>")
-        doUpdateViewEvent();
-    })
-
-
-    //sudo pwd event
-    ipcMain.on('NoticeEvent', function (event, arg) {
-        console.warn(arg, "MainProcessNotice")
-        new Notification(arg).show();
-    })
-} catch (e) {
-    saveLog.error(e, "mainError exitAll");
-    exitAll();
 }
 
