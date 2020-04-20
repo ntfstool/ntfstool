@@ -134,7 +134,7 @@ export default {
     Readonly:"読み取り専用",
     AlreadyUsing:"私はすでにNtfsToolを使用しており、本当に満足しています。",
     FindMore:"興味がある場合は、こちらで詳細をご覧ください:",
-    RecommendUseing:"このNTFSToolを使用してMac拡張ディスクを操作することをお勧めします",
+    RecommendUsing:"このNTFSToolを使用してMac拡張ディスクを操作することをお勧めします",
     SendEmailForHelp:"助けを求めるメールを送る",
     Viewthetranslation:"翻訳ファイルを表示し、更新された翻訳コンテンツを電子メールで送信します",
     Helpsoftwaretranslation:"ソフトウェアによる言語翻訳の改善を支援する",

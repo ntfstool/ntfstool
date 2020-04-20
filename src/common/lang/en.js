@@ -134,7 +134,7 @@ export default {
     Readonly:"Readonly",
     AlreadyUsing:"I'm already using NtfsTool and I'm really happy with it.",
     FindMore:"Find more info here if you're interested:",
-    RecommendUseing:"I recommend using this NTFSTool to operate the mac extended disk",
+    RecommendUsing:"I recommend using this NTFSTool to operate the mac extended disk",
     SendEmailForHelp:"Send Email for help",
     Viewthetranslation:"View the translation file, and send the updated translation content to e-mail to",
     Helpsoftwaretranslation:"Help the software improve language translation",

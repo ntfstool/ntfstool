@@ -198,7 +198,7 @@ export default {
             this.atest_lasttime = cur_time;
         },
         openShare() {
-            let subject = this.$i18n.t('RecommendUseing');
+            let subject = this.$i18n.t('RecommendUsing');
             let body = "Hi!%0d%0a "+this.$i18n.t('AlreadyUsing')+"%0d%0a"+this.$i18n.t('FindMore')
                 +"%0d%0ahttps://ntfstool.com/?tellfriends";
             shell.openExternal("mailto:?cc=service@ntfstool.com&subject=" + subject + "&body=" + body)

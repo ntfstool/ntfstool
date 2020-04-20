@@ -133,7 +133,7 @@ export default {
     Readonly:"Только для чтения",
     AlreadyUsing:"Я использую NtfsTool и очень им доволен.",
     FindMore:"Здесь можно найти больше информации:",
-    RecommendUseing:"Рекомендую использовать NTFSTool для работы с дисками",
+    RecommendUsing:"Рекомендую использовать NTFSTool для работы с дисками",
     SendEmailForHelp:"Отправить письмо для помощи",
     Viewthetranslation:"Просмотрите файл перевода и отправьте обновленный контент перевода на электронную почту",
     Helpsoftwaretranslation:"Помогите программе улучшить языковой перевод",
