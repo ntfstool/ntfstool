@@ -109,7 +109,7 @@ Translations into versions for other languages are welcome 🧐!
 | ja    | 日本語              | ✔️      |
 | ko    | 한국어              | ✔️      |
 | pt-BR | Portuguese (Brazil) | 🚧      |
-| ru    | Русский             | 🚧      |
+| ru    | Русский             | ✔️      |
 | tr    | Türkçe              | 🚧      |
 | uk    | Українська          | 🚧      |
 | zh-CN | 简体中文            | ✔️      |

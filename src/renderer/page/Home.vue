@@ -65,6 +65,7 @@
 
 
                                         <span v-if="typeof item.status != 'undefined' && (item.status == 0)" class="block_3n_d_1_sp">
+                                            <!-- TODO: add language strings for `mounting...` -->
                                             mounting...
                                         </span>
 
@@ -85,6 +86,7 @@
                                 <div v-if="typeof item.info != 'undefined' && typeof item.info.mounted != 'undefined' && item.info.mounted == true"
                                 >
                                     <div v-if="typeof item.info != 'undefined' && typeof item.info.readonly !='undefined' && item.info.readonly">
+                                        <!-- TODO: add language strings for `Readonly` -->
                                         <span class="readonly">Readonly</span>
                                     </div>
 
