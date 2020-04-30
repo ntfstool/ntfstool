@@ -526,3 +526,11 @@
     font-family: cursive;
     padding-left: 0;
 }
+.translate-lang{
+    margin-top: 30px;
+    border: 1px dashed red;
+    padding: 10px;
+    display: flex;
+    position: relative;
+    cursor: pointer;
+}

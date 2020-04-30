@@ -44,6 +44,10 @@
                                 <span>NTFSTool for Mac {{$t('menu')}}</span>
                             </div>
 
+                            <div class="translate-lang" @click="openTransLang()">
+                                ⛳️ {{$t('Helpsoftwaretranslation')}}
+                            </div>
+
                             <div class="main-from_div_1_1-div mb10">
                                 <!--<div class="main-from_div_1_1-div_1">-->
                                     <!--<div style="display: flex;flex-direction: column;justify-content: center">-->

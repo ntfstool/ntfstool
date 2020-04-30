@@ -269,8 +269,8 @@
                                     <tr>
                                         <td></td>
                                         <td class="rmain2_3_1_rdtext">
-                                            {{(select_item.info.total_size - select_item.info.used_size).toFixed(2)}}
-                                            {{select_item.info.total_size_wei}}
+                                            {{showFreeSpace(select_item.info.total_size,select_item.info.total_size_wei,
+                                            select_item.info.used_size,select_item.info.used_size_wei)}}
                                         </td>
                                     </tr>
                                 </table>

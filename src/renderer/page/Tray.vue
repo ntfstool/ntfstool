@@ -116,12 +116,14 @@
 
                             <div class="diskb_3_3">
                                 <div style="font-size: 15px;">
+                                    {{$t('total')}}:
                                     {{typeof item.info != 'undefined' && typeof item.info.total_size != "undefined"
                                     ? item.info.total_size : "" }}
                                     {{typeof item.info != 'undefined' && typeof item.info.total_size_wei !=
                                     "undefined" ? item.info.total_size_wei : "" }}
                                 </div>
                                 <div style="    font-size: 15px;">
+                                    {{$t('used')}}:
                                     {{typeof item.info != 'undefined' && typeof item.info.used_size != "undefined"
                                     ? item.info.used_size : "" }}
                                     {{typeof item.info != 'undefined' && typeof item.info.used_size_wei !=

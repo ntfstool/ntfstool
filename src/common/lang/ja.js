@@ -136,4 +136,8 @@ export default {
     FindMore:"興味がある場合は、こちらで詳細をご覧ください:",
     RecommendUseing:"このNTFSToolを使用してMac拡張ディスクを操作することをお勧めします",
     SendEmailForHelp:"助けを求めるメールを送る",
+    Viewthetranslation:"翻訳ファイルを表示し、更新された翻訳コンテンツを電子メールで送信します",
+    Helpsoftwaretranslation:"ソフトウェアによる言語翻訳の改善を支援する",
+    new_device_event:"新しいデバイスを発見する",
+    remove_device_event:"デバイスが削除されました"
 }

@@ -136,4 +136,8 @@ export default {
     FindMore:"Find more info here if you're interested:",
     RecommendUseing:"I recommend using this NTFSTool to operate the mac extended disk",
     SendEmailForHelp:"Send Email for help",
+    Viewthetranslation:"View the translation file, and send the updated translation content to e-mail to",
+    Helpsoftwaretranslation:"Help the software improve language translation",
+    new_device_event:"Discover new devices",
+    remove_device_event:"Device removed"
 }

@@ -136,4 +136,8 @@ export default {
     FindMore:"관심이 있으시면 여기에서 자세한 정보를 찾으십시오.",
     RecommendUseing:"이 NTFS 도구를 사용하여 Mac 확장 디스크를 작동하는 것이 좋습니다",
     SendEmailForHelp:"도움을 받으려면 이메일을 보내십시오",
+    Viewthetranslation:"번역 파일을보고 업데이트 된 번역 컨텐츠를 이메일로 보내십시오.",
+    Helpsoftwaretranslation:"소프트웨어의 언어 번역 개선",
+    new_device_event:"새로운 장치를 발견하십시오",
+    remove_device_event:"기기 제거"
 }

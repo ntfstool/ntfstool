@@ -99,6 +99,12 @@
             disableZoom(require('electron').webFrame);
             this.version = getPackageVersion();
 
+            ipcRenderer.on("ChangeLangEvent", (e, lang) => {
+                console.warn("feedback wind ChangeLangEvent", lang);
+                this.$i18n.locale = lang;
+                this.lang = lang;
+            });
+
             getSystemInfo().then(json => {
                 var pasysteminfo_parmrams = Object.keys(json).map(function (key) {
                     return encodeURIComponent(key) + "=" + encodeURIComponent(json[key]);
