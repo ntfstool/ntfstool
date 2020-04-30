@@ -23,7 +23,6 @@
 import {app, ipcMain, ipcRenderer, Notification, dialog, shell} from 'electron'
 
 const saveLog = require('electron-log');
-import {autoUpdater} from "electron-updater"
 
 
 import {checkNeedInitStore, setDefaultStore, InitSystemInfo,getStore} from '../common/utils/AlfwStore.js'
@@ -34,12 +33,11 @@ import {
     exitAll,
     doChangeLangEvent,
     doDesktopAppEvent,
-    doSudoPwdEvent,
     doUpdateViewEvent,
     doCreteFileEvent
 } from '../main/lib/PageConfig.js'
 import {AlConst} from "@/common/utils/AlfwConst";
-import {getPackageVersion} from "@/common/utils/AlfwCommon";
+
 
 var get = require('get');
 app.disableHardwareAcceleration();//disable gpu
@@ -51,6 +49,7 @@ app.allowRendererProcessReuse = true;
 try {
     app.on('ready', () => {
         InitSystemInfo();
+
         if (checkNeedInitStore()) {
             //first run
             try {
@@ -144,8 +143,8 @@ try {
     })
 
     ipcMain.on("CreteFileEvent", function (event, arg) {
-        console.warn("Main CreteFileEvent Start >>>>>>>>>>>>>>>>>>>>")
-        doCreteFileEvent();
+        console.warn({event, arg},"Main CreteFileEvent Start >>>>>>>>>>>>>>>>>>>>")
+        doCreteFileEvent(arg);
     })
 
 

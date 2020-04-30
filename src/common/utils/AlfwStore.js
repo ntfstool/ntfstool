@@ -18,8 +18,8 @@ const alfwStore = {
         how_restart_window: "change_to_bacground",
     },
     message: {
-        mount_show_msg: "",
-        update_show_msg: "",
+        mount_show_msg: true,
+        update_show_msg: true,
         error_disk_msg: "",
     },
     disk_list: {
@@ -139,6 +139,13 @@ export function getMountType(){
     return _.get(data,"mountType") == "outer" ? "outer" : "inner";
 }
 
+/**
+ * @returns {string}
+ */
+export function getMountNotifyStatus(){
+    return store.get("message.mount_show_msg") ? true : false;
+}
+
 
 export function watchStatus($val){
     if(typeof $val == "undefined"){
@@ -190,6 +197,13 @@ export function delIgnoreItem(name){
     store.set("IgnoreItem",ret);
     return true;
 }
+
+export function delAllIgnore(){
+    store.set("IgnoreItem",[]);
+    console.warn("delAllIgnore ok")
+    return true;
+}
+
 
 
 

@@ -20,10 +20,9 @@
 
 import {app,ipcRenderer, remote} from 'electron'
 import {getPackageVersion, disableZoom, choseDefaultNode, getSystemInfo} from '@/common/utils/AlfwCommon.js'
-import {clearPwd, getStoreForDiskList, getMountType} from '@/common/utils/AlfwStore'
+import {clearPwd, getStoreForDiskList, getMountType,getMountNotifyStatus} from '@/common/utils/AlfwStore'
 import {
     getDiskList,
-    getDiskFullInfo,
     uMountDisk,
     mountDisk,
     openInFinder
@@ -85,7 +84,7 @@ export default {
             }
         });
 
-        ipcRenderer.on("CreteFileEvent", () => {
+        ipcRenderer.on("CreteFileEvent", (event,arg) => {
             console.warn("Home on CreteFileEvent...")
             var _this = this;
             setTimeout(function () {
@@ -101,7 +100,21 @@ export default {
             setTimeout(function () {
                 console.warn("start CreteFileEvent refreshDevice ... (18)")
                 _this.refreshDevice();
-            },18000)
+            },18000);
+        });
+
+        ipcRenderer.on("UsbDeleteFileEvent", (event,arg) => {
+            if(getMountNotifyStatus()) {
+                new window.Notification(this.$i18n.t('remove_device_event'), {body: arg});
+            }
+        });
+
+        ipcRenderer.on("UsbAddFileEvent", (event,arg) => {
+            if(getMountNotifyStatus()){
+                new window.Notification(this.$i18n.t('new_device_event'), {body:arg}).onclick = function () {
+                    remote.getCurrentWindow().show();
+                };
+            }
         });
 
 
@@ -274,6 +287,61 @@ export default {
         clearPwd() {
             clearPwd();
             this.menu_box1 = false;
+        },
+        showFreeSpace(total_size,total_size_wei,used_size,used_size_wei){
+            let wei_to_num = function (wei) {
+                if(!wei || typeof wei != "string"){
+                    return 1;
+                }
+
+                wei = wei.toLowerCase();
+                if(wei.indexOf("tb") >= 0){
+                    return 1024*1024*1024;
+                }
+
+                if(wei.indexOf("gb") >= 0){
+                    return 1024*1024;
+                }
+
+                if(wei.indexOf("mb") >= 0){
+                    return 1024;
+                }
+
+                return 1;
+            }
+
+            let num_to_weinum = function (num) {
+                var num = parseFloat(num).toFixed(0);
+                if(isNaN(num)){
+                    return "-";
+                }
+                if(!num){
+                    return "--";
+                }
+                if(num <= 1024){
+                    return num + " KB";
+                }
+
+                if(num > 1024 && num <= 1024 * 1024){
+                    return (num/1024).toFixed(2) + " MB";
+                }
+
+                if(num > 1024*1024 && num <= 1024 * 1024 * 1024){
+                    return (num/(1024 * 1024)).toFixed(2) + " GB";
+                }
+
+                if(num > 1024*1024*1024 && num <= 1024 * 1024 * 1024 * 1024){
+                    return (num/(1024 * 1024*1024)).toFixed(2) + " TB";
+                }
+
+            }
+
+            var free_num = total_size * wei_to_num(total_size_wei) - used_size * wei_to_num(used_size_wei);
+            return num_to_weinum(free_num);
+            //
+            //
+            // return total_size +"|"+total_size_wei +
+            //     "#"+used_size+"|"+used_size_wei;
         }
     }
 }

@@ -115,7 +115,8 @@ export function noticeTheSystemError(_error, setOption) {
         getSudoPwdError: 10031,
         checkSudoPasswordError: 10041,
         opendevmod: 10030,
-        FEEDBACK_ERROR: 10040
+        FEEDBACK_ERROR: 10040,
+        UNCLEANERROR:10050
     };
     var error = (typeof _error != "undefined") ? _error : "system";
     console.warn(error, "error")

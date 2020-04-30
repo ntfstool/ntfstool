@@ -27,6 +27,8 @@ const {_} = require('lodash')
 import {ipcRenderer, remote} from 'electron'
 var reMountLock = [];//global lock
 var fs= require("fs")
+import {noticeTheSystemError} from '@/common/utils/AlfwCommon'
+
 
 export function autoMountNtfsDisk(mountInfo,cb) {
     try{
@@ -103,6 +105,19 @@ function reMountNtfs(index, force = false) {
             if (!fs.existsSync(mount_path)) {
                 await execShellSudo("mkdir -p " + mount_path);
                 //TODO ======================= this should be ignore
+            }else{
+                //the same name volumes
+                var samename_res = await execShell("mount |grep '" + mount_path + " '");
+
+                console.warn(samename_res,"samename_res");
+                if(samename_res && samename_res.indexOf(index) <= 0){
+                    console.warn("not found index");
+                    volumename = volumename + "1";//rename
+                    var mount_path = '/Volumes/' + volumename;
+                    if (!fs.existsSync(mount_path)) {
+                        await execShellSudo("mkdir -p " + mount_path);
+                    }
+                }
             }
 
             if(getMountType() == "inner"){
@@ -133,6 +148,15 @@ function reMountNtfs(index, force = false) {
         } catch (e) {
             reMountLock[index] = false;
             watchStatus(true);
+            if(typeof e == "string" && e.indexOf("unclean") >= 0){
+                //The disk contains an unclean file system (0, 0).
+                // Metadata kept in Windows cache, refused to mount.
+                // Falling back to read-only mount because the NTFS partition is in an
+                // unsafe state. Please resume and shutdown Windows fully (no hibernation
+                // or fast restarting.)
+                noticeTheSystemError("UNCLEANERROR",e);
+            }
+
             saveLog.error(e, "reMountNtfs Error");
             reject(e)
         }

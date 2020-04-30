@@ -62,6 +62,11 @@ export default {
         // //background event
         // fsListenMount();
 
+        ipcRenderer.on("ChangeLangEvent", (e, lang) => {
+            console.warn("dialog wind ChangeLangEvent", lang);
+            this.$i18n.locale = lang;
+        });
+
 
         ipcRenderer.on("ShowDialogEvent", (event, arg) => {
             saveLog.info(arg, "Dialog ShowDialogEvent");

@@ -258,6 +258,12 @@ export default {
                     alert(this.$i18n.t('Resetfailed'));
                 }
             }
+        },
+        openTransLang(){
+            alert(this.$i18n.t('Viewthetranslation') + " service@ntfstool.com");
+            shell.openExternal("https://github.com/ntfstool/ntfstool/blob/master/src/common/lang/en.js")
+            shell.openExternal("https://github.com/ntfstool/ntfstool/blob/master/src/common/lang/"+this.lang+".js")
+            shell.openExternal("mailto:service@ntfstool.com")
         }
     }
 }

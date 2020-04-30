@@ -78,8 +78,8 @@ export default {
     Cancontinuetobeusedsafely: '可以继续安全使用',
     Lessforsafestorage: '更少用于安全存储',
     total: '总',
-    used: '用过的',
-    available: '可用的',
+    used: '已用',
+    available: '可用',
     Erasingthediskwilldelete: '擦除磁盘将删除所有数据',
     Detectsystemdisktoolisabouttojump: '检测系统磁盘工具，即将跳转',
     Internaldiskcannotbeunmounted: '内部磁盘，无法卸载',
@@ -135,4 +135,10 @@ export default {
     FindMore:"如果你感兴趣,在这里发现更多的信息:",
     RecommendUseing:"我推荐使用NTFSTool工具去操作MAC系统NTFS磁盘",
     SendEmailForHelp:"发送邮件寻求帮助",
+    Viewthetranslation:"查看翻译文件,并将更新翻译后的内容以邮件的方式发送到",
+    Helpsoftwaretranslation:"帮助软件完善翻译功能",
+    new_device_event:"发现新设备",
+    remove_device_event:"设备已移除"
+
+
 }

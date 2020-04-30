@@ -23,7 +23,7 @@
 // import {getDiskList,getDiskInfo} from 'diskutil'
 
 const {getDiskInfo, getDiskList} = require('diskutil')
-const {setStoreForDiskList, getStoreForDiskList,watchStatus} = require("@/common/utils/AlfwStore")
+const {setStoreForDiskList, getStoreForDiskList,watchStatus,delAllIgnore} = require("@/common/utils/AlfwStore")
 const {autoMountNtfsDisk} = require("@/common/utils/AlfwDisk")
 import {unitTimesToRun, queueExec, filterNtfsNeedMountByDiskList} from '@/common/utils/AlfwCommon.js'
 import {AlConst} from '@/common/utils/AlfwConst'
@@ -45,9 +45,14 @@ export function test() {
 export function fsListenMount() {
     var path = '/Volumes/';
     watchmac(path, function (data) {
+        var device_file = typeof data.File != "undefined" ? data.File : "";
+
         if(typeof data.Event != "undefined" && data.Event == "CreteFileEvent"){
             console.warn("Start CreteFileEvent...");
-            ipcRenderer.send("CreteFileEvent");
+            ipcRenderer.send("CreteFileEvent",device_file);
+
+            //TODO clear all ignore disk
+            delAllIgnore();
         }
 
         if(watchStatus() === true){
@@ -57,7 +62,6 @@ export function fsListenMount() {
             console.warn("watchmac ignore[watchStatus False]");
         }
     })
-
 }
 
 

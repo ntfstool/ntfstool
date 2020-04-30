@@ -79,7 +79,7 @@ export function execShellSudo(shell, force = false) {
     return new Promise((resolve, reject) => {
         var password = getSudoPwd();
         try {
-            exec(`echo ${password}|sudo  -S ${shell}`, (error, stdout, stderr) => {
+            exec(`echo '${password}'|sudo  -S ${shell}`, (error, stdout, stderr) => {
                 stderr = stderr.replace( /^Password:/gi , '')
                 saveLog.warn("execShellSudo", {
                     code: "[SUDO]" + shell,
@@ -173,7 +173,7 @@ export function checkSudoPassword(setPwd = false) {
     return new Promise((resolve, reject) => {
         try {
             //sudo -Sk Force password
-            exec(`echo ${password}|sudo -Sk ls /usr`, (error, stdout, stderr) => {
+            exec(`echo '${password}'|sudo -Sk ls /usr`, (error, stdout, stderr) => {
                 saveLog.warn({
                     error, stdout, stderr
                 }, "checkSudoPassword res");

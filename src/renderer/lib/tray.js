@@ -25,7 +25,6 @@ import {openLog, getPackageVersion} from '@/common/utils/AlfwCommon.js'
 import {getStoreForDiskList} from "@/common/utils/AlfwStore";
 import {
     getDiskList,
-    getDiskFullInfo,
     uMountDisk,
     mountDisk,
     openInFinder
@@ -46,6 +45,11 @@ export default {
         this._title = this.title;
         console.warn(this.$refs, "this.$refsa")
         this.resetSize();
+
+        ipcRenderer.on("ChangeLangEvent", (e, lang) => {
+            console.warn("tray wind ChangeLangEvent", lang);
+            this.$i18n.locale = lang;
+        });
 
         // window.addEventListener('beforeunload', ()=>{
         //     remote.getCurrentWindow().on('blur', () => {
