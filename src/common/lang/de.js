@@ -134,7 +134,7 @@ export default {
     Readonly: "Schreibgeschützt",
     AlreadyUsing: "Ich benutze bereits NtfsTool und bin sehr zufrieden damit.",
     FindMore: "Weitere Informationen finden Sie hier, wenn Sie interessiert sind:",
-    RecommendUseing: "Ich empfehle, dieses NTFSTool zu verwenden, um die erweiterte Mac-Festplatte zu betreiben",
+    RecommendUsing: "Ich empfehle, dieses NTFSTool zu verwenden, um die erweiterte Mac-Festplatte zu betreiben",
     SendEmailForHelp: "Senden Sie eine E-Mail, um Hilfe zu erhalten",
     Viewthetranslation: "Zeigen Sie die Übersetzungsdatei an und senden Sie den aktualisierten Übersetzungsinhalt per E-Mail an",
     Helpsoftwaretranslation: "Helfen Sie der Software, die Sprachübersetzung zu verbessern",

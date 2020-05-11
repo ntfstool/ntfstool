@@ -133,7 +133,7 @@ export default {
     Readonly:"只读",
     AlreadyUsing:"我正在使用Ntfstool工具,我很喜欢他.",
     FindMore:"如果你感兴趣,在这里发现更多的信息:",
-    RecommendUseing:"我推荐使用NTFSTool工具去操作MAC系统NTFS磁盘",
+    RecommendUsing:"我推荐使用NTFSTool工具去操作MAC系统NTFS磁盘",
     SendEmailForHelp:"发送邮件寻求帮助",
     Viewthetranslation:"查看翻译文件,并将更新翻译后的内容以邮件的方式发送到",
     Helpsoftwaretranslation:"帮助软件完善翻译功能",
