@@ -62,7 +62,8 @@
                         <div class="diskb_1">
                             <div v-if="typeof item.info != 'undefined' && typeof item.info.mounted != 'undefined' && item.info.mounted == true"
                                  @click="uMountDisk(item)" @click.stop>
-                                <i class="iconfont ico_color mr10">&#xe769;</i>
+                                <i  v-if="index == 'inner'" class="iconfont ico_color mr10">&#xe61a;</i>
+                                <i  v-else class="iconfont ico_color mr10">&#xe769;</i>
                             </div>
 
                             <div v-else @click="mountDisk(item)" @click.stop>
@@ -90,7 +91,7 @@
                         </div>
 
 
-                        <div class="diskb_3">
+                        <div class="diskb_3" :title="$t('dbclicktoopen')">
                             <div class="diskb_3_1">
                                 <div>
                                     <i class="iconfont ico_color">&#xe607;</i>
@@ -103,7 +104,7 @@
                                 </div>
 
 
-                                <div v-if="typeof item.info != 'undefined' && typeof item.info.readonly !='undefined' && item.info.readonly"  style="font-size: 15px;">
+                                <div v-if="typeof item.info != 'undefined' && typeof item.info.readonly !='undefined' && item.info.readonly"  style="font-size: 14px;color: #f56c6c">
                                     Readonly
                                 </div>
                             </div>
@@ -115,14 +116,14 @@
                             </div>
 
                             <div class="diskb_3_3">
-                                <div style="font-size: 15px;">
+                                <div style="font-size: 14px;">
                                     {{$t('total')}}:
                                     {{typeof item.info != 'undefined' && typeof item.info.total_size != "undefined"
                                     ? item.info.total_size : "" }}
                                     {{typeof item.info != 'undefined' && typeof item.info.total_size_wei !=
                                     "undefined" ? item.info.total_size_wei : "" }}
                                 </div>
-                                <div style="    font-size: 15px;">
+                                <div style="    font-size: 14px;">
                                     {{$t('used')}}:
                                     {{typeof item.info != 'undefined' && typeof item.info.used_size != "undefined"
                                     ? item.info.used_size : "" }}

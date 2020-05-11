@@ -17,6 +17,7 @@
  * along with this program (in the main directory of the NTFS Tool
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
+// Enlace de referencia original: https://github.com/ntfstool/ntfstool/blob/master/src/common/lang/en.js
 
 export default {
     lang_select: 'Seleção de idioma',
@@ -139,5 +140,12 @@ export default {
     Viewthetranslation:"Vea el archivo de traducción y envíe el contenido actualizado de la traducción por correo electrónico a",
     Helpsoftwaretranslation:"Ayuda al software a mejorar la traducción de idiomas",
     new_device_event:"Descubre nuevos dispositivos",
-    remove_device_event:"Dispositivo eliminado"
+    remove_device_event:"Dispositivo eliminado",
+
+    dbclicktoopen:"Haga doble clic para abrir el disco",
+    click_can_forbid:"El clic puede estar prohibido",
+    cancel_usb_notify:"Cancelar notificación USB?",
+    canceled_usb_notify:"Notificación cancelada",
+    Automatically_mount_NTFS_disk:"Montar automáticamente el disco NTFS",
+    Sorryitisnotsupported:"Lo sentimos, los usuarios con permisos normales todavía no son compatibles (utilice la cuenta de administrador para ejecutar el software)",
 }

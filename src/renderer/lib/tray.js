@@ -24,7 +24,6 @@ const {shell, ipcRenderer, remote} = require('electron')
 import {openLog, getPackageVersion} from '@/common/utils/AlfwCommon.js'
 import {getStoreForDiskList} from "@/common/utils/AlfwStore";
 import {
-    getDiskList,
     uMountDisk,
     mountDisk,
     openInFinder
@@ -150,11 +149,19 @@ export default {
         },
         openSettingPage() {
             this.menu_box1 = false;
-            ipcRenderer.send('MainMsgFromRender', 'openSettingPage')
+            // ipcRenderer.send('MainMsgFromRender', 'openSettingPage')
+            ipcRenderer.send('IPCMain', {
+                name:"openPageByName",
+                data:"openFeedBackPage"
+            })
         },
         openDialog() {
             this.menu_box1 = false;
-            ipcRenderer.send('MainMsgFromRender', 'openDialogPage')
+            // ipcRenderer.send('MainMsgFromRender', 'openDialogPage')
+            ipcRenderer.send('IPCMain', {
+                name:"openPageByName",
+                data:"openDialogPage"
+            })
         },
         openLog() {
             this.menu_box1 = false;
@@ -162,19 +169,32 @@ export default {
         },
         openAboutPage() {
             this.menu_box1 = false;
-            ipcRenderer.send('MainMsgFromRender', 'openAboutPage')
+            // ipcRenderer.send('MainMsgFromRender', 'openAboutPage')
+            ipcRenderer.send('IPCMain', {
+                name:"openPageByName",
+                data:"openAboutPage"
+            })
         },
         openFeedBackPage() {
             this.menu_box1 = false;
-            ipcRenderer.send('MainMsgFromRender', 'openFeedBackPage')
+            // ipcRenderer.send('MainMsgFromRender', 'openFeedBackPage')
+            ipcRenderer.send('IPCMain', {
+                name:"openPageByName",
+                data:"openFeedBackPage"
+            })
         },
         openHomePage() {
             this.menu_box1 = false;
-            ipcRenderer.send('MainMsgFromRender', 'openHomePage')
+            // ipcRenderer.send('MainMsgFromRender', 'openHomePage')
+            ipcRenderer.send('IPCMain', {
+                name:"openPageByName",
+                data:"openHomePage"
+            })
         },
         exitAll() {
             this.menu_box1 = false;
-            ipcRenderer.send('MainMsgFromRender', 'exitAll')
+            // ipcRenderer.send('MainMsgFromRender', 'exitAll')
+            ipcRenderer.send('IPCMain', "exitAll")
         },
         startDebug() {
             console.warn("click startDebug");

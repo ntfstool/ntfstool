@@ -118,10 +118,10 @@ function startElectron () {
   electronProcess = spawn(electron, [path.join(__dirname, '../dist/electron/main.js')])
 
   electronProcess.stdout.on('data', data => {
-    electronLog(data, 'blue')
+    ntfstoolLog(data, 'blue')
   })
   electronProcess.stderr.on('data', data => {
-    electronLog(data, 'red')
+    ntfstoolLog(data, 'red')
   })
 
   electronProcess.on('close', () => {
@@ -129,7 +129,7 @@ function startElectron () {
   })
 }
 
-function electronLog (data, color) {
+function ntfstoolLog (data, color) {
   let log = ''
   data = data.toString().split(/\r?\n/)
   data.forEach(line => {
@@ -137,7 +137,7 @@ function electronLog (data, color) {
   })
   if (/[0-9A-z]+/.test(log)) {
     console.log(
-      chalk[color].bold('┏ Electron -------------------') +
+      chalk[color].bold('┏ NtfstoolLog -------------------') +
       '\n\n' +
       log +
       chalk[color].bold('┗ ----------------------------') +

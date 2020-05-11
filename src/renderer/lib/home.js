@@ -18,15 +18,23 @@
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
 
-import {app,ipcRenderer, remote} from 'electron'
+import {app, ipcRenderer, remote} from 'electron'
 import {getPackageVersion, disableZoom, choseDefaultNode, getSystemInfo} from '@/common/utils/AlfwCommon.js'
-import {clearPwd, getStoreForDiskList, getMountType,getMountNotifyStatus} from '@/common/utils/AlfwStore'
 import {
-    getDiskList,
+    clearPwd,
+    getStore,
+    getStoreForDiskList,
+    getMountType,
+    getMountNotifyStatus,
+    fixUnclear,
+    ignoreUSB
+} from '@/common/utils/AlfwStore'
+import {
     uMountDisk,
     mountDisk,
     openInFinder
 } from '@/common/utils/AlfwDisk'
+
 const {_} = require('lodash')
 
 import {fsListenMount, updateDisklist, test} from '@/renderer/lib/diskMonitor'
@@ -59,6 +67,7 @@ export default {
             atest_lasttime: 0,
             atest_times: 0,
             sudoDialog: false,
+            firstTime:true
         }
     },
     mounted() {
@@ -75,45 +84,61 @@ export default {
         fsListenMount();
 
         ipcRenderer.on(AlConst.GlobalViewUpdate, () => {
+            console.warn("Home GlobalViewUpdate Come")
             this.diskList = getStoreForDiskList();
-            if(!_.get(this.select_item,"name") && !_.get(this.select_item,"type")){
-                if(_.get(this.diskList,"inner[0]")){
-                    this.select_item = _.get(this.diskList,"inner[0]");
-                    this.select_disk_key = _.get(this.diskList,"inner[0].index");
+            if (!_.get(this.select_item, "name") && !_.get(this.select_item, "type")) {
+                if (_.get(this.diskList, "inner[0]")) {
+                    this.select_item = _.get(this.diskList, "inner[0]");
+                    this.select_disk_key = _.get(this.diskList, "inner[0].index");
                 }
             }
         });
 
-        ipcRenderer.on("CreteFileEvent", (event,arg) => {
+        ipcRenderer.on("CreteFileEvent", (event, arg) => {
             console.warn("Home on CreteFileEvent...")
             var _this = this;
             setTimeout(function () {
-                console.warn("start CreteFileEvent refreshDevice ... (3)")
+                console.warn(arg,"start CreteFileEvent refreshDevice ... (3)")
                 _this.refreshDevice();
-            },3000)
+            }, 3000)
 
             setTimeout(function () {
-                console.warn("start CreteFileEvent refreshDevice ... (8)")
+                console.warn(arg,"start CreteFileEvent refreshDevice ... (8)")
                 _this.refreshDevice();
-            },8000)
+            }, 8000)
 
             setTimeout(function () {
-                console.warn("start CreteFileEvent refreshDevice ... (18)")
+                console.warn(arg,"start CreteFileEvent refreshDevice ... (18)")
                 _this.refreshDevice();
-            },18000);
+            }, 18000);
         });
 
-        ipcRenderer.on("UsbDeleteFileEvent", (event,arg) => {
-            if(getMountNotifyStatus()) {
-                new window.Notification(this.$i18n.t('remove_device_event'), {body: arg});
+
+        var UsbNotice = function (title, device) {
+            console.warn(device,"UsbNotice")
+            if (ignoreUSB(device.serialNumber) !== true) {
+                new window.Notification(title, {body: device.deviceName + "("+_this.$i18n.t('click_can_forbid')+")"}).onclick = function () {
+                    remote.getCurrentWindow().show();
+                    var confirm_status = confirm(device.deviceName + ": "+ _this.$i18n.t('cancel_usb_notify'))
+                    if (confirm_status) {
+                        ignoreUSB(device.serialNumber,true);
+                        alert(_this.$i18n.t('canceled_usb_notify'));
+                    }
+                };
+            } else {
+                console.warn(device, "device [in ignoreUSB]");
+            }
+        }
+
+        ipcRenderer.on("UsbDeleteFileEvent", (event, device) => {
+            if (getMountNotifyStatus()) {
+                UsbNotice(this.$i18n.t('remove_device_event'), device)
             }
         });
 
-        ipcRenderer.on("UsbAddFileEvent", (event,arg) => {
-            if(getMountNotifyStatus()){
-                new window.Notification(this.$i18n.t('new_device_event'), {body:arg}).onclick = function () {
-                    remote.getCurrentWindow().show();
-                };
+        ipcRenderer.on("UsbAddFileEvent", (event, device) => {
+            if (getMountNotifyStatus()) {
+                UsbNotice(this.$i18n.t('new_device_event'), device)
             }
         });
 
@@ -155,9 +180,29 @@ export default {
                 _this.loading = -1;
                 updateDisklist(function () {
                     _this.loading = 0;
+
+                    _this.firstTime = false;
                 });
             } catch (e) {
                 console.warn(e, "refreshDevice");
+            }
+
+            //first time to show
+            if(this.firstTime){
+                this.firstTime = false;
+                //show cache
+                var cacheValue = getStoreForDiskList();
+                if(cacheValue && typeof cacheValue.inner != "undefined"){
+                    this.diskList = cacheValue;
+                    if (!_.get(this.select_item, "name") && !_.get(this.select_item, "type")) {
+                        if (_.get(this.diskList, "inner[0]")) {
+                            this.select_item = _.get(this.diskList, "inner[0]");
+                            this.select_disk_key = _.get(this.diskList, "inner[0].index");
+                        }
+                    }
+                }else{
+                    console.warn("firstTime show cache [fail]");
+                }
             }
         },
         changeVolumeName(select_item) {
@@ -214,7 +259,7 @@ export default {
                 console.warn("mountDisk res", res)
                 let option = {
                     title: "NTFSTool",
-                    body: item.name + " "+_this.$i18n.t('Diskmountedsuccessfully'),
+                    body: item.name + " " + _this.$i18n.t('Diskmountedsuccessfully'),
                 };
                 new window.Notification(option.title, option);
                 _this.refreshDevice();
@@ -240,7 +285,10 @@ export default {
         },
         openSysSetting() {
             console.warn(" openSysSetting click");
-            ipcRenderer.send('MainMsgFromRender', 'openSettingPage')
+            ipcRenderer.send('IPCMain', {
+                name:"openPageByName",
+                data:"openSettingPage"
+            })
         },
         altest() {
             console.warn("altest");
@@ -270,40 +318,53 @@ export default {
         },
         openSettingPage() {
             this.menu_box1 = false;
-            ipcRenderer.send('MainMsgFromRender', 'openSettingPage')
+            // ipcRenderer.send('MainMsgFromRender', 'openSettingPage')
+            ipcRenderer.send('IPCMain', {
+                name:"openPageByName",
+                data:"openSettingPage"
+            })
         },
         openAboutPage() {
             this.menu_box1 = false;
-            ipcRenderer.send('MainMsgFromRender', 'openAboutPage')
+            // ipcRenderer.send('MainMsgFromRender', 'openAboutPage')
+            ipcRenderer.send('IPCMain', {
+                name:"openPageByName",
+                data:"openAboutPage"
+            })
         },
         openFeedBackPage() {
             this.menu_box1 = false;
-            ipcRenderer.send('MainMsgFromRender', 'openFeedBackPage')
+            // ipcRenderer.send('MainMsgFromRender', 'openFeedBackPage')
+            ipcRenderer.send('IPCMain', {
+                name:"openPageByName",
+                data:"openFeedBackPage"
+            })
         },
         exitAll() {
             this.menu_box1 = false;
-            ipcRenderer.send('MainMsgFromRender', 'exitAll')
+            // ipcRenderer.send('MainMsgFromRender', 'exitAll')
+            ipcRenderer.send('IPCMain',"exitAll")
         },
         clearPwd() {
             clearPwd();
             this.menu_box1 = false;
         },
-        showFreeSpace(total_size,total_size_wei,used_size,used_size_wei){
+        showFreeSpace(total_size, total_size_wei, used_size, used_size_wei) {
             let wei_to_num = function (wei) {
-                if(!wei || typeof wei != "string"){
+                if (!wei || typeof wei != "string") {
                     return 1;
                 }
 
                 wei = wei.toLowerCase();
-                if(wei.indexOf("tb") >= 0){
-                    return 1024*1024*1024;
+                if (wei.indexOf("tb") >= 0) {
+                    return 1024 * 1024 * 1024;
                 }
 
-                if(wei.indexOf("gb") >= 0){
-                    return 1024*1024;
+                if (wei.indexOf("gb") >= 0) {
+                    return 1024 * 1024;
                 }
 
-                if(wei.indexOf("mb") >= 0){
+                if (wei.indexOf("mb") >= 0) {
                     return 1024;
                 }
 
@@ -312,26 +373,26 @@ export default {
 
             let num_to_weinum = function (num) {
                 var num = parseFloat(num).toFixed(0);
-                if(isNaN(num)){
+                if (isNaN(num)) {
                     return "-";
                 }
-                if(!num){
+                if (!num) {
                     return "--";
                 }
-                if(num <= 1024){
+                if (num <= 1024) {
                     return num + " KB";
                 }
 
-                if(num > 1024 && num <= 1024 * 1024){
-                    return (num/1024).toFixed(2) + " MB";
+                if (num > 1024 && num <= 1024 * 1024) {
+                    return (num / 1024).toFixed(2) + " MB";
                 }
 
-                if(num > 1024*1024 && num <= 1024 * 1024 * 1024){
-                    return (num/(1024 * 1024)).toFixed(2) + " GB";
+                if (num > 1024 * 1024 && num <= 1024 * 1024 * 1024) {
+                    return (num / (1024 * 1024)).toFixed(2) + " GB";
                 }
 
-                if(num > 1024*1024*1024 && num <= 1024 * 1024 * 1024 * 1024){
-                    return (num/(1024 * 1024*1024)).toFixed(2) + " TB";
+                if (num > 1024 * 1024 * 1024 && num <= 1024 * 1024 * 1024 * 1024) {
+                    return (num / (1024 * 1024 * 1024)).toFixed(2) + " TB";
                 }
 
             }
@@ -342,6 +403,12 @@ export default {
             //
             // return total_size +"|"+total_size_wei +
             //     "#"+used_size+"|"+used_size_wei;
+        },
+        test() {
+            ipcRenderer.send('IPCMain', {
+                "name":"name1",
+                "data":"data1"
+            })
         }
     }
 }

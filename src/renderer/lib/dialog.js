@@ -67,6 +67,10 @@ export default {
             this.$i18n.locale = lang;
         });
 
+        ipcRenderer.on("NotSudoerEvent", (e, arg) => {
+            console.warn("dialog NotSudoerEvent", arg);
+            alert(this.$i18n.t('Sorryitisnotsupported'));
+        });
 
         ipcRenderer.on("ShowDialogEvent", (event, arg) => {
             saveLog.info(arg, "Dialog ShowDialogEvent");
@@ -158,9 +162,12 @@ export default {
             }
 
             if (!this.workpwd) {
-                shell.beep()
-                this.$refs.workpwd.focus()
-                this.sharkWin();
+                alert("Password cannot be empty");
+                return;
+            }
+
+            if(this.workpwd.indexOf("'") >= 0){
+                alert("Password cannot contain symbols '");
                 return;
             }
 

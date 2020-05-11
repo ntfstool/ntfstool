@@ -17,6 +17,7 @@
  * along with this program (in the main directory of the NTFS Tool
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
+// 元の参照リンク： https://github.com/ntfstool/ntfstool/blob/master/src/common/lang/en.js
 
 export default {
     lang_select: '言語選択',
@@ -139,5 +140,12 @@ export default {
     Viewthetranslation:"翻訳ファイルを表示し、更新された翻訳コンテンツを電子メールで送信します",
     Helpsoftwaretranslation:"ソフトウェアによる言語翻訳の改善を支援する",
     new_device_event:"新しいデバイスを発見する",
-    remove_device_event:"デバイスが削除されました"
+    remove_device_event:"デバイスが削除されました",
+
+    dbclicktoopen:"ダブルクリックしてディスクを開く",
+    click_can_forbid:"クリックを禁止できます",
+    cancel_usb_notify:"USB通知をキャンセルしますか？",
+    canceled_usb_notify:"通知がキャンセルされました",
+    Automatically_mount_NTFS_disk:"NTFSディスクを自動的にマウントする",
+    Sorryitisnotsupported:"通常の権限を持つユーザーはまだサポートされていません（管理者アカウントを使用してソフトウェアを実行してください）",
 }

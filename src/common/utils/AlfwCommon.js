@@ -17,16 +17,15 @@
  * along with this program (in the main directory of the NTFS Tool
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
-// import {exec} from 'child_process'
 import {execShell,execShellSudo} from '@/common/utils/AlfwShell'
 import {t} from 'element-ui/lib/locale'
 import {remote} from 'electron'
 import {ignoreItem,delIgnoreItem} from '@/common/utils/AlfwStore'
-const {shell} = require('electron')
+const {shell,app} = require('electron')
 const {getAspInfo} = require('ntfstool')
 const {_} = require('lodash')
 const saveLog = require('electron-log');
-
+const get = require('get');
 /**
  * check is dev
  */
@@ -301,5 +300,106 @@ export function choseDefaultNode(diskList) {
     } catch (e) {
         saveLog.info(diskList, "choseDefaultNode diskList");
         saveLog.error(e, "choseDefaultNode error");
+    }
+}
+
+
+
+/**
+ * versionStringCompare
+ * @param preVersion
+ * @param lastVersion
+ * @returns {number}
+ */
+function versionStringCompare(preVersion='', lastVersion=''){
+    var sources = preVersion.split('.');
+    var dests = lastVersion.split('.');
+    var maxL = Math.max(sources.length, dests.length);
+    var result = 0;
+    for (let i = 0; i < maxL; i++) {
+        let preValue = sources.length>i ? sources[i]:0;
+        let preNum = isNaN(Number(preValue)) ? preValue.charCodeAt() : Number(preValue);
+        let lastValue = dests.length>i ? dests[i]:0;
+        let lastNum =  isNaN(Number(lastValue)) ? lastValue.charCodeAt() : Number(lastValue);
+        if (preNum < lastNum) {
+            result = -1;
+            break;
+        } else if (preNum > lastNum) {
+            result = 1;
+            break;
+        }
+    }
+    return result;
+}
+
+/**
+ * checkUpdate
+ */
+export function checkUpdate() {
+    var cur_version = process.env.NODE_ENV === 'development' ? process.env.npm_package_version : app.getVersion()
+    // console.warn(this.$http,"this.$http")
+
+    try {
+        get('https://ntfstool.com/version.json').asString(function (err, ret) {
+            if (err) {
+                saveLog.error("get api update version.json error",err);
+                return;
+            }
+            var data = {
+                "version": "",
+                "url": "https://ntfstool.com/",
+                "title": "New Version Found",
+                "detail": "update"
+            };
+
+            try {
+                var getData = JSON.parse(ret);
+                if (!getData || typeof getData.version == "undefined" || !getData.version) {
+                    saveLog.error("not found version!")
+                    return;
+                }
+                if (typeof getData.version != "undefined") {
+                    data.version = getData.version;
+                }
+                if (typeof getData.url != "undefined") {
+                    data.url = getData.url;
+                }
+                if (typeof getData.title != "undefined") {
+                    data.title = getData.title;
+                }
+                if (typeof getData.detail != "undefined") {
+                    data.detail = getData.detail;
+                }
+            } catch (e) {
+                saveLog.warn("check version format error!",e)
+            }
+
+            if (typeof data.version != "undefined" && data.version) {
+                saveLog.warn({
+                    cur_version: cur_version,
+                    check_version: data.version
+                })
+                if (cur_version != data.version && versionStringCompare(cur_version,data.version) < 0) {
+                    const dialogOpts = {
+                        type: 'info',
+                        buttons: ['Cancel', "OK"],
+                        title: 'Application Update',
+                        message: data.title + "("+cur_version+"->"+data.version+")",
+                        detail: data.detail
+                    }
+
+                    dialog.showMessageBox(dialogOpts).then((diaret) => {
+                        if (typeof diaret.response != "undefined" && diaret.response == 1) {
+                            shell.openExternal(data.url);
+                        }
+
+                    });
+                }
+            } else {
+                saveLog.warn("check version format error!")
+            }
+        });
+    } catch (e) {
+        saveLog.error("get update error!", e);
     }
 }

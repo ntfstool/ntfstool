@@ -17,6 +17,7 @@
  * along with this program (in the main directory of the NTFS Tool
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
+// 원본 참조 링크 : https://github.com/ntfstool/ntfstool/blob/master/src/common/lang/en.js
 
 export default {
     lang_select: '언어 선택',
@@ -139,5 +140,12 @@ export default {
     Viewthetranslation:"번역 파일을보고 업데이트 된 번역 컨텐츠를 이메일로 보내십시오.",
     Helpsoftwaretranslation:"소프트웨어의 언어 번역 개선",
     new_device_event:"새로운 장치를 발견하십시오",
-    remove_device_event:"기기 제거"
+    remove_device_event:"기기 제거",
+
+    dbclicktoopen:"두 번 클릭하여 디스크 열기",
+    click_can_forbid:"클릭 금지",
+    cancel_usb_notify:"USB 알림을 취소 하시겠습니까?",
+    canceled_usb_notify:"알림이 취소되었습니다",
+    Automatically_mount_NTFS_disk:"NTFS 디스크 자동 마운트",
+    Sorryitisnotsupported:"죄송합니다. 일반 권한이있는 사용자에게는 지원되지 않습니다 (관리자 계정을 사용하여 소프트웨어를 실행하십시오)",
 }

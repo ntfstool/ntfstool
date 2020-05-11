@@ -1,3 +1,22 @@
+/**
+ * @author   service@ntfstool.com
+ * Copyright (c) 2020 ntfstool.com
+ * Copyright (c) 2020 alfw.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the MIT General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MIT General Public License for more details.
+ *
+ * You should have received a copy of the MIT General Public License
+ * along with this program (in the main directory of the NTFS Tool
+ * distribution in the file COPYING); if not, write to the service@ntfstool.com
+ */
 import {app, BrowserWindow, Menu, Tray, ipcMain, globalShortcut, crashReporter, screen, Notification} from 'electron'
 import {isDev} from "@/common/utils/AlfwCommon";
 import {AlConst} from "@/common/utils/AlfwConst";
@@ -61,6 +80,12 @@ export function doCreteFileEvent(arg) {
     }
 }
 
+export function doNotSudoerEvent(arg) {
+    if (dialogPageHandle) {
+        dialogPageHandle.send("NotSudoerEvent", arg);
+    }
+}
+
 export function doUsbDeleteFileEvent(arg) {
     if (homeWinHandle) {
         homeWinHandle.send("UsbDeleteFileEvent", arg);
@@ -70,25 +95,6 @@ export function doUsbDeleteFileEvent(arg) {
 export function doUsbAddFileEvent(arg) {
     if (homeWinHandle) {
         homeWinHandle.send("UsbAddFileEvent", arg);
-    }
-}
-
-
-export function doSudoPwdEvent(arg) {
-    // console.warn("SudoPwdEvent", arg);
-    // if (dialogPageHandle) {
-    //     dialogPageHandle.send("SudoPwdEvent", arg);
-    // }
-}
-
-
-export function doDesktopAppEvent(args) {
-    console.warn("DesktopAppEvent", arg);
-    if (homeWinHandle) {
-        homeWinHandle.send("DesktopAppEvent", arg);
-    }
-    if (trayPageHandle) {
-        trayPageHandle.send("DesktopAppEvent", arg);
     }
 }
 
@@ -112,18 +118,64 @@ export function openPages() {
     }, 3000)
 }
 
+export function goResume() {
+    setTimeout(function () {
+        openHomePage("hide");
+        monitorUsb();
+    }, 10000)
+
+    setTimeout(function () {
+        openDialogPage("hide");
+        openSettingPage("hide");
+        openFeedBackPage("hide");
+    }, 20000)
+}
+
+export function goSleep() {
+    try {
+        usbDetect.stopMonitoring();
+
+        if (homeWinHandle) {
+            homeWinHandle.destroy();
+            homeWinHandle = null;
+        }
+
+        if (settingPageHandle) {
+            settingPageHandle.destroy();
+            settingPageHandle = null;
+        }
+        if (dialogPageHandle) {
+            dialogPageHandle.destroy();
+            dialogPageHandle = null;
+        }
+        if (feedBackPageHandle) {
+            feedBackPageHandle.destroy();
+            feedBackPageHandle = null;
+        }
+    } catch (e) {
+        console.error(e,"exitAll");
+    }
+}
+
+
 export function openPageByName(name) {
     if (name == "openSettingPage") {
         openSettingPage();
     } else if (name == "openAboutPage") {
         openDialogPage();
-        dialogPageHandle.send("ShowDialogEvent", "showAbout");
+        if(dialogPageHandle){
+            dialogPageHandle.send("ShowDialogEvent", "showAbout");
+        }
     } else if (name == "openSudoPage") {
         openDialogPage();
-        dialogPageHandle.send("ShowDialogEvent", "showSudo");
+        if(dialogPageHandle){
+            dialogPageHandle.send("ShowDialogEvent", "showSudo");
+        }
     } else if (name == "openInstallFusePage") {
         openDialogPage();
-        dialogPageHandle.send("ShowDialogEvent", "showInstallFuse");
+        if(dialogPageHandle){
+            dialogPageHandle.send("ShowDialogEvent", "showInstallFuse");
+        }
     } else if (name == "openFeedBackPage") {
         openFeedBackPage();
     } else if (name == "openHomePage") {
@@ -166,18 +218,7 @@ export function exitAll() {
     }
 }
 
-export function toggleTrayMenu() {
-    if (tray !== null) {
-        tray.destroy();
-        tray = null;
-        event.returnValue = 'destroy';
-    } else {
-        openTrayMenu();
-        event.returnValue = 'newopen';
-    }
-}
-
-const openHomePage = () => {
+const openHomePage = (show_force) => {
     if (homeWinHandle == null) {
         console.warn("create new openHomePage")
         homeWinHandle = new BrowserWindow({
@@ -194,7 +235,7 @@ const openHomePage = () => {
             titleBarStyle: 'hidden',
             webPreferences: {
                 experimentalFeatures: true,
-                nodeIntegration: true
+                nodeIntegration: true,
             },
             // transparent: true
         })
@@ -210,7 +251,11 @@ const openHomePage = () => {
             if (loginItemSettings && typeof loginItemSettings.wasOpenedAtLogin != "undefined" && loginItemSettings.wasOpenedAtLogin == true) {
                 homeWinHandle.hide();
             } else {
-                homeWinHandle.show();
+                if(show_force == "hide"){
+                    homeWinHandle.hide();
+                }else{
+                    homeWinHandle.show();
+                }
             }
 
             if (isDev()) {
@@ -552,14 +597,13 @@ const _homeWinMenu = () => {
 const monitorUsb = function () {
     try {
         usbDetect.startMonitoring();
-
         usbDetect.on('add', function (device) {
             console.warn('usbDeviceMonitorAdd', device);
-            doUsbAddFileEvent(device.deviceName);
+            doUsbAddFileEvent(device);
         });
         usbDetect.on('remove', function (device) {
             console.warn('usbDeviceMonitorRemove', device.deviceName);
-            doUsbDeleteFileEvent(device.deviceName);
+            doUsbDeleteFileEvent(device);
         });
     } catch (e) {
         console.error(e, "usbDeviceMonitor Error")

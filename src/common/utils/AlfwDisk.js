@@ -18,10 +18,10 @@
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
 import {savePassword,execShell,execShellSudo,checkSudoPassword} from '@/common/utils/AlfwShell'
-import {getStoreForDiskList,setStoreForDiskList,getMountType,watchStatus,ignoreItem,delIgnoreItem} from '@/common/utils/AlfwStore'
+import {getStoreForDiskList,setStoreForDiskList,getMountType,watchStatus,ignoreItem,delIgnoreItem,fixUnclear} from '@/common/utils/AlfwStore'
 import {AlConst} from "@/common/utils/AlfwConst";
 const saveLog = require('electron-log');
-const {getDiskInfo, getDiskList} = require('diskutil')
+const {getDiskInfo} = require('diskutil')
 const {ntfstool_bin} = require('ntfstool')
 const {_} = require('lodash')
 import {ipcRenderer, remote} from 'electron'
@@ -59,6 +59,11 @@ function reMountNtfs(index, force = false) {
         try {
             var info = await getDiskInfo(index);
             console.log(info, "reMountNtfs info");
+            if(!info){
+                console.warn(index,"reMountNtfs Fail");
+                reject("reMountNtfs Fail");
+                return false;
+            }
 
             if (info.typebundle != "ntfs") {
                 reMountLock[index] = false;
@@ -111,7 +116,7 @@ function reMountNtfs(index, force = false) {
 
                 console.warn(samename_res,"samename_res");
                 if(samename_res && samename_res.indexOf(index) <= 0){
-                    console.warn("not found index");
+                    console.warn("not found index",index);
                     volumename = volumename + "1";//rename
                     var mount_path = '/Volumes/' + volumename;
                     if (!fs.existsSync(mount_path)) {
@@ -125,7 +130,14 @@ function reMountNtfs(index, force = false) {
                 var run_res = await execShellSudo(`mount_ntfs -o rw,auto,nobrowse,noowners,noatime ${link_dev} ${mount_path}`);
             }else{
                 console.warn("UseMountType:Outer")
-                var run_res = await execShellSudo(`${ntfstool_bin} ${link_dev} ${mount_path} -o volname=${volumename}  -olocal -oallow_other   -o auto_xattr -o hide_hid_files`);
+                // unclear -o remove_hiberfile
+                if(fixUnclear(index) === true){
+                    console.warn("fixUnclear mode to mount",index);
+                    var run_res = await execShellSudo(`${ntfstool_bin} ${link_dev} ${mount_path} -o volname=${volumename} -o remove_hiberfile -olocal -oallow_other   -o auto_xattr -o hide_hid_files`);
+                }else{
+                    var run_res = await execShellSudo(`${ntfstool_bin} ${link_dev} ${mount_path} -o volname=${volumename}  -olocal -oallow_other   -o auto_xattr -o hide_hid_files`);
+                }
+
             }
 
             watchStatus(true);
@@ -154,7 +166,10 @@ function reMountNtfs(index, force = false) {
                 // Falling back to read-only mount because the NTFS partition is in an
                 // unsafe state. Please resume and shutdown Windows fully (no hibernation
                 // or fast restarting.)
+                console.warn("Catch unclean");
                 noticeTheSystemError("UNCLEANERROR",e);
+
+                fixUnclear(index,true);
             }
 
             saveLog.error(e, "reMountNtfs Error");
@@ -186,7 +201,7 @@ function setDiskMountPrending(index,setStatus) {
     }
 
     setStoreForDiskList(diskList,function () {
-        ipcRenderer.send(AlConst.GlobalViewUpdate);
+        ipcRenderer.send("IPCMain",AlConst.GlobalViewUpdate);
     })
 }
 

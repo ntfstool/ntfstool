@@ -138,7 +138,12 @@ export default {
     Viewthetranslation:"查看翻译文件,并将更新翻译后的内容以邮件的方式发送到",
     Helpsoftwaretranslation:"帮助软件完善翻译功能",
     new_device_event:"发现新设备",
-    remove_device_event:"设备已移除"
+    remove_device_event:"设备已移除",
 
-
+    dbclicktoopen:"双击打开磁盘",
+    click_can_forbid:"点击可以禁止",
+    cancel_usb_notify:"取消USB通知?",
+    canceled_usb_notify:"已取消通知",
+    Automatically_mount_NTFS_disk:"自动挂载NTFS磁盘",
+    Sorryitisnotsupported:"抱歉,暂不支持普通权限用户使用(请使用管理员账户运行软件)",
 }

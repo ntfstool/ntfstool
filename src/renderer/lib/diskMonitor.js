@@ -17,48 +17,39 @@
  * along with this program (in the main directory of the NTFS Tool
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
-//
-// import {getPackageVersion, disableZoom, getSystemInfo} from '@/common/utils/AlfwCommon.js'
-//
-// import {getDiskList,getDiskInfo} from 'diskutil'
 
-const {getDiskInfo, getDiskList} = require('diskutil')
-const {setStoreForDiskList, getStoreForDiskList,watchStatus,delAllIgnore} = require("@/common/utils/AlfwStore")
+const {getDiskList} = require('diskutil')
+const {setStoreForDiskList, getStoreForDiskList, watchStatus, delAllIgnore, getStore} = require("@/common/utils/AlfwStore")
 const {autoMountNtfsDisk} = require("@/common/utils/AlfwDisk")
 import {unitTimesToRun, queueExec, filterNtfsNeedMountByDiskList} from '@/common/utils/AlfwCommon.js'
 import {AlConst} from '@/common/utils/AlfwConst'
+
 const {_} = require('lodash')
 
 import {ipcRenderer, remote} from 'electron'
 
 const watchmac = require("watch-mac")
 
-
-export function test() {
-    console.warn(getStoreForDiskList(), "getStoreForDiskList")
-    //
-    // getDiskList().then((diskList) => {
-    //     console.log(diskList, "getDiskList");
-    // });
-}
-
 export function fsListenMount() {
     var path = '/Volumes/';
     watchmac(path, function (data) {
         var device_file = typeof data.File != "undefined" ? data.File : "";
 
-        if(typeof data.Event != "undefined" && data.Event == "CreteFileEvent"){
+        if (typeof data.Event != "undefined" && data.Event == "CreteFileEvent") {
             console.warn("Start CreteFileEvent...");
-            ipcRenderer.send("CreteFileEvent",device_file);
+            ipcRenderer.send("IPCMain", {
+                name: "CreteFileEvent",
+                data: device_file
+            });
 
             //TODO clear all ignore disk
             delAllIgnore();
         }
 
-        if(watchStatus() === true){
+        if (watchStatus() === true) {
             console.warn(data, "watchmac")
             updateDisklist();
-        }else{
+        } else {
             console.warn("watchmac ignore[watchStatus False]");
         }
     })
@@ -66,16 +57,18 @@ export function fsListenMount() {
 
 
 export function updateDisklist(callback) {
+    // console.warn("updateDisklist Start +++");
     unitTimesToRun("getDiskList", function () {
-
+        // console.warn("updateDisklist Start +++ ok 0");
         getDiskList().then((diskList) => {
+            // console.warn(getDiskList,"updateDisklist getDiskList ok");
             //filter inner unmounted
-            if(typeof diskList.inner != "undefined") {
+            if (typeof diskList.inner != "undefined") {
                 diskList.inner = diskList.inner.filter(function (item) {
-                    if(_.get(item, "info.readonly") === true){
+                    if (_.get(item, "info.readonly") === true) {
                         item.info.readonly = false;
                     }
-                    if (_.get(item, "info.typebundle") === "apfs" && _.get(item, "info.mountpoint").indexOf("/System/Volumes/") >= 0) {
+                    if (_.get(item, "info.typebundle").toLocaleLowerCase() === "apfs" && _.get(item, "info.mountpoint").toLocaleLowerCase().indexOf("/system/volumes/") >= 0) {
                         return false;
                     } else {
                         return true;
@@ -84,13 +77,13 @@ export function updateDisklist(callback) {
             }
 
             //filter ext unmounted
-            if(typeof diskList.ext != "undefined") {
+            if (typeof diskList.ext != "undefined") {
                 diskList.ext = diskList.ext.filter(function (item) {
-                    if(_.get(item, "info.volumename").replace(/\s+/g,"").indexOf("nofilesystem") > 0){
+                    if (_.get(item, "info.volumename").replace(/\s+/g, "").indexOf("nofilesystem") > 0) {
                         return false;
                     }
 
-                    if (_.get(item, "info.typebundle") == "efi" || _.get(item, "info.typebundle") == "msr") {
+                    if (_.get(item, "type").toLocaleLowerCase() == "efi" || _.get(item, "info.typebundle").toLocaleLowerCase() == "efi" || _.get(item, "info.typebundle").toLocaleLowerCase() == "msr") {
                         return false;
                     }
 
@@ -99,7 +92,7 @@ export function updateDisklist(callback) {
             }
 
             //filter image unmounted
-            if(typeof diskList.image != "undefined") {
+            if (typeof diskList.image != "undefined") {
                 diskList.image = diskList.image.filter(function (item) {
                     if (_.get(item, "info.mounted") === false) {
                         return false;
@@ -111,9 +104,9 @@ export function updateDisklist(callback) {
 
             console.log(diskList, "getDiskList");
             setStoreForDiskList(diskList, function () {
-                if(typeof callback == "function") callback()
+                if (typeof callback == "function") callback()
                 //send the global view update
-                ipcRenderer.send(AlConst.GlobalViewUpdate, "");
+                ipcRenderer.send("IPCMain", AlConst.GlobalViewUpdate);
 
                 // if (typeof data.Event != "undefined" && data.Event == "CreteFileEvent") {
                 //filter the ntfs to remount
@@ -123,9 +116,14 @@ export function updateDisklist(callback) {
                     for (var i in needReMountList) {
                         //exec one by one
                         queueExec("autoMountNtfsDisk", function (cb) {
-                            autoMountNtfsDisk(needReMountList[i], function () {
-                                cb();
-                            });
+                            //set is auto_mount
+                            if (getStore("auto_mount") == false) {
+                                console.warn("Set Can't AutoMount...");
+                            } else {
+                                autoMountNtfsDisk(needReMountList[i], function () {
+                                    cb();
+                                });
+                            }
                         })
                     }
                 }

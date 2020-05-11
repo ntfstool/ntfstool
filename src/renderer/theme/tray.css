@@ -41,6 +41,8 @@ html, body, #app {
     background: #ebebeb;
     width: 100%;
     border-bottom: 1px solid #d8d5d5;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
 }
 
 .trayref_h_1 {
@@ -74,7 +76,7 @@ html, body, #app {
 }
 
 .trayref_h_1_2_1 span {
-    font-family: serif;
+    font-family: PingFangSC-Regular,sans-serif;
 }
 
 .trayref_h_1_3 {
@@ -127,7 +129,7 @@ html, body, #app {
     display: flex;
     justify-content: space-between;
     color: #4c4d4f;
-    font-family: serif;
+    font-family: PingFangSC-Regular,sans-serif;
     display: flex;
     align-items: center;
     /*background: green*/
@@ -141,7 +143,6 @@ html, body, #app {
 .diskb_3_1 span {
     color: #444446;
     font-size: 15px;
-    font-weight: bold;
 }
 
 .diskb_3_2 {
@@ -164,8 +165,8 @@ html, body, #app {
 .diskb_3_3 {
     display: flex;
     justify-content: space-between;
-    color: #4c4d4f;
-    font-family: serif;
+    color: #878688;
+    font-family: PingFangSC-Regular,sans-serif;
     display: flex;
     align-items: center;
     /*background: green*/

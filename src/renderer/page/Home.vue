@@ -4,7 +4,7 @@
             <el-header class="lheader">
                 <div>
                     <div>
-                        <span class="lheader_span">NTFS Tool</span>
+                        <span class="lheader_span">NTFSTool</span>
                     </div>
                 </div>
             </el-header>
@@ -26,7 +26,9 @@
                         <div class="lm-block_1">
                             <div v-if="typeof item.info != 'undefined' && typeof item.info.mounted != 'undefined' && item.info.mounted == true"
                                  @click="uMountDisk(item)" @click.stop>
-                                <i class="iconfont iconpush" style="color: rgb(110, 110, 112);">&#xe769;</i>
+
+                                <i v-if="index == 'inner'" class="iconfont iconpush" style="color: rgb(110, 110, 112);">&#xe61a;</i>
+                                <i v-else class="iconfont iconpush" style="color: rgb(110, 110, 112);">&#xe769;</i>
                             </div>
 
                             <div v-else @click="mountDisk(item)" @click.stop>
@@ -64,7 +66,8 @@
                                         </div>
 
 
-                                        <span v-if="typeof item.status != 'undefined' && (item.status == 0)" class="block_3n_d_1_sp">
+                                        <span v-if="typeof item.status != 'undefined' && (item.status == 0)"
+                                              class="block_3n_d_1_sp">
                                             {{$t('Mounting')}}...
                                         </span>
 
@@ -93,13 +96,13 @@
                                     <div class="lm-block_3n_d_2"
                                          v-if="typeof item.info != 'undefined' && typeof item.info.readonly !='undefined' && !item.info.readonly && typeof item.info.percentage !='undefined'">
                                         <span v-if="item.info.percentage >= 90"
-                                              v-bind:style="{ width: item.info.percentage + '%', backgroundColor: 'rgb(131, 192, 253)' }"></span>
+                                              v-bind:style="{ width: item.info.percentage + '%', backgroundColor: '#51b7f6' }"></span>
 
                                         <span v-else-if="item.info.percentage < 90"
-                                              v-bind:style="{ width: item.info.percentage + '%', backgroundColor: 'rgb(131, 192, 253)' }"></span>
+                                              v-bind:style="{ width: item.info.percentage + '%', backgroundColor: '#51b7f6' }"></span>
 
                                         <span v-else="item.info.percentage < 50"
-                                              v-bind:style="{ width: item.info.percentage + '%', backgroundColor: 'rgb(131, 192, 253)' }"></span>
+                                              v-bind:style="{ width: item.info.percentage + '%', backgroundColor: '#51b7f6' }"></span>
                                     </div>
                                 </div>
 
@@ -121,6 +124,7 @@
                         <div v-if="loading == -1" class="mint-spinner-snake">
                             <i class="iconfont iconiconsxz i-loading">&#xe623;</i>
                         </div>
+
 
                         <i v-else class="iconfont iconshuaxin i-loading2">&#xe650;</i>
                     </div>
@@ -145,49 +149,51 @@
                 <div>
                     <div class="rmain">
                         <div class="rmain_l">
-                            <div  class="rmain_l_box" v-if="select_item.group == 'inner'">
+                            <div class="rmain_l_box" v-if="select_item.group == 'inner'">
                                 <img src="../assets/disk04.png">
                             </div>
 
 
-                            <div class="rmain_l_box"  v-else-if="select_item.group == 'ext'">
+                            <div class="rmain_l_box" v-else-if="select_item.group == 'ext'">
                                 <img v-if="typeof select_item.info.typebundle != 'undefined' &&  select_item.info.typebundle == 'ntfs'"
                                      src="../assets/disk01.png">
 
                                 <img v-else src="../assets/disk02.png">
                             </div>
 
-                            <div class="rmain_l_box"  v-else="select_item.group == 'image'">
+                            <div class="rmain_l_box" v-else="select_item.group == 'image'">
                                 <img src="../assets/disk03.png">
                             </div>
                         </div>
 
                         <div class="rmain_r">
                             <div class="rmain_r_2">
-                                <div style="background: #f9f8f8;">
+                                <div style="background: white">
                                     <span>{{$t('installed')}}</span>
 
                                     <span v-if="typeof select_item.info.mounted != 'undefined' && select_item.info.mounted">
-                                    <i class="el-icon-check" style="color: #67c23a;"></i> Yes
-                                </span>
+                                        <i class="el-icon-check" style="color: #67c23a;"></i> Yes
+                                    </span>
 
                                     <span v-else>
-                                    <i class="el-icon-error" style="color: red;"></i> No
-                                </span>
+                                        <i class="el-icon-error" style="color: red;"></i> No
+                                    </span>
                                 </div>
-                                <div style="background: rgb(245, 245, 245);">
+
+                                <div style="background: #f1f2f2;">
                                     <span>{{$t('Pathnode')}}</span>
                                     <span>
                                         /dev/{{select_item.index}}</span>
                                 </div>
-                                <div style="background: #f9f8f8;"><span>{{$t('Mountnode')}}</span><span> {{typeof select_item.info.mountpoint != 'undefined' && select_item.info.mountpoint? select_item.info.mountpoint :'~'}}</span>
+                                
+                                <div style="background: white;"><span>{{$t('Mountnode')}}</span><span> {{typeof select_item.info.mountpoint != 'undefined' && select_item.info.mountpoint? select_item.info.mountpoint :'~'}}</span>
                                 </div>
-                                <div style="background: rgb(245, 245, 245);"><span>UUID</span>
+                                <div style="background: #f1f2f2;"><span>UUID</span>
                                     <span>{{typeof select_item.info.uuid != 'undefined' && select_item.info.uuid? select_item.info.uuid :'~'}}</span>
                                 </div>
-                                <div style="background: #f9f8f8;"><span>{{$t('Partitiontype')}}</span><span> {{select_item.info.typebundle}}</span>
+                                <div style="background: white;"><span>{{$t('Partitiontype')}}</span><span> {{select_item.info.typebundle}}</span>
                                 </div>
-                                <div style="background: rgb(245, 245, 245);"><span>{{$t('Mounttype')}}</span><span> {{typeof select_item.info.protocol != 'undefined' && select_item.info.protocol? select_item.info.protocol :'~'}}
+                                <div style="background: #f1f2f2;"><span>{{$t('Mounttype')}}</span><span> {{typeof select_item.info.protocol != 'undefined' && select_item.info.protocol? select_item.info.protocol :'~'}}
                             </span>
                                 </div>
                             </div>
@@ -283,7 +289,8 @@
                 <div class="mright-dir"
                      v-if="typeof select_item.info.mounted != 'undefined' && select_item.info.mounted">
                     <div class="goods">
-                        <img @click="openDisk(select_item)" src="../assets/opendisk.svg" :title="$t('Clicktoopenthedisk')">
+                        <img @click="openDisk(select_item)" src="../assets/opendisk.svg"
+                             :title="$t('Clicktoopenthedisk')">
                     </div>
                 </div>
             </el-main>
@@ -293,7 +300,7 @@
 
                 <div class="rfooter_1">
                     <div>
-                        <img  @click="openMenuBox('menu_box1')" src="../assets/setting2.svg">
+                        <img @click="openMenuBox('menu_box1')" src="../assets/setting2.svg">
                     </div>
 
                     <div class="menu_box" v-show="menu_box1">
@@ -303,6 +310,7 @@
                         <div @click="openSettingPage"> {{$t('preferences')}}</div>
                         <span class="line"></span>
                         <!--<div @click="clearPwd">{{$t('Clearpassword')}}</div>-->
+                        <div @click="test">test</div>
                         <div @click="openAboutPage"> {{$t('About')}}</div>
                     </div>
                 </div>
@@ -312,6 +320,7 @@
 </template>
 <script>
     import home from '@/renderer/lib/home.js'
+
     export default home
 </script>
 <style scoped src="@/renderer/theme/home.css"></style>

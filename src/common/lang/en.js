@@ -139,5 +139,12 @@ export default {
     Viewthetranslation:"View the translation file, and send the updated translation content to e-mail to",
     Helpsoftwaretranslation:"Help the software improve language translation",
     new_device_event:"Discover new devices",
-    remove_device_event:"Device removed"
+    remove_device_event:"Device removed",
+
+    dbclicktoopen:"Double-click to open the disk",
+    click_can_forbid:"Click can be forbidden",
+    cancel_usb_notify:"Cancel USB notification?",
+    canceled_usb_notify:"Notification cancelled",
+    Automatically_mount_NTFS_disk:"Automatically mount NTFS disk",
+    Sorryitisnotsupported:"Sorry, it is not supported for users with normal permissions (please use the administrator account to run the software)",
 }

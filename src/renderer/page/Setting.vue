@@ -61,11 +61,6 @@
                                     <!--</div>-->
                                 <!--</div>-->
                                 <!--<div>-->
-                                    <!--<div style="display: flex;flex-direction: column;justify-content: center">-->
-                                        <!--<el-button v-if="show_menu" @click="setToggleTrayMenu">{{$t('disable')}}</el-button>-->
-                                        <!--<el-button v-if="!show_menu" @click="setToggleTrayMenu">{{$t('enable')}}</el-button>-->
-                                    <!--</div>-->
-                                <!--</div>-->
                             </div>
 
                             <!--<div class="font12 mb20">-->
@@ -73,8 +68,12 @@
                                 <!--<span v-if="!show_menu">{{$t('notice_cannot_do_disk02')}}</span>-->
                             <!--</div>-->
 
-                            <div style="position: absolute;bottom: 0;">
+                            <div style="position: absolute;bottom: 30px;">
                                 <el-checkbox v-model="auto_run"  @change="changeAutoRun()"  :label="$t('Followthesystemstartup')" name="type"></el-checkbox>
+                            </div>
+
+                            <div style="position: absolute;bottom: 0;">
+                                <el-checkbox v-model="auto_mount"  @change="changeAutoMount()"  :label="$t('Automatically_mount_NTFS_disk')" name="type"></el-checkbox>
                             </div>
                         </div>
                         <div class="main-from_div_1_2">

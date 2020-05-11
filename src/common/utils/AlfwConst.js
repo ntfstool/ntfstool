@@ -24,5 +24,6 @@ export const AlConst = {
     DiskList:"DiskList",
     SudoPwdEvent:"SudoPwdEvent",
     InstallFuseEvent:"InstallFuseEvent",
+    NotSudoerEvent:"NotSudoerEvent",
     GlobalViewUpdate:"GlobalViewUpdate",
 };

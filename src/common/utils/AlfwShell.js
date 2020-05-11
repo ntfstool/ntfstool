@@ -46,7 +46,7 @@ export function execShell(shell) {
     return new Promise((resolve, reject) => {
         try {
             exec(shell, (error, stdout, stderr) => {
-                saveLog.warn("execShell", {
+                saveLog.log("execShell", {
                     code: shell,
                     stdout: stdout,
                     stderr: stderr,
@@ -79,9 +79,9 @@ export function execShellSudo(shell, force = false) {
     return new Promise((resolve, reject) => {
         var password = getSudoPwd();
         try {
-            exec(`echo '${password}'|sudo  -S ${shell}`, (error, stdout, stderr) => {
+            exec(`echo '${password}'|sudo  -Sk ${shell}`, (error, stdout, stderr) => {
                 stderr = stderr.replace( /^Password:/gi , '')
-                saveLog.warn("execShellSudo", {
+                saveLog.log("execShellSudo", {
                     code: "[SUDO]" + shell,
                     stdout: stdout,
                     stderr: stderr,
@@ -100,8 +100,14 @@ export function execShellSudo(shell, force = false) {
                             }
                         });
                     }else if(!checkFuseStr(stderr)){
-                        ipcRenderer.send(AlConst.InstallFuseEvent,"");
-                    } else {
+                        ipcRenderer.send("IPCMain",AlConst.InstallFuseEvent);
+                    }else if(!checkNotSudoer(stderr)){
+                        console.warn("checkNotSudoer ok");
+                        ipcRenderer.send("IPCMain",{
+                            name:AlConst.NotSudoerEvent,
+                            data:stderr
+                        });
+                    }  else {
                         reject(stderr);
                         return;
                     }
@@ -160,6 +166,23 @@ function checkFuseStr(stderr) {
     }
 }
 
+function checkNotSudoer(stderr) {
+    try {
+        var status = true;
+        if (stderr) {
+            if (stderr.toLowerCase().indexOf("no") >= 0) {
+                if (stderr.toLowerCase().indexOf("sudoers") >= 0) {
+                    status = false;
+                }
+            }
+        }
+
+        return status;
+    } catch (e) {
+        saveLog.error(e, "checkNotSudoer error");
+    }
+}
+
 /**
  * check the {{work}} password
  * @returns {Promise}
@@ -174,18 +197,13 @@ export function checkSudoPassword(setPwd = false) {
         try {
             //sudo -Sk Force password
             exec(`echo '${password}'|sudo -Sk ls /usr`, (error, stdout, stderr) => {
-                saveLog.warn({
+                saveLog.log({
                     error, stdout, stderr
                 }, "checkSudoPassword res");
 
                 if (checkIncorrectPasswordStr(stderr)) {
-                    //Todo
-
-                    // alEvent.$emit('SudoPWDEvent');//Send the refresh event
-                    // saveLog.warn("checkSudoPassword error password")
-
-                    console.warn("start send SudoPWDEvent >>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-                    ipcRenderer.send(AlConst.SudoPwdEvent,"");
+                    console.log("start send SudoPWDEvent >>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+                    ipcRenderer.send("IPCMain",AlConst.SudoPwdEvent);
 
                     resolve(false);
                 } else {

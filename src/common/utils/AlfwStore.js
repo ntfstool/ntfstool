@@ -4,11 +4,12 @@ const {_} = require('lodash')
 import {AlConst} from '@/common/utils/AlfwConst'
 import {getSystemInfo, noticeTheSystemError} from '@/common/utils/AlfwCommon'
 const store = new Store();
-
+const md5 = require('md5');
 
 const alfwStore = {
     name: "Alntfs",
     auto_run: true,
+    auto_mount: true,
     theme: "",
     lang: "en",
     show_menu: true,
@@ -34,6 +35,9 @@ const alfwStore = {
         update_beta_url: "",
     },
     sudoPwd: false,
+    fixUnclear:[],
+    ignoreUSB:[],
+    firstTimeCache:""
 };
 
 
@@ -91,12 +95,18 @@ export function getSudoPwd() {
 }
 
 export function setStoreForDiskList(value,callback) {
-    console.warn("setStoreForDiskList",value)
-    store.set(AlConst.DiskList,value);
-    if(typeof callback == "function") {
-        callback();
+    if(md5(JSON.stringify(getStoreForDiskList())) == md5(JSON.stringify(value))){
+        console.warn("setStoreForDiskList [Cache]",value)
+        if(typeof callback == "function") {
+            callback();
+        }
+    }else{
+        console.warn("setStoreForDiskList",value)
+        store.set(AlConst.DiskList,value);
+        if(typeof callback == "function") {
+            callback();
+        }
     }
-    // alEvent().emit(AlConst.DiskListEvent,"SADASFDS");//update the DiskListEvent
 }
 
 export function getStoreForDiskList() {
@@ -155,6 +165,17 @@ export function watchStatus($val){
     }
 }
 
+export function fixUnclear($index,$status){
+    $index = _.replace($index, '/', '_');
+    var $key = "fixUnclear."+$index;
+    console.warn($key,"fixUnclear")
+    if(typeof $status == "undefined"){
+        return store.get($key) ? true : false;
+    }else{
+        store.set($key,$status);
+    }
+}
+
 /**
  * get ignore disk item
  * @param $val
@@ -204,6 +225,23 @@ export function delAllIgnore(){
     return true;
 }
 
+
+export function ignoreUSB($key,$val){
+    var cacheKey = "ignoreUSB";
+    var ret = store.get(cacheKey);
+    console.warn(ret,cacheKey);
+    if(!ret){
+        ret = [];
+    }
+    if(typeof $val == "undefined"){
+        return ret.indexOf($key) >= 0 ? true : false;
+    }else{
+        if(_.indexOf(ret,$key) === -1){
+            ret.push($key);
+        }
+        store.set(cacheKey,ret);
+    }
+}
 
 
 

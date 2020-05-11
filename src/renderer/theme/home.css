@@ -39,7 +39,7 @@
 }
 
 .lm-t {
-    padding: 5px;
+    padding: 5px 0 0 10px;
 }
 
 .lm-t span {
@@ -157,11 +157,12 @@
 }
 
 .rheader_1 span {
-    font-size: 20px;
-    color: #000000;
+    font-size: 18px;
+    color: #1d1d1d;
     line-height: 60px;
     font-weight: 100;
-    font-family: -webkit-body;
+    font-family: PingFangSC-Regular,sans-serif;
+    /*font-family: -webkit-body;*/
 }
 
 .rmain {
@@ -187,16 +188,16 @@
 }
 
 .rmain_l_box{
-    /*background: pink;*/
+    /* background: pink; */
     height: 100%;
     justify-content: center;
     align-items: center;
+    width: 100%;
+    display: flex;
 }
 
 .rmain_l_box img {
-    /*background: #67c23a;*/
-    /* margin: 20px; */
-    height: 100%;
+    width: 100%;
 }
 
 .rmain_r {
@@ -219,9 +220,11 @@
 
 .rmain_r_2 {
 
-    border-radius: 3px;
-    padding: 10px 0;
-    background-color: #f7f7f7;
+    /*border-radius: 3px;*/
+    /*padding: 10px 0;*/
+    /*background-color: #f7f7f7;*/
+
+    border: solid 1px #f1f1f1;
 
 }
 
@@ -276,7 +279,7 @@
 .rmain2_1 span {
     color: #9f9f9f;
     font-size: 12px;
-    line-height: 30px;
+    line-height: 22px;
 }
 
 .rmain2_3_1 {
@@ -364,7 +367,7 @@
 }
 
 .mounted_dot {
-    background-color: #83c0fd;
+    background-color: #51b7f6;
     /*background-color: #13e735;*/
 }
 
@@ -500,7 +503,7 @@
 }
 
 .lheader_span {
-    color: black;
+    color: #000000ad;
     line-height: 30px;
     font-size: 20px;
 }
@@ -576,7 +579,7 @@
 }
 
 .menu_box{
-    background: rgb(214, 214, 214);
+    background: #dbdcde;
     position: absolute;
     bottom: 30px;
     right: 15px;
@@ -594,7 +597,7 @@
     padding: 0 20px;
     cursor: pointer;
     font-size: 14px;
-    color: black;
+    color: #232222;
 }
 
 .menu_box div:hover{

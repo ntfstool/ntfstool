@@ -462,7 +462,6 @@
     font-size: 11px;
     color: #4c4b4b;
     font-weight: 100;
-    /*font-family: cursive;*/
     padding-left: 0;
 }
 
@@ -523,7 +522,8 @@
     font-size: 11px;
     color: #4c4b4b;
     font-weight: 100;
-    font-family: cursive;
+    /*font-family: cursive;*/
+    font-family: PingFangSC-Regular,sans-serif;
     padding-left: 0;
 }
 .translate-lang{

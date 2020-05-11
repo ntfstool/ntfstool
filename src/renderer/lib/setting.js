@@ -43,6 +43,7 @@ export default {
 
         return {
             auto_run: store.get("auto_run") == false ? false : true,
+            auto_mount: store.get("auto_mount") == false ? false : true,
             theme: store.get("theme") != "undefined" ? store.get("theme") : 1,
             lang: store.get("lang") != "undefined" ? store.get("lang") : "english",
             show_menu: store.get("show_menu") == false ? false : true,
@@ -127,10 +128,6 @@ export default {
         onSubmit() {
             console.log('submit!');
         },
-        setToggleTrayMenu() {
-            this.show_menu = ipcRenderer.sendSync('toggleTrayMenu') == "destroy" ? false : true;
-            store.set("show_menu", this.show_menu);
-        },
         changeTheme() {
             console.warn("set theme", this.theme);
             store.set("theme", this.theme);
@@ -139,7 +136,11 @@ export default {
         changeLang() {
             store.set("lang", this.lang);
             this.$i18n.locale = this.lang;
-            ipcRenderer.send('ChangeLangEvent', this.lang);
+            // ipcRenderer.send('ChangeLangEvent', this.lang);
+            ipcRenderer.send('IPCMain', {
+                name:"ChangeLangEvent",
+                data:this.lang,
+            });
 
         },
         changeInstallBugType() {
@@ -151,7 +152,15 @@ export default {
         },
         changeAutoRun() {
             store.set("auto_run", this.auto_run);
-            ipcRenderer.send('AutoRunEvent', this.auto_run);
+            // ipcRenderer.send('AutoRunEvent', this.auto_run);
+            ipcRenderer.send("IPCMain",{
+                name:"AutoRunEvent",
+                data:this.auto_run
+            });
+        },
+        changeAutoMount() {
+            store.set("auto_mount", this.auto_mount);
+            console.warn(store.get("auto_mount"),"changeAutoMount")
         },
         changeMountShowMsg() {
             store.set("message.mount_show_msg", this.mount_show_msg);
@@ -251,7 +260,7 @@ export default {
         resetConf() {
             var confirm_status = confirm(this.$i18n.t('ConfirmConfigtoreset'))
             if (confirm_status) {
-                if (ipcRenderer.sendSync('MainMsgFromRender', "resetConf") == "succ" ? true : false) {
+                if (ipcRenderer.sendSync('IPCMain', "resetConf") == "succ" ? true : false) {
                     alert(this.$i18n.t('Theresetissuccessful'));
                     remote.getCurrentWindow().close();
                 } else {
