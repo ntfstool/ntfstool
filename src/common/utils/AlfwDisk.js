@@ -107,35 +107,36 @@ function reMountNtfs(index, force = false) {
             var volumename = info.volumename ? info.volumename : getAutoVolumeName();
             volumename = volumename.replace( /volumes/gi , '').replace( /\//gi , '');
             var mount_path = '/Volumes/' + volumename;
-            if (!fs.existsSync(mount_path)) {
-                await execShellSudo("mkdir -p " + mount_path);
-                //TODO ======================= this should be ignore
-            }else{
-                //the same name volumes
-                var samename_res = await execShell("mount |grep '" + mount_path + " '");
-
-                console.warn(samename_res,"samename_res");
-                if(samename_res && samename_res.indexOf(index) <= 0){
-                    console.warn("not found index",index);
-                    volumename = volumename + "1";//rename
-                    var mount_path = '/Volumes/' + volumename;
-                    if (!fs.existsSync(mount_path)) {
-                        await execShellSudo("mkdir -p " + mount_path);
-                    }
-                }
-            }
 
             if(getMountType() == "inner"){
+                if (!fs.existsSync(mount_path)) {
+                    await execShellSudo("mkdir -p '" + mount_path + "'");
+                    //TODO ======================= this should be ignore
+                }else{
+                    //the same name volumes
+                    var samename_res = await execShell("mount |grep '" + mount_path + "'");
+
+                    console.warn(samename_res,"samename_res");
+                    if(samename_res && samename_res.indexOf(index) <= 0){
+                        console.warn("not found index",index);
+                        volumename = volumename + "1";//rename
+                        var mount_path = '/Volumes/' + volumename;
+                        if (!fs.existsSync(mount_path)) {
+                            await execShellSudo("mkdir -p " + mount_path);
+                        }
+                    }
+                }
+
                 console.warn("UseMountType:Inner")
-                var run_res = await execShellSudo(`mount_ntfs -o rw,auto,nobrowse,noowners,noatime ${link_dev} ${mount_path}`);
+                var run_res = await execShellSudo(`mount_ntfs -o rw,auto,nobrowse,noowners,noatime ${link_dev} '${mount_path}'`);
             }else{
                 console.warn("UseMountType:Outer")
                 // unclear -o remove_hiberfile
                 if(fixUnclear(index) === true){
                     console.warn("fixUnclear mode to mount",index);
-                    var run_res = await execShellSudo(`${ntfstool_bin} ${link_dev} ${mount_path} -o volname=${volumename} -o remove_hiberfile -olocal -oallow_other   -o auto_xattr -o hide_hid_files`);
+                    var run_res = await execShellSudo(`${ntfstool_bin} ${link_dev} '${mount_path}' -o volname='${volumename}' -o remove_hiberfile -olocal -oallow_other   -o auto_xattr -o hide_hid_files`);
                 }else{
-                    var run_res = await execShellSudo(`${ntfstool_bin} ${link_dev} ${mount_path} -o volname=${volumename}  -olocal -oallow_other   -o auto_xattr -o hide_hid_files`);
+                    var run_res = await execShellSudo(`${ntfstool_bin} ${link_dev} '${mount_path}' -o volname='${volumename}'  -olocal -oallow_other   -o auto_xattr -o hide_hid_files`);
                 }
 
             }

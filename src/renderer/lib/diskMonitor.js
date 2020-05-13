@@ -57,22 +57,31 @@ export function fsListenMount() {
 
 
 export function updateDisklist(callback) {
-    // console.warn("updateDisklist Start +++");
+    console.warn("updateDisklist Start +++");
     unitTimesToRun("getDiskList", function () {
         // console.warn("updateDisklist Start +++ ok 0");
         getDiskList().then((diskList) => {
-            // console.warn(getDiskList,"updateDisklist getDiskList ok");
+            console.warn(diskList,"updateDisklist0");
             //filter inner unmounted
             if (typeof diskList.inner != "undefined") {
                 diskList.inner = diskList.inner.filter(function (item) {
                     if (_.get(item, "info.readonly") === true) {
                         item.info.readonly = false;
                     }
+
+                    if(!_.get(item, "info.typebundle")){
+                        return false;
+                    }
+
                     if (_.get(item, "info.typebundle").toLocaleLowerCase() === "apfs" && _.get(item, "info.mountpoint").toLocaleLowerCase().indexOf("/system/volumes/") >= 0) {
                         return false;
-                    } else {
-                        return true;
                     }
+
+                    if (_.get(item, "type").toLocaleLowerCase().indexOf("boot") >= 0  || _.get(item, "type").toLocaleLowerCase() == "efi" || _.get(item, "info.typebundle").toLocaleLowerCase() == "efi" || _.get(item, "info.typebundle").toLocaleLowerCase() == "msr") {
+                        return false;
+                    }
+
+                    return true;
                 });
             }
 

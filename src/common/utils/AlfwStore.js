@@ -4,7 +4,6 @@ const {_} = require('lodash')
 import {AlConst} from '@/common/utils/AlfwConst'
 import {getSystemInfo, noticeTheSystemError} from '@/common/utils/AlfwCommon'
 const store = new Store();
-const md5 = require('md5');
 
 const alfwStore = {
     name: "Alntfs",
@@ -95,17 +94,14 @@ export function getSudoPwd() {
 }
 
 export function setStoreForDiskList(value,callback) {
-    if(md5(JSON.stringify(getStoreForDiskList())) == md5(JSON.stringify(value))){
-        console.warn("setStoreForDiskList [Cache]",value)
-        if(typeof callback == "function") {
-            callback();
-        }
-    }else{
+    try{
         console.warn("setStoreForDiskList",value)
         store.set(AlConst.DiskList,value);
         if(typeof callback == "function") {
             callback();
         }
+    }catch (e) {
+        saveLog.errror("setStoreForDiskList error",e);
     }
 }
 

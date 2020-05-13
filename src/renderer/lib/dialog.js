@@ -27,8 +27,6 @@ var fs= require("fs")
 const {fuse_pkg} = require('ntfstool')
 const CurWin = remote.getCurrentWindow();
 
-import {fsListenMount,test} from '@/renderer/lib/diskMonitor'
-
 export default {
     components: {},
     data() {
@@ -58,9 +56,6 @@ export default {
 
 
         disableZoom(require('electron').webFrame);
-
-        // //background event
-        // fsListenMount();
 
         ipcRenderer.on("ChangeLangEvent", (e, lang) => {
             console.warn("dialog wind ChangeLangEvent", lang);
@@ -101,7 +96,7 @@ export default {
         showInstallFuse() {
             this.show_index = "install_fuse";
 
-            CurWin.setSize(500, 160);
+            CurWin.setSize(500, 200);
             CurWin.setAlwaysOnTop(false);
             CurWin.show();
         },

@@ -100,7 +100,7 @@ export function doUsbAddFileEvent(arg) {
 
 export function openPages() {
     //shortcut to toggle debug window
-    globalShortcut.register('Command+Shift+J', () => {
+    globalShortcut.register('Option+L', () => {
         let focusWin = BrowserWindow.getFocusedWindow()
         focusWin && focusWin.toggleDevTools()
     });

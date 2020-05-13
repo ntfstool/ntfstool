@@ -310,7 +310,6 @@
                         <div @click="openSettingPage"> {{$t('preferences')}}</div>
                         <span class="line"></span>
                         <!--<div @click="clearPwd">{{$t('Clearpassword')}}</div>-->
-                        <div @click="test">test</div>
                         <div @click="openAboutPage"> {{$t('About')}}</div>
                     </div>
                 </div>

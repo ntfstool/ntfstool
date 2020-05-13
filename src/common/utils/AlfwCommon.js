@@ -21,7 +21,7 @@ import {execShell,execShellSudo} from '@/common/utils/AlfwShell'
 import {t} from 'element-ui/lib/locale'
 import {remote} from 'electron'
 import {ignoreItem,delIgnoreItem} from '@/common/utils/AlfwStore'
-const {shell,app} = require('electron')
+import {app, ipcMain, ipcRenderer, Notification, dialog, shell, powerMonitor} from 'electron'
 const {getAspInfo} = require('ntfstool')
 const {_} = require('lodash')
 const saveLog = require('electron-log');
