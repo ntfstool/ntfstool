@@ -23,14 +23,14 @@ import {getPackageVersion, disableZoom,filter_menu_show} from '@/common/utils/Al
 import {
     clearPwd,
     getMountNotifyStatus,
-    ignoreUSB,
-    getStore,
+    getMenuShowConf,
     setStore
 } from '@/common/utils/AlfwStore'
 import {
     uMountDisk,
     mountDisk,
-    openInFinder
+    openInFinder,
+    autoMountNtfsDisk
 } from '@/common/utils/AlfwDisk'
 
 const {_} = require('lodash')
@@ -55,6 +55,7 @@ export default {
                 "free_space_in_bytes": 0,
                 "ignore_ownership": "-",
                 "mounted":true,
+                "mount_status":"",
                 "mount_point": "-",
                 "physical_drive": {
                     "device_name": "-",
@@ -72,7 +73,11 @@ export default {
             firstTime:true,
             showDebugMenu: process.env.NODE_ENV === 'development' ? true : false,
             scrollShow:false,
-            menu_show_conf:"",
+            menu_show_conf:{
+                inner:true,
+                ext:true,
+                image:true
+            },
         }
     },
     mounted() {
@@ -83,96 +88,83 @@ export default {
 
         this.refreshDevice();
 
-        this.menu_show_conf = getStore("menu_show_conf");
+        this.menu_show_conf = getMenuShowConf();
         console.warn(this.menu_show_conf,"init this.menu_show_conf")
 
         disableZoom(require('electron').webFrame);
 
-        //background event [past it in dialog]
         fsListenMount();
 
-        ipcRenderer.on(AlConst.GlobalViewUpdate, (event,args) => {
-            console.warn("Home GlobalViewUpdate Come",{
-                args,event
-            })
-            this.diskMap = filter_menu_show(args);
+        ipcRenderer.on("HomeEvent", (event,args) => {
+            console.warn("HomeEvent",args);
 
-            console.warn( this.diskMap,"Home diskMap");
+            if(_.get(args,"type") == AlConst.GlobalViewUpdate){
+                this.diskMap = filter_menu_show(_.get(args,"data"));
 
-            if(!_.get(_this.select_item, "_name") && !_.get(_this.select_item, "bsd_name") ||
-                -1 == _.findIndex(_.get(this.diskMap,_this.select_item.group), function(o) { return o.bsd_name == _this.select_item.bsd_name; })){
-                if (_.get(this.diskMap, "inner[0]")) {
-                    _this.select_item = _.get(this.diskMap, "inner[0]");
-                    console.warn(_this.select_item,"Home  _this.select_item +++++++++++++++++")
+                console.warn( this.diskMap,"Home diskMap");
+
+                if(!_.get(_this.select_item, "_name") && !_.get(_this.select_item, "bsd_name") ||
+                    -1 == _.findIndex(_.get(this.diskMap,_this.select_item.group), function(o) { return o.bsd_name == _this.select_item.bsd_name; })){
+                    if (_.get(this.diskMap, "inner[0]")) {
+                        _this.select_item = _.get(this.diskMap, "inner[0]");
+                        console.warn(_this.select_item,"Home  _this.select_item +++++++++++++++++")
+                    }
+                }
+            }
+
+            if(_.get(args,"type") == "CreteFileEvent"){
+                // console.warn("Home on CreteFileEvent...")
+                setTimeout(function () {
+                    console.warn(args,"start CreteFileEvent refreshDevice ... (3)")
+                    _this.refreshDevice();
+                }, 3000)
+
+                setTimeout(function () {
+                    console.warn(args,"start CreteFileEvent refreshDevice ... (8)")
+                    _this.refreshDevice();
+                }, 8000)
+
+                setTimeout(function () {
+                    console.warn(args,"start CreteFileEvent refreshDevice ... (18)")
+                    _this.refreshDevice();
+                }, 18000);
+            }
+
+            if(_.get(args,"type") == "ChangeLangEvent"){
+                console.warn("home wind ChangeLangEvent", _.get(args,"data"));
+                this.$i18n.locale = _.get(args,"data");
+            }
+
+            if(_.get(args,"type") == "MountStatusEvent"){
+                var for_bsd_name = _.get(args,"data.bsd_name");
+                var type = _.get(args,"data.type");
+                if(typeof this.diskMap["ext"] != "undefined" && this.diskMap["ext"].length > 0){
+                    for(var i in this.diskMap["ext"]){
+                        if(this.diskMap["ext"][i]["bsd_name"] == for_bsd_name){
+                            var mount_status = "";
+                            if(type == AlConst.MountStatus.UMOUNT_ON){
+                                mount_status = "&#xe676;";//-> 1/4
+                            }else if(type == AlConst.MountStatus.UMOUNT_OK){
+                                mount_status = "&#xe679;";//-> 1/3
+                            }else if(type == AlConst.MountStatus.MOUNT_ON){
+                                mount_status = "&#xe67e;"; //-> 1/2
+                            }else if(type == AlConst.MountStatus.MOUNT_FIX_ON){
+                                mount_status = "&#xe680;"; //-> 3/4
+                            }else if(type == AlConst.MountStatus.MOUNT_OK){
+                                mount_status = "&#xe67a;"; // 1
+                            }
+                            this.diskMap["ext"][i]["mount_status"] = mount_status;
+                            this.diskMap.__ob__.dep.notify()
+                        }
+                    }
                 }
             }
         });
 
-        ipcRenderer.on("CreteFileEvent", (event, arg) => {
-            console.warn("Home on CreteFileEvent...")
-            var _this = this;
-            setTimeout(function () {
-                console.warn(arg,"start CreteFileEvent refreshDevice ... (3)")
-                _this.refreshDevice();
-            }, 3000)
-
-            setTimeout(function () {
-                console.warn(arg,"start CreteFileEvent refreshDevice ... (8)")
-                _this.refreshDevice();
-            }, 8000)
-
-            setTimeout(function () {
-                console.warn(arg,"start CreteFileEvent refreshDevice ... (18)")
-                _this.refreshDevice();
-            }, 18000);
-        });
-
-
-        // var UsbNotice = function (title, device) {
-        //     console.warn(device,"UsbNotice")
-        //     if (ignoreUSB(device.serialNumber) !== true) {
-        //         new window.Notification(title, {body: device.deviceName + "("+_this.$i18n.t('click_can_forbid')+")"}).onclick = function () {
-        //             remote.getCurrentWindow().show();
-        //             var confirm_status = confirm(device.deviceName + ": "+ _this.$i18n.t('cancel_usb_notify'))
-        //             if (confirm_status) {
-        //                 ignoreUSB(device.serialNumber,true);
-        //                 alert(_this.$i18n.t('canceled_usb_notify'));
-        //             }
-        //         };
-        //     } else {
-        //         console.warn(device, "device [in ignoreUSB]");
-        //     }
-        // }
-        //
-        // ipcRenderer.on("UsbDeleteFileEvent", (event, device) => {
-        //     if (getMountNotifyStatus()) {
-        //         UsbNotice(this.$i18n.t('remove_device_event'), device)
-        //     }
-        // });
-        //
-        // ipcRenderer.on("UsbAddFileEvent", (event, device) => {
-        //     if (getMountNotifyStatus()) {
-        //         UsbNotice(this.$i18n.t('new_device_event'), device)
-        //     }
-        // });
-
-        // window.addEventListener('beforeunload', () => {
-        //     remote.getCurrentWindow().on('blur', () => {
-        //         this.menu_box = false;
-        //     })
-        // });
-
-
-        ipcRenderer.on("ChangeLangEvent", (e, lang) => {
-            console.warn("main wind ChangeLangEvent", lang);
-            this.$i18n.locale = lang;
-        });
-
-
-        remote.getCurrentWindow().on('focus', function () {
-            console.warn("currentWindow focus[todo: check diskutils <=> mount]");
-            _this.refreshDevice();
-        })
+        // remote.getCurrentWindow().on('focus', function () {
+        //     console.warn("currentWindow focus[todo: check diskutils <=> mount]");
+        //     _this.refreshDevice();
+        // })
     },
     methods: {
         handleScroll(e){
@@ -239,13 +231,13 @@ export default {
             console.warn(confirm_status, "confirm confirm_status")
 
             if (confirm_status) {
-                uMountDisk(item).then(res => {
-                    console.warn("uMountDisk res", res);
-                    let option = {
-                        title: "NTFSTool",
-                        body: item._name + " " + _this.$i18n.t('Diskuninstallsucceeded'),
-                    };
-                    new window.Notification(option.title, option);
+                uMountDisk(item,true).then(res => {
+                    // console.warn("uMountDisk res", res);
+                    // let option = {
+                    //     title: "NTFSTool",
+                    //     body: item._name + " " + _this.$i18n.t('Diskuninstallsucceeded'),
+                    // };
+                    // new window.Notification(option.title, option);
                 }).catch(err => {
                     console.warn(err,"uMountDisk");
                     alert(_this.$i18n.t('Uninstallfailed'));
@@ -257,11 +249,11 @@ export default {
             var _this = this;
             mountDisk(item).then(res => {
                 console.warn("mountDisk res", res)
-                let option = {
-                    title: "NTFSTool",
-                    body: item._name + " " + _this.$i18n.t('Diskmountedsuccessfully'),
-                };
-                new window.Notification(option.title, option);
+                // let option = {
+                //     title: "NTFSTool",
+                //     body: item._name + " " + _this.$i18n.t('Diskmountedsuccessfully'),
+                // };
+                // new window.Notification(option.title, option);
             })
         },
         choseDisk(item) {
@@ -340,8 +332,9 @@ export default {
                 console.error({group:group,menu_show_conf:this.menu_show_conf},"menu_show_c group err");
             }
         },
-        writeable_fix(){
-            console.warn("writeable_fix")
+        writeable_fix(item){
+            console.warn(item,"writeable_fix")
+            autoMountNtfsDisk(item);
         }
     }
 }

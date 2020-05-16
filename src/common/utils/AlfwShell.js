@@ -160,7 +160,8 @@ function checkFuseStr(stderr) {
             }
         }
 
-        return fuseStatus;
+        // return fuseStatus;
+        return true;
     } catch (e) {
         saveLog.error(e, "checkFuseStr error");
     }

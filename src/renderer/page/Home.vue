@@ -19,15 +19,18 @@
                             </div>
                             <span class="line"></span>
                             <div @click="menu_show_set('inner')">
-                                <i class="iconfont iconpush">{{typeof menu_show_conf.inner != "undefined" && menu_show_conf.inner == true ? "&#xe618;" : "&#xef96;"}}</i>
+                                <i class="iconfont iconpush">{{menu_show_conf && typeof menu_show_conf.inner != "undefined" &&
+                                    menu_show_conf.inner == true ? "&#xe618;" : "&#xef96;"}}</i>
                                 系统卷
                             </div>
                             <div @click="menu_show_set('ext')">
-                                <i class="iconfont iconpush">{{typeof menu_show_conf.ext != "undefined" && menu_show_conf.ext == true ? "&#xe618;" : "&#xef96;"}}</i>
+                                <i class="iconfont iconpush">{{menu_show_conf && typeof menu_show_conf.ext != "undefined" &&
+                                    menu_show_conf.ext == true ? "&#xe618;" : "&#xef96;"}}</i>
                                 扩展卷
                             </div>
                             <div @click="menu_show_set('image')">
-                                <i class="iconfont iconpush">{{typeof menu_show_conf.image != "undefined" && menu_show_conf.image == true ? "&#xe618;" : "&#xef96;"}}</i>
+                                <i class="iconfont iconpush">{{menu_show_conf && typeof menu_show_conf.image != "undefined" &&
+                                    menu_show_conf.image == true ? "&#xe618;" : "&#xef96;"}}</i>
                                 镜像卷
                             </div>
                         </div>
@@ -53,7 +56,8 @@
                     </div>
 
                     <div v-bind:class="['bar',select_item.group != 'inner' ? '' : 'bar_disable']">
-                        <div class="i"  @click="select_item.group != 'inner' && (select_item.mounted == true ? uMountDisk(select_item) : mountDisk(select_item))">
+                        <div class="i"
+                             @click="select_item.group != 'inner' && (select_item.mounted == true ? uMountDisk(select_item) : mountDisk(select_item))">
                             <i class="iconfont iconpush" style="color: rgb(110, 110, 112);">&#xeb99;</i>
                         </div>
 
@@ -104,7 +108,8 @@
 
                                     <i v-if="index == 'inner'" class="iconfont iconpush"
                                        style="color: rgb(110, 110, 112);">&#xe61a;</i>
-                                    <i v-else class="iconfont iconpush" style="color: rgb(110, 110, 112);" title="点击卸载磁盘">&#xe769;</i>
+                                    <i v-else class="iconfont iconpush" style="color: rgb(110, 110, 112);"
+                                       title="点击卸载磁盘">&#xe769;</i>
                                 </div>
 
                                 <div v-else @click="mountDisk(item)" @click.stop title="点击挂载磁盘">
@@ -133,41 +138,66 @@
                                 <div class="lm-block_3n_d">
                                     <div class="lm-block_3n_d_1">
                                         <div class="lm-block_3n_d_1_flex" :title="item._name">
-                                            <div class="block_3n_d_1_sd"
-                                                 v-if="typeof item.writable == 'string' && item.writable.toLowerCase() == 'no'">
-                                                <span class="readonly">
-                                                    {{$t('Readonly')}}
-                                                </span>
-                                            </div>
-
-                                            <div v-else class="block_3n_d_1_sd">
-                                                <span v-if="item.mounted"
-                                                      class="block_3n_d_1_sdp mounted_dot"></span>
-                                                <span v-else class="block_3n_d_1_sdp unmounted_dot"></span>
-                                            </div>
 
 
-                                            <span v-if="typeof item.status != 'undefined' && (item.status == 0)"
-                                                  class="block_3n_d_1_sp">
-                                                {{$t('Mounting')}}...
+                                            <!--<div class="block_3n_d_1_sd">-->
+                                                <!--<span v-if="item.mounted"-->
+                                                      <!--class="block_3n_d_1_sdp mounted_dot"></span>-->
+                                                <!--<span v-else class="block_3n_d_1_sdp unmounted_dot"></span>-->
+                                            <!--</div>-->
+
+
+                                            <!--<span v-if="typeof item.status != 'undefined' && (item.status == 0)"-->
+                                                  <!--class="block_3n_d_1_sp">-->
+                                                <!--{{$t('Mounting')}}...-->
+                                            <!--</span>-->
+
+                                            <span class="block_3n_d_1_sp">
+
+                                                <i v-if="item.mount_status"  v-html="item.mount_status" class="iconfont iconrepush1" style="color: #51b7f6;font-size: 12px;">
+                                                    {{item.mount_status}}
+                                                </i>
+
+                                                <i v-else-if="!item.mount_status && item.mounted" class="iconfont iconrepush1" style="color: #51b7f6;font-size: 12px;">
+                                                    &#xe67a;
+                                                </i>
+
+                                                 <i v-else-if="!item.mount_status && !item.mounted" class="iconfont iconrepush1" style="color: #c0c4cc;font-size: 12px;">
+                                                    &#xe67a;
+                                                </i>
+
+                                                <i v-else  class="iconfont iconrepush1" style="color: #51b7f6;font-size: 18px;">
+                                                    &#xe67a;
+                                                </i>
+
+
+                                                {{item._name.length > 16 ? (item._name.substring(0,16) + "...") : (item._name ? item._name : "未命名")}}
                                             </span>
-
-                                            <span v-else class="block_3n_d_1_sp">{{item._name.length > 16 ? (item._name.substring(0,16) + "...") : (item._name ? item._name : "NoName")}}</span>
 
                                         </div>
 
-                                        <div class="lm-block_3n_d_1_fdf">
+                                        <div class="block_3n_d_1_sd"
+                                             title="点击修复只读挂载"
+                                             @click="writeable_fix(item)" @click.stop
+                                             v-if="item.group == 'ext' && (typeof item.writable == 'string' && item.writable.toLowerCase() == 'no')">
+                                            <span class="readonly">
+                                                {{$t('Readonly')}}
+                                            </span>
+                                        </div>
+
+                                        <div v-else class="lm-block_3n_d_1_fdf">
                                             {{item.total_size}}
                                         </div>
                                     </div>
 
-                                    <div v-if="item.mounted == true" style="position: relative">
-                                        <div class="lm-block_3n_d_2" v-bind:style="{backgroundColor: select_item.bsd_name == item.bsd_name ? '#e4e4e4' : '#f3f3f3'}">
+                                    <div v-if="item.mounted == true" class="lm-block_3n_d_2">
+                                        <div class="lm-block_3n_d_2_bar"
+                                             v-bind:style="{backgroundColor: select_item.bsd_name == item.bsd_name ? '#e4e4e4' : 'white'}">
                                             <span v-bind:style="{ width: item.percentage + '%', backgroundColor: '#66b1ff' }"></span>
                                         </div>
                                     </div>
 
-                                    <div v-else>
+                                    <div v-else class="lm-block_3n_d_2">
                                         <span title="点击挂载" class="umounted" @click="mountDisk(item)" @click.stop>
                                             {{$t('Unmounted')}}
                                         </span>
@@ -183,7 +213,7 @@
                     <div class="lfooter_div" @click="refreshDevice">
                         <div style="display: flex;">
                             <!--<div v-if="loading == -1" class="mint-spinner-snake">-->
-                                <!--<i class="iconfont iconiconsxz i-loading">&#xe623;</i>-->
+                            <!--<i class="iconfont iconiconsxz i-loading">&#xe623;</i>-->
                             <!--</div>-->
 
                             <div v-if="loading == -1" class="mint-spinner-snake">
@@ -236,8 +266,8 @@
                                            :pre_value="select_item._name"
                                            class="l-input" type="text" v-model="select_item._name">
 
-                                    <div v-else class="l" >
-                                        {{select_item._name ? select_item._name : "NoName"}}
+                                    <div v-else class="l">
+                                        {{select_item._name ? select_item._name : "未命名"}}
                                     </div>
                                 </div>
 
@@ -247,13 +277,17 @@
                                             Status
                                         </span>
 
-                                        <span v-if="select_item.mounted == true && select_item.writable == 'yes'" style="color: #67c23a">
+                                        <span v-if="select_item.mounted == true && select_item.writable == 'yes'"
+                                              style="color: #67c23a">
                                              write_mounted
                                         </span>
 
-                                        <span v-else-if="select_item.mounted == true && select_item.writable != 'yes'" style="color: #f56c6c;">
+                                        <span v-else-if="select_item.mounted == true && select_item.writable != 'yes'"
+                                              style="color: #f56c6c;">
                                             只读挂载
-                                            <span @click="writeable_fix" v-if="typeof select_item.file_system == 'string' && select_item.file_system.toLowerCase().indexOf('ntfs') >= 0" class="writeable_fix">
+                                            <span @click="writeable_fix"
+                                                  v-if="typeof select_item.file_system == 'string' && select_item.file_system.toLowerCase().indexOf('ntfs') >= 0"
+                                                  class="writeable_fix">
                                                  修复
                                              </span>
                                         </span>

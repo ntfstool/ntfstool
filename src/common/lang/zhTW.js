@@ -141,8 +141,6 @@ export default {
     Helpsoftwaretranslation:"幫助軟件完善語言翻譯",
     dbclicktoopen:"雙擊打開磁盤",
     click_can_forbid:"點擊可以禁止",
-    cancel_usb_notify:"取消USB通知?",
-    canceled_usb_notify:"已取消通知",
     Automatically_mount_NTFS_disk:"自動掛載NTFS磁盤",
     Sorryitisnotsupported:"抱歉,暫不支持普通權限用戶使用(請使用管理員賬戶運行軟件)",
 }

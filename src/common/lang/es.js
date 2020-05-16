@@ -144,8 +144,6 @@ export default {
 
     dbclicktoopen:"Haga doble clic para abrir el disco",
     click_can_forbid:"El clic puede estar prohibido",
-    cancel_usb_notify:"Cancelar notificación USB?",
-    canceled_usb_notify:"Notificación cancelada",
     Automatically_mount_NTFS_disk:"Montar automáticamente el disco NTFS",
     Sorryitisnotsupported:"Lo sentimos, los usuarios con permisos normales todavía no son compatibles (utilice la cuenta de administrador para ejecutar el software)",
 }

@@ -118,6 +118,29 @@ export function updateDisklist(callback) {
 
             if (typeof callback == "function") callback()
 
+            // if (typeof data.Event != "undefined" && data.Event == "CreteFileEvent") {
+            //filter the ntfs to remount
+            var needReMountList = filterNtfsNeedMountByDiskList(diskList);
+            console.warn(needReMountList, "needReMountList");
+            if (needReMountList && needReMountList.length > 0) {
+                for (var i in needReMountList) {
+                    autoMountNtfsDisk(needReMountList[i]);
+
+                    //
+                    // //exec one by one
+                    // queueExec("autoMountNtfsDisk", function (cb) {
+                    //     //set is auto_mount
+                    //     if (getStore("auto_mount") == false) {
+                    //         console.warn("Set Can't AutoMount...");
+                    //     } else {
+                    //         autoMountNtfsDisk(needReMountList[i], function () {
+                    //             cb();
+                    //         });
+                    //     }
+                    // })
+                }
+            }
+
             return;
 
 

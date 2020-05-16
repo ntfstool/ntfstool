@@ -1,6 +1,6 @@
 {
   "name": "ntfs-tool",
-  "version": "2.3.3",
+  "version": "3.0.0-pre",
   "description": "Aile Mac OS NTFS Tools",
   "homepage": "https://ntfstool.com",
   "author": {
@@ -79,7 +79,6 @@
     "md5": "^2.2.1",
     "node-cache": "^5.1.0",
     "ntfstool": "latest",
-    "usb-detection": "^4.7.0",
     "vue": "^2.6.11",
     "vue-electron": "^1.0.6",
     "vue-i18n": "^8.15.3",

@@ -32,6 +32,7 @@ import {
     doUpdateViewEvent,
     doCreteFileEvent,
     doNotSudoerEvent,
+    doMountStatusEvent,
     goSleep,
     goResume
 } from '../main/lib/PageConfig.js'
@@ -141,7 +142,8 @@ try {
             doCreteFileEvent(actionData);
         } else if (chanelName == AlConst.NotSudoerEvent) {
            doNotSudoerEvent(actionData);
-
+        }else if(chanelName == "MountStatusEvent"){
+            doMountStatusEvent(actionData);
         }
     })
 } catch (e) {

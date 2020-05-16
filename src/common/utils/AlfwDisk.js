@@ -25,7 +25,7 @@ const {getDiskInfo} = require('diskutil')
 const {ntfstool_bin} = require('ntfstool')
 const {_} = require('lodash')
 import {ipcRenderer, remote} from 'electron'
-var reMountLock = [];//global lock
+// var reMountLock = [];//global lock
 var fs= require("fs")
 import {noticeTheSystemError} from '@/common/utils/AlfwCommon'
 
@@ -33,16 +33,50 @@ import {noticeTheSystemError} from '@/common/utils/AlfwCommon'
 export function autoMountNtfsDisk(mountInfo,cb) {
     try{
         console.warn(mountInfo,"mountInfo")
-        reMountNtfs(mountInfo.index).then(function () {
-            cb();
+        reMountNtfs(mountInfo).then(function () {
+            typeof cb == "function" && cb();
         }).catch(function () {
-            cb();
+            typeof cb == "function" && cb();
         })
     }catch (e) {
         console.error(e,"autoMountNtfsDisk");
-        cb();
+        typeof cb == "function" && cb();
         //send log
     }
+}
+
+/**
+ * mountDisk
+ * @param mount_path
+ * @param link_path
+ * @returns {Promise<any>}
+ */
+export function mountDisk(item) {
+    console.warn(item, "mountDisk start +++++++++++++++++++++TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
+    return new Promise(async (resolve, reject) => {
+        try {
+            delIgnoreItem(item.bsd_name);
+            reMountNtfs(item, true).then((res) => {
+                resolve(res);
+            }).catch((err) => {
+                reject(err);
+            });
+        } catch (e) {
+            saveLog.error(e, "mountDisk");
+            reject(e)
+        }
+    })
+}
+
+
+function sendReMountNtfsEvent(item,type) {
+    typeof ipcRenderer != "undefined" && ipcRenderer.send('IPCMain', {
+        name:"MountStatusEvent",
+        data:{
+            bsd_name: _.get(item,"bsd_name",""),
+            type:type
+        }
+    })
 }
 
 /**
@@ -54,42 +88,51 @@ export function autoMountNtfsDisk(mountInfo,cb) {
 function reMountNtfs(item, force = false) {
     var index = item.bsd_name;
     console.warn(index, "reMountNtfs start +++++++++++TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT++++++++++");
-    reMountLock[index] = true;
+    // reMountLock[index] = true;
     var link_dev = "/dev/" + index;
     return new Promise(async (resolve, reject) => {
         try {
-            // var info = await getDiskInfo(index);
-            // console.log(info, "reMountNtfs info");
-            // if(!info){
-            //     console.warn(index,"reMountNtfs Fail");
-            //     reject("reMountNtfs Fail");
-            //     return false;
-            // }
-            //
-            // if (info.typebundle != "ntfs") {
-            //     reMountLock[index] = false;
-            //     reject("not is ntfs disk[" + index + "]!");
-            //     return;
-            // }
-
-
-            if(_.get(item,"mounted") == true){
-                if(force === false && _.get(info,"readonly") != true){
-                    reMountLock[index] = false;
-                    console.warn("succ[" + index + "] is Already Moubted!");
-                    resolve("succ[" + index + "] is Already Moubted!");
-                    return ;
-                }
-
-                await execShellSudo("diskutil unmount " + link_dev);
+            //判断如果不是ntfs格式无需卸载挂载[插拔设备即可]
+            if (_.get(item,"file_system","").toLowerCase().indexOf('ntfs') < 0) {
+                reject("not is ntfs disk[" + index + "]!");
+                return;
             }
+
+            //手动点击是强制性的,自动挂载是判断性的
+            if(force == true){
+                sendReMountNtfsEvent(item,AlConst.MountStatus.UMOUNT_OK);
+                // 先卸载再挂载 [手动模式]
+                if(_.get(item,"mounted") == true){
+                    uMountDisk(item,true);
+                }
+            }else{
+                // 必须命令系统检查(脏消息问题) [自动挂载模式]
+                var check_res = await execShell("mount | grep '"+link_dev+"'");
+                var check_str = check_res.toString() + "";
+                if(check_str){
+                    if(check_str.toLowerCase().indexOf("read-only") >= 0){
+                        //检查如果已经[只读]挂载,则卸载磁盘
+                        console.warn(check_str.toLowerCase(),"reMountNtfs [只读]挂载,则卸载磁盘.....");
+                        uMountDisk(item);
+                    }else{
+                        //检查如果已经[可读写]挂载,则退出
+                        console.warn(check_str.toLowerCase(),"reMountNtfs [可读写]挂载,退出.....");
+                        return;
+                    }
+                }
+            }
+
 
 
             // here should deeply notice the recursive for the watch for the [/Volumes]
             // WatchStatus = false
             watchStatus(false);
+            if(_.get(item,"_name") == _.get(item,"bsd_name")){
+                console.error(item,"_name === bsd_name,reset _name null");
+                item._name = "";
+            }
 
-            var volumename = item._name ? item._name : getAutoVolumeName();
+            var volumename = item._name ? item._name : getAutoVolumeName(item);
             volumename = volumename.replace( /volumes/gi , '').replace( /\//gi , '');
             var mount_path = '/Volumes/' + volumename;
 
@@ -103,7 +146,7 @@ function reMountNtfs(item, force = false) {
 
                     console.warn(samename_res,"samename_res");
                     if(samename_res && samename_res.indexOf(index) <= 0){
-                        console.warn("not found index",index);
+                        console.warn("reMountNtfs not found index",index);
                         volumename = volumename + "1";//rename
                         var mount_path = '/Volumes/' + volumename;
                         if (!fs.existsSync(mount_path)) {
@@ -112,39 +155,49 @@ function reMountNtfs(item, force = false) {
                     }
                 }
 
-                console.warn("UseMountType:Inner")
+                sendReMountNtfsEvent(item,AlConst.MountStatus.MOUNT_ON);
+
                 var run_res = await execShellSudo(`mount_ntfs -o rw,auto,nobrowse,noowners,noatime ${link_dev} '${mount_path}'`);
+
+                sendReMountNtfsEvent(item,AlConst.MountStatus.MOUNT_OK);
             }else{
-                console.warn("UseMountType:Outer")
+                console.warn("reMountNtfs UseMountType:Outer");
+
+                sendReMountNtfsEvent(item,AlConst.MountStatus.MOUNT_ON);
+
                 // unclear -o remove_hiberfile
                 if(fixUnclear(index) === true){
-                    console.warn("fixUnclear mode to mount",index);
+                    sendReMountNtfsEvent(item,AlConst.MountStatus.MOUNT_FIX_ON);
+                    console.warn("reMountNtfs fixUnclear mode to mount",index);
                     var run_res = await execShellSudo(`${ntfstool_bin} ${link_dev} '${mount_path}' -o volname='${volumename}' -o remove_hiberfile -olocal -oallow_other   -o auto_xattr -o hide_hid_files`);
                 }else{
                     var run_res = await execShellSudo(`${ntfstool_bin} ${link_dev} '${mount_path}' -o volname='${volumename}'  -olocal -oallow_other   -o auto_xattr -o hide_hid_files`);
                 }
 
+                sendReMountNtfsEvent(item,AlConst.MountStatus.MOUNT_OK);
             }
 
             watchStatus(true);
 
-            console.log(run_res, "run_res mount_ntfs");
+            console.log(run_res, "reMountNtfs run_res mount_ntfs");
 
 
             var check_res2 = await execShell("mount |grep '" + index + "'");
             if (check_res2 && check_res2.indexOf("read-only") <= 0) {
-                reMountLock[index] = false;
+                // reMountLock[index] = false;
                 // setDiskMountPrending(index,0)
-                console.warn("start to mount disk...[ok]",link_dev)
+                console.warn("reMountNtfs start to mount disk...[ok]",link_dev)
 
                 resolve("succ[" + index + "]");
             } else {
                 // setDiskMountPrending(index,-99)
-                reMountLock[index] = false;
+                // reMountLock[index] = false;
                 reject("mount fail[" + index + "]");
             }
         } catch (e) {
-            reMountLock[index] = false;
+            sendReMountNtfsEvent(item,AlConst.MountStatus.MOUNT_OK);
+
+            // reMountLock[index] = false;
             watchStatus(true);
             if(typeof e == "string" && e.indexOf("itself") >= 0 && e.indexOf("OSXFUSE") >= 0){
                 console.warn("reMountNtfs busy try ...",e);
@@ -157,8 +210,8 @@ function reMountNtfs(item, force = false) {
                 // Falling back to read-only mount because the NTFS partition is in an
                 // unsafe state. Please resume and shutdown Windows fully (no hibernation
                 // or fast restarting.)
-                console.warn("Catch unclean");
-                noticeTheSystemError("UNCLEANERROR",e);
+                console.warn("reMountNtfs Catch unclean");
+                // noticeTheSystemError("UNCLEANERROR",e);
 
                 fixUnclear(index,true);
             }
@@ -169,14 +222,10 @@ function reMountNtfs(item, force = false) {
     })
 }
 
-
-function getAutoVolumeName() {
-    if(typeof global["AutoVolumeNameTimes"] == "undefined"){
-        global["AutoVolumeNameTimes"] = 0;
-        return "AUntitled";
-    }else{
-        global["AutoVolumeNameTimes"]++;
-        return "AUntitled" + global["AutoVolumeNameTimes"];
+//直接和卷名关联
+function getAutoVolumeName(item) {
+    if(typeof item.bsd_name != "undefined" && item.bsd_name){
+        return "NT" + item.bsd_name.replace("disk","").toUpperCase();
     }
 }
 
@@ -196,59 +245,38 @@ function setDiskMountPrending(index,setStatus) {
     })
 }
 
-/**
- * mountDisk
- * @param mount_path
- * @param link_path
- * @returns {Promise<any>}
- */
-export function mountDisk(item) {
-    console.warn(item, "mountDisk start +++++++++++++++++++++TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
-    return new Promise(async (resolve, reject) => {
-        try {
-            //del ignore item
-            delIgnoreItem(item.bsd_name);
-            if (typeof item.file_system == 'string' && item.file_system.toLowerCase().indexOf('ntfs') >= 0) {
-                console.warn(item.bsd_name, "[ntfs mount]mountDisk start +++++++++++++++++++++TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
-                reMountNtfs(item, true).then((res) => {
-                    resolve(res);
-                }).catch((err) => {
-                    reject(err);
-                });
-                return;
-            }
-            //No other disks need to be mounted temporarily
-            reject("not need mount");
-        } catch (e) {
-            saveLog.error(e, "mountDisk");
-            reject(e)
-        }
-    })
-}
+
 
 /**
  * umount the disk
  * @param item
  * @returns {Promise<any>}
  */
-export function uMountDisk(item) {
+export function uMountDisk(item,user_action = false) {
     console.warn(item, "mountDisk start +++++++++++++++++++++TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
     return new Promise(async (resolve, reject) => {
         try {
             //add ignore item
-            ignoreItem(item.bsd_name);
+            if(user_action == true){
+                ignoreItem(item.bsd_name);
+            }
 
             var dev_path = "/dev/" + item.bsd_name;
             //NTFS
+            sendReMountNtfsEvent(item,AlConst.MountStatus.UMOUNT_ON);
             if (typeof item.file_system != "undefined" && item.file_system.toLowerCase().indexOf('ntfs') >= 0) {
                 console.warn(item, "[NTFS]uMountDisk start +++++++++++++++++++++TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
-                resolve(await execShellSudo(`umount ${dev_path}`));
+                var res = await execShellSudo(`umount -f '${dev_path}'`);
             } else {
                 console.warn(item, "eject uMountDisk start +++++++++++++++++++++TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
-                resolve(await execShellSudo(`diskutil eject ${get_safe_ejst_disk_name(dev_path)}`));
+                var res = await execShellSudo(`diskutil eject '${get_safe_ejst_disk_name(dev_path)}'`);
             }
+            sendReMountNtfsEvent(item,AlConst.MountStatus.UMOUNT_OK);
+
+            resolve(res);
         } catch (e) {
             saveLog.error(e, "uMountDisk");
+            sendReMountNtfsEvent(item,AlConst.MountStatus.UMOUNT_OK);
             reject(e)
         }
     })

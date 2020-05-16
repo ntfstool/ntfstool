@@ -21,7 +21,6 @@ import {app, BrowserWindow, Menu, Tray, ipcMain, globalShortcut, crashReporter, 
 import {isDev} from "@/common/utils/AlfwCommon";
 import {AlConst} from "@/common/utils/AlfwConst";
 
-var usbDetect = require('usb-detection');
 var fs = require("fs")
 var winURL;
 var homeWinHandle = null;
@@ -41,60 +40,75 @@ if (isDev()) {
     global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
 }
 
-export function doChangeLangEvent(arg) {
-    console.warn("ChangeLangEvent", arg);
+export function doChangeLangEvent(actionData) {
+    console.warn("ChangeLangEvent", actionData);
     if (homeWinHandle) {
-        homeWinHandle.send("ChangeLangEvent", arg);
+        homeWinHandle.send("HomeEvent",{
+            type:"ChangeLangEvent",
+            data:actionData
+        });
     }
 
     if (trayPageHandle) {
-        trayPageHandle.send("ChangeLangEvent", arg);
+        trayPageHandle.send("HomeEvent",{
+            type:"ChangeLangEvent",
+            data:actionData
+        });
     }
 
     if (dialogPageHandle) {
-        dialogPageHandle.send("ChangeLangEvent", arg);
+        dialogPageHandle.send("ChangeLangEvent", actionData);
     }
 
     if (feedBackPageHandle) {
-        feedBackPageHandle.send("ChangeLangEvent", arg);
+        feedBackPageHandle.send("ChangeLangEvent", actionData);
+    }
+}
+
+export function doMountStatusEvent(actionData) {
+    if (homeWinHandle) {
+        homeWinHandle.send("HomeEvent",{
+            type:"MountStatusEvent",
+            data:actionData
+        });
+    }
+
+    if (trayPageHandle) {
+        trayPageHandle.send("TrayEvent",{
+            type:"MountStatusEvent",
+            data:actionData
+        });
     }
 }
 
 export function doUpdateViewEvent(actionData) {
     if (homeWinHandle) {
-        homeWinHandle.send(AlConst.GlobalViewUpdate,actionData);
+        homeWinHandle.send("HomeEvent",{
+            type:AlConst.GlobalViewUpdate,
+            data:actionData
+        });
     }
 
     if (trayPageHandle) {
-        trayPageHandle.send(AlConst.GlobalViewUpdate,actionData);
+        trayPageHandle.send("TrayEvent",{
+            type:AlConst.GlobalViewUpdate,
+            data:actionData
+        });
     }
 }
 
-export function doCreteFileEvent(arg) {
+export function doCreteFileEvent(actionData) {
     if (homeWinHandle) {
-        homeWinHandle.send("CreteFileEvent", arg);
-    }
-
-    if (trayPageHandle) {
-        trayPageHandle.send("CreteFileEvent", arg);
+        homeWinHandle.send("HomeEvent",{
+            type:"CreteFileEvent",
+            data:actionData
+        });
     }
 }
 
 export function doNotSudoerEvent(arg) {
     if (dialogPageHandle) {
         dialogPageHandle.send("NotSudoerEvent", arg);
-    }
-}
-
-export function doUsbDeleteFileEvent(arg) {
-    if (homeWinHandle) {
-        homeWinHandle.send("UsbDeleteFileEvent", arg);
-    }
-}
-
-export function doUsbAddFileEvent(arg) {
-    if (homeWinHandle) {
-        homeWinHandle.send("UsbAddFileEvent", arg);
     }
 }
 
@@ -109,8 +123,6 @@ export function openPages() {
 
     openTrayPage();
 
-    monitorUsb();
-
     setTimeout(function () {
         openDialogPage("hide");
         openSettingPage("hide");
@@ -121,7 +133,6 @@ export function openPages() {
 export function goResume() {
     setTimeout(function () {
         openHomePage("hide");
-        monitorUsb();
     }, 10000)
 
     setTimeout(function () {
@@ -133,8 +144,6 @@ export function goResume() {
 
 export function goSleep() {
     try {
-        usbDetect.stopMonitoring();
-
         if (homeWinHandle) {
             homeWinHandle.destroy();
             homeWinHandle = null;
@@ -187,8 +196,6 @@ export function openPageByName(name) {
 
 export function exitAll() {
     try {
-        usbDetect.stopMonitoring();
-        
         //only exec once
         if (!exitAllStatus) {
             return;
@@ -594,21 +601,4 @@ const _homeWinMenu = () => {
     ];
 
     Menu.setApplicationMenu(Menu.buildFromTemplate(template));
-}
-
-
-const monitorUsb = function () {
-    try {
-        usbDetect.startMonitoring();
-        usbDetect.on('add', function (device) {
-            console.warn('usbDeviceMonitorAdd', device);
-            doUsbAddFileEvent(device);
-        });
-        usbDetect.on('remove', function (device) {
-            console.warn('usbDeviceMonitorRemove', device.deviceName);
-            doUsbDeleteFileEvent(device);
-        });
-    } catch (e) {
-        console.error(e, "usbDeviceMonitor Error")
-    }
 }

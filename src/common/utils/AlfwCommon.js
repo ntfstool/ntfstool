@@ -20,7 +20,7 @@
 import {execShell, execShellSudo} from '@/common/utils/AlfwShell'
 import {t} from 'element-ui/lib/locale'
 import {remote} from 'electron'
-import {ignoreItem, getStore} from '@/common/utils/AlfwStore'
+import {ignoreItem, getStore,getMenuShowConf} from '@/common/utils/AlfwStore'
 import {app, ipcMain, ipcRenderer, Notification, dialog, shell, powerMonitor} from 'electron'
 
 const {getAspInfo} = require('ntfstool')
@@ -263,13 +263,13 @@ export function filterNtfsNeedMountByDiskList(diskList) {
     var ret = [];
     if (typeof diskList != "undefined" && typeof diskList["ext"] != "undefined" && diskList["ext"].length > 0) {
         for (var i in diskList["ext"]) {
-            if (_.indexOf(ignoreItemList, diskList["ext"][i]["index"]) === -1) {
+            if (_.indexOf(ignoreItemList, diskList["ext"][i]["bsd_name"]) === -1) {
                 console.warn({list: diskList["ext"][i], ignorelist: ignoreItemList},
                     "ignoreChose false");
 
                 //NTFS needs to be remounted
-                if (_.get(diskList["ext"][i], "info.typebundle") == "ntfs") {
-                    if (_.get(diskList["ext"][i], "info.readonly") == true || _.get(diskList["ext"][i], "info.mounted") == false) {
+                if (_.get(diskList["ext"][i], "file_system", "").toLowerCase().indexOf('ntfs') >= 0) {
+                    if (_.get(diskList["ext"][i], "writable", "").toLowerCase() == 'no' || _.get(diskList["ext"][i], "mounted") == false) {
                         ret.push(diskList["ext"][i]);
                     }
                 }
@@ -407,27 +407,24 @@ export function checkUpdate() {
 
 
 export function filter_menu_show(list) {
-    var menu_show_conf = getStore("menu_show_conf");
-    console.warn(menu_show_conf,"filter_menu_show #");
+    var menu_show_conf = getMenuShowConf();
 
-    console.warn(list,"filter_menu_show 0");
 
-    if (typeof menu_show_conf.inner != "undefined" && menu_show_conf.inner == false) {
-        if (typeof list.inner != "undefined") {
+    if (_.get(menu_show_conf, "inner", "") === false) {
+        if (list && typeof list.inner != "undefined") {
             list.inner = [];
         }
     }
-    if (typeof menu_show_conf.ext != "undefined" && menu_show_conf.ext == false) {
-        if (typeof list.ext != "undefined") {
+    if (_.get(menu_show_conf, "ext", "") === false) {
+        if (list && typeof list.ext != "undefined") {
             list.ext = [];
         }
     }
-
-    if (typeof menu_show_conf.image != "undefined" && menu_show_conf.image == false) {
-        if (typeof list.image != "undefined") {
+    if (_.get(menu_show_conf, "image", "") === false) {
+        if (list && typeof list.image != "undefined") {
             list.image = [];
         }
     }
-    console.warn(list,"filter_menu_show 1");
+    console.warn(list, "filter_menu_show 1");
     return list;
 }

@@ -145,8 +145,6 @@ export default {
 
     dbclicktoopen:"두 번 클릭하여 디스크 열기",
     click_can_forbid:"클릭 금지",
-    cancel_usb_notify:"USB 알림을 취소 하시겠습니까?",
-    canceled_usb_notify:"알림이 취소되었습니다",
     Automatically_mount_NTFS_disk:"NTFS 디스크 자동 마운트",
     Sorryitisnotsupported:"죄송합니다. 일반 권한이있는 사용자에게는 지원되지 않습니다 (관리자 계정을 사용하여 소프트웨어를 실행하십시오)",
 }

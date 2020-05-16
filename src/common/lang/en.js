@@ -143,8 +143,6 @@ export default {
 
     dbclicktoopen:"Double-click to open the disk",
     click_can_forbid:"Click can be forbidden",
-    cancel_usb_notify:"Cancel USB notification?",
-    canceled_usb_notify:"Notification cancelled",
     Automatically_mount_NTFS_disk:"Automatically mount NTFS disk",
     Sorryitisnotsupported:"Sorry, it is not supported for users with normal permissions (please use the administrator account to run the software)",
 }

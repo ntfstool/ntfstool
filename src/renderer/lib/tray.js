@@ -45,16 +45,20 @@ export default {
     mounted() {
         this._title = this.title;
 
-        ipcRenderer.on("ChangeLangEvent", (e, lang) => {
-            console.warn("tray wind ChangeLangEvent", lang);
-            this.$i18n.locale = lang;
-        });
+        ipcRenderer.on("TrayEvent", (event,args) => {
+            console.warn("TrayEvent",args);
 
-        // window.addEventListener('beforeunload', ()=>{
-        //     remote.getCurrentWindow().on('blur', () => {
-        //         this.menu_box1 = false;
-        //     })
-        // });
+            //GlobalViewUpdate
+            if(_.get(args,"type") == AlConst.GlobalViewUpdate){
+                this.diskMap = filter_menu_show(_.get(args,"data"));
+                this.resetSize();
+            }
+
+            if(_.get(args,"type") == "ChangeLangEvent"){
+                console.warn("tray wind ChangeLangEvent", _.get(args,"data"));
+                this.$i18n.locale = _.get(args,"data");
+            }
+        });
 
 
         remote.getCurrentWindow().on('focus', function () {
@@ -65,16 +69,6 @@ export default {
             });
         })
 
-        ipcRenderer.on(AlConst.GlobalViewUpdate, (event,args) => {
-            console.warn("Tray GlobalViewUpdate Come",{
-                args,event
-            })
-
-            this.diskMap = filter_menu_show(args);
-
-            // console.warn(`${AlConst.GlobalViewUpdate} come tray ...`, this.diskMap);
-            this.resetSize();
-        });
 
         ipcRenderer.on("OpenShare", () => {
             this.openShare();
@@ -95,7 +89,7 @@ export default {
             console.warn(confirm_status, "confirm confirm_status")
 
             if (confirm_status) {
-                uMountDisk(item).then(res => {
+                uMountDisk(item,true).then(res => {
                     console.warn("uMountDisk res", res);
                     let option = {
                         title: "NTFSTool",

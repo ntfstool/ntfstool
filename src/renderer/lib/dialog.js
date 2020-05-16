@@ -48,7 +48,6 @@ export default {
         var _this = this;
 
         remote.getCurrentWindow().on('focus', function() {
-            //check fuse installed and hide()
             if(_this.show_index == "install_fuse" && fs.existsSync("/Library/Frameworks/OSXFUSE.framework")){
                 remote.getCurrentWindow().hide();
             }

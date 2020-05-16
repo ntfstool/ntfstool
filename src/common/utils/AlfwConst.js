@@ -20,10 +20,17 @@
 export const POST_LOG_URL = 'https://ntfstool.cn-hongkong.log.aliyuncs.com/logstores/ntfstool/track';
 
 export const AlConst = {
-    DiskListEvent : "DiskListEvent",
-    DiskList:"DiskList",
-    SudoPwdEvent:"SudoPwdEvent",
-    InstallFuseEvent:"InstallFuseEvent",
-    NotSudoerEvent:"NotSudoerEvent",
-    GlobalViewUpdate:"GlobalViewUpdate",
+    DiskListEvent: "DiskListEvent",
+    DiskList: "DiskList",
+    SudoPwdEvent: "SudoPwdEvent",
+    InstallFuseEvent: "InstallFuseEvent",
+    NotSudoerEvent: "NotSudoerEvent",
+    GlobalViewUpdate: "GlobalViewUpdate",
+    MountStatus: {
+        UMOUNT_ON: "UMOUNT_ON",
+        UMOUNT_OK: "UMOUNT_OK",
+        MOUNT_ON: "MOUNT_ON",
+        MOUNT_FIX_ON: "MOUNT_FIX_ON",
+        MOUNT_OK: "MOUNT_OK"
+    }
 };

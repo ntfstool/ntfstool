@@ -35,7 +35,6 @@ const alfwStore = {
     },
     sudoPwd: false,
     fixUnclear:[],
-    ignoreUSB:[],
     firstTimeCache:"",
     menu_show_conf:{
         inner:true,
@@ -66,6 +65,19 @@ export function setStore(key,value) {
 
 export function getStore(key) {
     return store.get(key);
+}
+
+export function getMenuShowConf() {
+    var menu_show_conf = store.get("menu_show_conf");
+    if (!menu_show_conf || typeof menu_show_conf.inner == "undefined") {
+        menu_show_conf = {
+            inner: true,
+            ext: true,
+            image: true
+        };
+        setStore("menu_show_conf",menu_show_conf);
+    }
+    return menu_show_conf;
 }
 
 export function clearPwd() {
@@ -226,24 +238,4 @@ export function delAllIgnore(){
     console.warn("delAllIgnore ok")
     return true;
 }
-
-
-export function ignoreUSB($key,$val){
-    var cacheKey = "ignoreUSB";
-    var ret = store.get(cacheKey);
-    console.warn(ret,cacheKey);
-    if(!ret){
-        ret = [];
-    }
-    if(typeof $val == "undefined"){
-        return ret.indexOf($key) >= 0 ? true : false;
-    }else{
-        if(_.indexOf(ret,$key) === -1){
-            ret.push($key);
-        }
-        store.set(cacheKey,ret);
-    }
-}
-
-
 
