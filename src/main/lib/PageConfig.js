@@ -60,13 +60,13 @@ export function doChangeLangEvent(arg) {
     }
 }
 
-export function doUpdateViewEvent(event, args) {
+export function doUpdateViewEvent(actionData) {
     if (homeWinHandle) {
-        homeWinHandle.send(AlConst.GlobalViewUpdate);
+        homeWinHandle.send(AlConst.GlobalViewUpdate,actionData);
     }
 
     if (trayPageHandle) {
-        trayPageHandle.send(AlConst.GlobalViewUpdate);
+        trayPageHandle.send(AlConst.GlobalViewUpdate,actionData);
     }
 }
 
@@ -224,20 +224,23 @@ const openHomePage = (show_force) => {
         homeWinHandle = new BrowserWindow({
             show: false,
             fullscreen: false,
-            height: 600,
-            minHeight: 600,
+            height: 608,
+            minHeight: 500,
             minWidth: 800,
-            width: 900,
+            width: 930,
             maxWidth: 1200,
             useContentSize: true,
             // center: true,
             frame: false,
             titleBarStyle: 'hidden',
+
+            vibrancy: 'ultra-light',
             webPreferences: {
                 experimentalFeatures: true,
                 nodeIntegration: true,
+
             },
-            // transparent: true
+            transparent: true
         })
 
         homeWinHandle.loadURL(winURL);
@@ -314,7 +317,7 @@ const openTrayPage = () => {
         })
 
         trayPageHandle.on('blur', () => {
-            trayPageHandle.hide();
+            // trayPageHandle.hide();
         })
     } else {
         trayPageHandle.show()

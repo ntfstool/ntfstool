@@ -19,15 +19,13 @@
  */
 
 import {app, ipcRenderer, remote} from 'electron'
-import {getPackageVersion, disableZoom, choseDefaultNode, getSystemInfo} from '@/common/utils/AlfwCommon.js'
+import {getPackageVersion, disableZoom,filter_menu_show} from '@/common/utils/AlfwCommon.js'
 import {
     clearPwd,
-    getStore,
-    getStoreForDiskList,
-    getMountType,
     getMountNotifyStatus,
-    fixUnclear,
-    ignoreUSB
+    ignoreUSB,
+    getStore,
+    setStore
 } from '@/common/utils/AlfwStore'
 import {
     uMountDisk,
@@ -37,59 +35,75 @@ import {
 
 const {_} = require('lodash')
 
-import {fsListenMount, updateDisklist, test} from '@/renderer/lib/diskMonitor'
+import {fsListenMount, updateDisklist} from '@/renderer/lib/diskMonitor'
 import {AlConst} from "@/common/utils/AlfwConst";
 
 export default {
     components: {},
     data() {
         return {
-            activeTab: 'tab1',
-            devices: [],
-            diskList: [],
+            diskMap:[],
             loading: 0,
-            version: "1.0.0",
-            menu_box1: false,
-
-
+            version: "-",
+            menu_box: false,
+            menu_top_box: false,
             select_item: {
-                disk_mount: "",
-                canPush: false,
-                type: "",
-                name: "",
-                size: "",
-                size_wei: "",
-                index: "",
-                info: [],
-                _test: ""
+                "_name": "",
+                "bsd_name": "",
+                "group": "-",
+                "file_system": "-",
+                "free_space_in_bytes": 0,
+                "ignore_ownership": "-",
+                "mounted":true,
+                "mount_point": "-",
+                "physical_drive": {
+                    "device_name": "-",
+                    "is_internal_disk": "no",
+                    "media_name": "-",
+                    "partition_map_type": "-",
+                    "protocol": "-"
+                },
+                "size_in_bytes": 0,
+                "total_size": "",
+                "percentage": "",
+                "volume_uuid": "-",
+                "writable": "-"
             },
-            select_disk_key: "",
-            atest_lasttime: 0,
-            atest_times: 0,
-            sudoDialog: false,
-            firstTime:true
+            firstTime:true,
+            showDebugMenu: process.env.NODE_ENV === 'development' ? true : false,
+            scrollShow:false,
+            menu_show_conf:"",
         }
     },
     mounted() {
         var _this = this;
+        window.addEventListener('scroll',this.handleScroll,true)
 
-        console.warn("getMountType", getMountType());
+        this.setVersion();
 
         this.refreshDevice();
-        this.setVersion();
-        disableZoom(require('electron').webFrame);
 
+        this.menu_show_conf = getStore("menu_show_conf");
+        console.warn(this.menu_show_conf,"init this.menu_show_conf")
+
+        disableZoom(require('electron').webFrame);
 
         //background event [past it in dialog]
         fsListenMount();
 
-        ipcRenderer.on(AlConst.GlobalViewUpdate, () => {
-            console.warn("Home GlobalViewUpdate Come")
-            this.diskList = getStoreForDiskList();
-            if (!_.get(this.select_item, "name") && !_.get(this.select_item, "type")) {
-                if (_.get(this.diskList, "inner[0]")) {
-                    this.select_item = _.get(this.diskList, "inner[0]");
-                    this.select_disk_key = _.get(this.diskList, "inner[0].index");
+        ipcRenderer.on(AlConst.GlobalViewUpdate, (event,args) => {
+            console.warn("Home GlobalViewUpdate Come",{
+                args,event
+            })
+            this.diskMap = filter_menu_show(args);
+
+            console.warn( this.diskMap,"Home diskMap");
+
+            if(!_.get(_this.select_item, "_name") && !_.get(_this.select_item, "bsd_name") ||
+                -1 == _.findIndex(_.get(this.diskMap,_this.select_item.group), function(o) { return o.bsd_name == _this.select_item.bsd_name; })){
+                if (_.get(this.diskMap, "inner[0]")) {
+                    _this.select_item = _.get(this.diskMap, "inner[0]");
+                    console.warn(_this.select_item,"Home  _this.select_item +++++++++++++++++")
                 }
             }
         });
@@ -114,40 +128,39 @@ export default {
         });
 
 
-        var UsbNotice = function (title, device) {
-            console.warn(device,"UsbNotice")
-            if (ignoreUSB(device.serialNumber) !== true) {
-                new window.Notification(title, {body: device.deviceName + "("+_this.$i18n.t('click_can_forbid')+")"}).onclick = function () {
-                    remote.getCurrentWindow().show();
-                    var confirm_status = confirm(device.deviceName + ": "+ _this.$i18n.t('cancel_usb_notify'))
-                    if (confirm_status) {
-                        ignoreUSB(device.serialNumber,true);
-                        alert(_this.$i18n.t('canceled_usb_notify'));
-                    }
-                };
-            } else {
-                console.warn(device, "device [in ignoreUSB]");
-            }
-        }
+        // var UsbNotice = function (title, device) {
+        //     console.warn(device,"UsbNotice")
+        //     if (ignoreUSB(device.serialNumber) !== true) {
+        //         new window.Notification(title, {body: device.deviceName + "("+_this.$i18n.t('click_can_forbid')+")"}).onclick = function () {
+        //             remote.getCurrentWindow().show();
+        //             var confirm_status = confirm(device.deviceName + ": "+ _this.$i18n.t('cancel_usb_notify'))
+        //             if (confirm_status) {
+        //                 ignoreUSB(device.serialNumber,true);
+        //                 alert(_this.$i18n.t('canceled_usb_notify'));
+        //             }
+        //         };
+        //     } else {
+        //         console.warn(device, "device [in ignoreUSB]");
+        //     }
+        // }
+        //
+        // ipcRenderer.on("UsbDeleteFileEvent", (event, device) => {
+        //     if (getMountNotifyStatus()) {
+        //         UsbNotice(this.$i18n.t('remove_device_event'), device)
+        //     }
+        // });
+        //
+        // ipcRenderer.on("UsbAddFileEvent", (event, device) => {
+        //     if (getMountNotifyStatus()) {
+        //         UsbNotice(this.$i18n.t('new_device_event'), device)
+        //     }
+        // });
 
-        ipcRenderer.on("UsbDeleteFileEvent", (event, device) => {
-            if (getMountNotifyStatus()) {
-                UsbNotice(this.$i18n.t('remove_device_event'), device)
-            }
-        });
-
-        ipcRenderer.on("UsbAddFileEvent", (event, device) => {
-            if (getMountNotifyStatus()) {
-                UsbNotice(this.$i18n.t('new_device_event'), device)
-            }
-        });
-
-
-        window.addEventListener('beforeunload', () => {
-            remote.getCurrentWindow().on('blur', () => {
-                this.menu_box1 = false;
-            })
-        });
+        // window.addEventListener('beforeunload', () => {
+        //     remote.getCurrentWindow().on('blur', () => {
+        //         this.menu_box = false;
+        //     })
+        // });
 
 
         ipcRenderer.on("ChangeLangEvent", (e, lang) => {
@@ -162,16 +175,13 @@ export default {
         })
     },
     methods: {
-
-        help() {
-            var confirm_status = confirm(this.$i18n.t('Submittherunninglog'))
-            if (confirm_status) {
-                var confirm_status = confirm(this.$i18n.t('Theanalysisdata'))
-                if (confirm_status) {
-
-                }
-            } else {
-                alert(this.$i18n.t('Youhavegivenup'));
+        handleScroll(e){
+            var _this = this;
+            if(!this.scrollShow){
+                _this.scrollShow = true;
+                setTimeout(function () {
+                    _this.scrollShow = false;
+                },1000)
             }
         },
         refreshDevice() {
@@ -180,63 +190,52 @@ export default {
                 _this.loading = -1;
                 updateDisklist(function () {
                     _this.loading = 0;
-
-                    _this.firstTime = false;
                 });
             } catch (e) {
                 console.warn(e, "refreshDevice");
             }
-
-            //first time to show
-            if(this.firstTime){
-                this.firstTime = false;
-                //show cache
-                var cacheValue = getStoreForDiskList();
-                if(cacheValue && typeof cacheValue.inner != "undefined"){
-                    this.diskList = cacheValue;
-                    if (!_.get(this.select_item, "name") && !_.get(this.select_item, "type")) {
-                        if (_.get(this.diskList, "inner[0]")) {
-                            this.select_item = _.get(this.diskList, "inner[0]");
-                            this.select_disk_key = _.get(this.diskList, "inner[0].index");
-                        }
-                    }
-                }else{
-                    console.warn("firstTime show cache [fail]");
-                }
+        },
+        submit_change_name(){
+            if(typeof this.$refs.name_input != "undefined" && this.$refs.name_input.getAttribute("pre_value") != this.select_item._name){
+                console.warn(this.select_item._name,"submit_change_name");
+                alert(this.select_item._name);
+            }else{
+                console.warn("Same submit_change_name");
             }
+
         },
         changeVolumeName(select_item) {
-            this.$prompt(this.$i18n.t('Pleaseenteranewname'), '', {
+            if(select_item.group != "ext"){
+                alert("该磁盘不支持重命名");
+                return;
+            }
+
+            // name_input
+            console.warn(this.$refs.name_input,"this.$ref")
+
+            console.warn(this.$refs.name_input.getAttribute("pre_value"),"submit_change_name prename attr");
+
+            this.$refs.name_input.focus();
+
+            return;
+            this.$prompt("", this.$i18n.t('Pleaseenteranewname'), {
                 showClose: false,
-                inputValue: select_item.volume_name,
+                inputValue: select_item._name,
                 confirmButtonText: this.$i18n.t('Confirm'),
                 cancelButtonText: this.$i18n.t('Cancel'),
             }).then(({value}) => {
                 this.$alert("ok " + value);
             })
         },
-        clearDisk(item) {
-            console.warn("clearDisk click", this.$i18n.t('Erasingthediskwilldelete'))
-            var confirm_status = confirm(this.$i18n.t('Erasingthediskwilldelete') + " (" + item.name + ")")
-            console.warn(confirm_status, "confirm confirm_status")
-            if (confirm_status) {
-                if (confirm(this.$i18n.t('Detectsystemdisktoolisabouttojump'))) {
-                    openSysDiskUtils().then(res => {
-                        console.warn("openSysDiskUtils res", res)
-                    })
-                }
-            }
-        },
         uMountDisk(item) {
             var _this = this;
             console.warn(item, "select_item");
             if (item.group == 'inner') {
-                alert(_this.$i18n.t('Internaldiskcannotbeunmounted') + ":" + item.name);
+                alert(_this.$i18n.t('Internaldiskcannotbeunmounted') + ":" + item._name);
                 return;
             }
 
-
-            var confirm_status = confirm(_this.$i18n.t('OKtounmountthedisk') + ":" + item.name)
+            var confirm_status = confirm(item._name ? _this.$i18n.t('OKtounmountthedisk') + ": " + item._name + "?" : _this.$i18n.t('OKtounmountthedisk'))
             console.warn(confirm_status, "confirm confirm_status")
 
             if (confirm_status) {
@@ -244,42 +243,45 @@ export default {
                     console.warn("uMountDisk res", res);
                     let option = {
                         title: "NTFSTool",
-                        body: item.name + " " + _this.$i18n.t('Diskuninstallsucceeded'),
+                        body: item._name + " " + _this.$i18n.t('Diskuninstallsucceeded'),
                     };
                     new window.Notification(option.title, option);
-                    _this.refreshDevice();
                 }).catch(err => {
+                    console.warn(err,"uMountDisk");
                     alert(_this.$i18n.t('Uninstallfailed'));
                 })
             }
         },
         mountDisk(item) {
+            console.warn("start mountDisk_______________________")
             var _this = this;
             mountDisk(item).then(res => {
                 console.warn("mountDisk res", res)
                 let option = {
                     title: "NTFSTool",
-                    body: item.name + " " + _this.$i18n.t('Diskmountedsuccessfully'),
+                    body: item._name + " " + _this.$i18n.t('Diskmountedsuccessfully'),
                 };
                 new window.Notification(option.title, option);
-                _this.refreshDevice();
             })
         },
         choseDisk(item) {
-            if (typeof item.index != "undefined" && typeof item.info != "undefined" && typeof item.info.protocol != "undefined") {
+            console.warn(item, "choseDisk");
+
+            this.submit_change_name();
+
+            if (typeof item.bsd_name != "undefined") {
                 this.select_item = item;
-                this.select_disk_key = item.index;
             } else {
                 console.warn(item, "choseDisk Error");
             }
         },
         openDisk(item) {
-            console.warn("dbclick ", item);
-            if (!item.info.mountpoint) {
+            console.warn("openDisk ", item);
+            if (!item.mount_point) {
                 alert(this.$i18n.t('Thediskisnotmounted'));
                 return;
             }
-            openInFinder(item.info.mountpoint).catch(() => {
+            openInFinder(item.mount_point).catch(() => {
                 alert("openDisk fail!");
             });
         },
@@ -290,125 +292,56 @@ export default {
                 data:"openSettingPage"
             })
         },
-        altest() {
-            console.warn("altest");
-            var cur_time = new Date().getTime();
-
-
-            if (cur_time - this.atest_lasttime > 1000) {
-                this.atest_times = 0;
-
-            } else {
-                this.atest_times++;
-                // console.warn(this.atest_times, "this.atest_times");
-
-                if (this.atest_times > 5) {
-                    this.atest_times = 0;
-                    remote.getCurrentWindow().webContents.openDevTools();
-                    console.warn("open debug!....");
-                }
-            }
-            this.atest_lasttime = cur_time;
-        },
         setVersion() {
             this.version = getPackageVersion();
         },
-        openMenuBox(id) {
-            this[id] = this[id] ? false : true
-        },
         openSettingPage() {
-            this.menu_box1 = false;
-            // ipcRenderer.send('MainMsgFromRender', 'openSettingPage')
+            this.menu_box = false;
             ipcRenderer.send('IPCMain', {
                 name:"openPageByName",
                 data:"openSettingPage"
             })
         },
         openAboutPage() {
-            this.menu_box1 = false;
-            // ipcRenderer.send('MainMsgFromRender', 'openAboutPage')
+            this.menu_box = false;
             ipcRenderer.send('IPCMain', {
                 name:"openPageByName",
                 data:"openAboutPage"
             })
         },
         openFeedBackPage() {
-            this.menu_box1 = false;
-            // ipcRenderer.send('MainMsgFromRender', 'openFeedBackPage')
+            this.menu_box = false;
             ipcRenderer.send('IPCMain', {
                 name:"openPageByName",
                 data:"openFeedBackPage"
             })
         },
         exitAll() {
-            this.menu_box1 = false;
-            // ipcRenderer.send('MainMsgFromRender', 'exitAll')
+            this.menu_box = false;
             ipcRenderer.send('IPCMain',"exitAll")
         },
         clearPwd() {
+            this.menu_box = false;
             clearPwd();
-            this.menu_box1 = false;
         },
-        showFreeSpace(total_size, total_size_wei, used_size, used_size_wei) {
-            let wei_to_num = function (wei) {
-                if (!wei || typeof wei != "string") {
-                    return 1;
-                }
+        menu_show_set(group){
+            if(typeof  this.menu_show_conf[group] != "undefined"){
+                this.menu_show_conf[group] = !this.menu_show_conf[group];
+                setStore("menu_show_conf",this.menu_show_conf);
+                this.refreshDevice();
 
-                wei = wei.toLowerCase();
-                if (wei.indexOf("tb") >= 0) {
-                    return 1024 * 1024 * 1024;
-                }
+                ipcRenderer.send('IPCMain', {
+                    name:AlConst.GlobalViewUpdate,
+                    data:this.diskMap
+                })
 
-                if (wei.indexOf("gb") >= 0) {
-                    return 1024 * 1024;
-                }
-
-                if (wei.indexOf("mb") >= 0) {
-                    return 1024;
-                }
-
-                return 1;
+                this.menu_top_box = false;
+            }else{
+                console.error({group:group,menu_show_conf:this.menu_show_conf},"menu_show_c group err");
             }
-
-            let num_to_weinum = function (num) {
-                var num = parseFloat(num).toFixed(0);
-                if (isNaN(num)) {
-                    return "-";
-                }
-                if (!num) {
-                    return "--";
-                }
-                if (num <= 1024) {
-                    return num + " KB";
-                }
-
-                if (num > 1024 && num <= 1024 * 1024) {
-                    return (num / 1024).toFixed(2) + " MB";
-                }
-
-                if (num > 1024 * 1024 && num <= 1024 * 1024 * 1024) {
-                    return (num / (1024 * 1024)).toFixed(2) + " GB";
-                }
-
-                if (num > 1024 * 1024 * 1024 && num <= 1024 * 1024 * 1024 * 1024) {
-                    return (num / (1024 * 1024 * 1024)).toFixed(2) + " TB";
-                }
-
-            }
-
-            var free_num = total_size * wei_to_num(total_size_wei) - used_size * wei_to_num(used_size_wei);
-            return num_to_weinum(free_num);
-            //
-            //
-            // return total_size +"|"+total_size_wei +
-            //     "#"+used_size+"|"+used_size_wei;
         },
-        test() {
-            ipcRenderer.send('IPCMain', {
-                "name":"name1",
-                "data":"data1"
-            })
+        writeable_fix(){
+            console.warn("writeable_fix")
         }
     }
 }

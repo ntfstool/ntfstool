@@ -36,7 +36,12 @@ const alfwStore = {
     sudoPwd: false,
     fixUnclear:[],
     ignoreUSB:[],
-    firstTimeCache:""
+    firstTimeCache:"",
+    menu_show_conf:{
+        inner:true,
+        ext:true,
+        image:true
+    }
 };
 
 
@@ -106,7 +111,8 @@ export function setStoreForDiskList(value,callback) {
 }
 
 export function getStoreForDiskList() {
-    return store.get(AlConst.DiskList);
+    console.error("disable to use getStoreForDiskList");
+    // return store.get(AlConst.DiskList);
 }
 
 

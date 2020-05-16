@@ -135,7 +135,7 @@ try {
             openPageByName("openInstallFusePage");
         } else if (chanelName == AlConst.GlobalViewUpdate) {
             console.warn("Main GlobalViewUpdate Start >>>>>>>>>>>>>>>>>>>>")
-            doUpdateViewEvent();
+            doUpdateViewEvent(actionData);
         } else if (chanelName == "CreteFileEvent") {
             console.warn(actionData, "Main CreteFileEvent Start >>>>>>>>>>>>>>>>>>>>")
             doCreteFileEvent(actionData);

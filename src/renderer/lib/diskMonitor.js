@@ -62,89 +62,95 @@ export function updateDisklist(callback) {
         // console.warn("updateDisklist Start +++ ok 0");
         getDiskList().then((diskList) => {
             console.warn(diskList,"updateDisklist0");
-            //filter inner unmounted
-            if (typeof diskList.inner != "undefined") {
-                diskList.inner = diskList.inner.filter(function (item) {
-                    if (_.get(item, "info.readonly") === true) {
-                        item.info.readonly = false;
-                    }
+            // //filter inner unmounted
+            // if (typeof diskList.inner != "undefined") {
+            //     diskList.inner = diskList.inner.filter(function (item) {
+            //         if (_.get(item, "info.readonly") === true) {
+            //             item.info.readonly = false;
+            //         }
+            //
+            //         if(!_.get(item, "info.typebundle")){
+            //             return false;
+            //         }
+            //
+            //         if (_.get(item, "info.typebundle").toLocaleLowerCase() === "apfs" && _.get(item, "info.mountpoint").toLocaleLowerCase().indexOf("/system/volumes/") >= 0) {
+            //             return false;
+            //         }
+            //
+            //         if (_.get(item, "type").toLocaleLowerCase().indexOf("boot") >= 0  || _.get(item, "type").toLocaleLowerCase() == "efi" || _.get(item, "info.typebundle").toLocaleLowerCase() == "efi" || _.get(item, "info.typebundle").toLocaleLowerCase() == "msr") {
+            //             return false;
+            //         }
+            //
+            //         return true;
+            //     });
+            // }
+            //
+            // //filter ext unmounted
+            // if (typeof diskList.ext != "undefined") {
+            //     diskList.ext = diskList.ext.filter(function (item) {
+            //         if (_.get(item, "info.volumename").replace(/\s+/g, "").indexOf("nofilesystem") > 0) {
+            //             return false;
+            //         }
+            //
+            //         if (_.get(item, "type").toLocaleLowerCase() == "efi" || _.get(item, "info.typebundle").toLocaleLowerCase() == "efi" || _.get(item, "info.typebundle").toLocaleLowerCase() == "msr") {
+            //             return false;
+            //         }
+            //
+            //         return true;
+            //     });
+            // }
+            //
+            // //filter image unmounted
+            // if (typeof diskList.image != "undefined") {
+            //     diskList.image = diskList.image.filter(function (item) {
+            //         if (_.get(item, "info.mounted") === false) {
+            //             return false;
+            //         } else {
+            //             return true;
+            //         }
+            //     });
+            // }
 
-                    if(!_.get(item, "info.typebundle")){
-                        return false;
-                    }
+            ipcRenderer.send("IPCMain", {
+                name:AlConst.GlobalViewUpdate,
+                data:diskList
+            });
 
-                    if (_.get(item, "info.typebundle").toLocaleLowerCase() === "apfs" && _.get(item, "info.mountpoint").toLocaleLowerCase().indexOf("/system/volumes/") >= 0) {
-                        return false;
-                    }
+            if (typeof callback == "function") callback()
 
-                    if (_.get(item, "type").toLocaleLowerCase().indexOf("boot") >= 0  || _.get(item, "type").toLocaleLowerCase() == "efi" || _.get(item, "info.typebundle").toLocaleLowerCase() == "efi" || _.get(item, "info.typebundle").toLocaleLowerCase() == "msr") {
-                        return false;
-                    }
+            return;
 
-                    return true;
-                });
-            }
 
-            //filter ext unmounted
-            if (typeof diskList.ext != "undefined") {
-                diskList.ext = diskList.ext.filter(function (item) {
-                    if (_.get(item, "info.volumename").replace(/\s+/g, "").indexOf("nofilesystem") > 0) {
-                        return false;
-                    }
-
-                    if (_.get(item, "type").toLocaleLowerCase() == "efi" || _.get(item, "info.typebundle").toLocaleLowerCase() == "efi" || _.get(item, "info.typebundle").toLocaleLowerCase() == "msr") {
-                        return false;
-                    }
-
-                    return true;
-                });
-            }
-
-            //filter image unmounted
-            if (typeof diskList.image != "undefined") {
-                diskList.image = diskList.image.filter(function (item) {
-                    if (_.get(item, "info.mounted") === false) {
-                        return false;
-                    } else {
-                        return true;
-                    }
-                });
-            }
 
             console.log(diskList, "getDiskList");
             setStoreForDiskList(diskList, function () {
                 if (typeof callback == "function") callback()
                 //send the global view update
-                ipcRenderer.send("IPCMain", AlConst.GlobalViewUpdate);
+                ipcRenderer.send("IPCMain", {
+                    name:AlConst.GlobalViewUpdate,
+                    data:diskList
+                });
 
-                // if (typeof data.Event != "undefined" && data.Event == "CreteFileEvent") {
-                //filter the ntfs to remount
-                var needReMountList = filterNtfsNeedMountByDiskList(diskList);
-                console.warn(needReMountList, "needReMountList");
-                if (needReMountList && needReMountList.length > 0) {
-                    for (var i in needReMountList) {
-                        //exec one by one
-                        queueExec("autoMountNtfsDisk", function (cb) {
-                            //set is auto_mount
-                            if (getStore("auto_mount") == false) {
-                                console.warn("Set Can't AutoMount...");
-                            } else {
-                                autoMountNtfsDisk(needReMountList[i], function () {
-                                    cb();
-                                });
-                            }
-                        })
-                    }
-                }
+                // // if (typeof data.Event != "undefined" && data.Event == "CreteFileEvent") {
+                // //filter the ntfs to remount
+                // var needReMountList = filterNtfsNeedMountByDiskList(diskList);
+                // console.warn(needReMountList, "needReMountList");
+                // if (needReMountList && needReMountList.length > 0) {
+                //     for (var i in needReMountList) {
+                //         //exec one by one
+                //         queueExec("autoMountNtfsDisk", function (cb) {
+                //             //set is auto_mount
+                //             if (getStore("auto_mount") == false) {
+                //                 console.warn("Set Can't AutoMount...");
+                //             } else {
+                //                 autoMountNtfsDisk(needReMountList[i], function () {
+                //                     cb();
+                //                 });
+                //             }
+                //         })
+                //     }
+                // }
             });
         });
     })
 }
-
-// export function globalUpdate() {
-//     ipcRenderer.on("GlobalUpdateExent", (event, arg) => {
-//         saveLog.info(arg, "GlobalUpdateExent Come");
-//         var diskList = getStoreForDiskList();
-//
-//     });
-// }

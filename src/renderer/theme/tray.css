@@ -34,6 +34,7 @@ html, body, #app {
     background: rgb(243, 243, 243);
     border-radius: 8px;
     padding-bottom: 15px;
+    min-height: 100px;
     /*overflow: hidden;*/
 }
 
@@ -43,6 +44,7 @@ html, body, #app {
     border-bottom: 1px solid #d8d5d5;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
+    background-image: -webkit-linear-gradient(#f1f1f1 0%, #e2dfdf 50%, #d0d0d0 100%);
 }
 
 .trayref_h_1 {
@@ -76,6 +78,7 @@ html, body, #app {
 }
 
 .trayref_h_1_2_1 span {
+    color: #3e3d3d;
     font-family: PingFangSC-Regular,sans-serif;
 }
 
@@ -158,7 +161,7 @@ html, body, #app {
 .diskb_3_2_1 {
     height: 4px;
     border-radius: 4px;
-    width: 80%;
+    width: 0%;
     background: #409eff;
 }
 
@@ -172,19 +175,27 @@ html, body, #app {
     /*background: green*/
 }
 
+.trayref_h_1_3_1:focus{
+    outline: 0px !important;
+    border: 0px !important;
+}
+
 .menu_box{
-    background: rgb(214, 214, 214);
+    background: #f4f4f5;
     position: absolute;
     top: 20px;
     right: 0px;
     width: max-content;
     z-index: 9999999;
-    border: 1px solid #b5a8a8;
+    border:1px solid #e4e4e4;
     border-radius: 3px;
-    padding: 10px 0;
+    padding: 5px 0;
 }
 .menu_box .line{
-    display:flex;    margin: 5px 0;background: #a5a0a0;height: 1px;
+    display:flex;
+    margin: 5px 0;
+    background: #e4e4e4;
+    height: 2px;
 }
 .menu_box div{
     padding: 0 20px;
@@ -196,4 +207,13 @@ html, body, #app {
 .menu_box div:hover{
     background: #409eff;
     color: white;
+}
+
+.readonly_txt{
+    font-size: 10px;
+    line-height: 15px;
+    color: rgb(255, 255, 255);
+    background: rgb(245, 108, 108);
+    padding: 0 5px;
+    border-radius: 3px;
 }

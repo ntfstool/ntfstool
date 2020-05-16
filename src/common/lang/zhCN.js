@@ -83,7 +83,7 @@ export default {
     Erasingthediskwilldelete: '擦除磁盘将删除所有数据',
     Detectsystemdisktoolisabouttojump: '检测系统磁盘工具，即将跳转',
     Internaldiskcannotbeunmounted: '内部磁盘，无法卸载',
-    OKtounmountthedisk: '单击确定以卸载磁盘',
+    OKtounmountthedisk: '确定卸载磁盘',
     ImageVolume: "镜像卷",
     mount:"挂载",
     Unmounted: "未挂载",

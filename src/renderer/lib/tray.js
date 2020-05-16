@@ -21,8 +21,9 @@ import {AlConst} from "@/common/utils/AlfwConst";
  */
 const {shell, ipcRenderer, remote} = require('electron')
 
-import {openLog, getPackageVersion} from '@/common/utils/AlfwCommon.js'
-import {getStoreForDiskList} from "@/common/utils/AlfwStore";
+import {openLog, getPackageVersion,filter_menu_show} from '@/common/utils/AlfwCommon.js'
+
+const {_} = require('lodash')
 import {
     uMountDisk,
     mountDisk,
@@ -37,13 +38,12 @@ export default {
             title: "NTFS Tool",
             menu_box1: false,
             diskList: [],
+            diskMap:[],
             showDebugMenu: process.env.NODE_ENV === 'development' ? true : false,
         }
     },
     mounted() {
         this._title = this.title;
-        console.warn(this.$refs, "this.$refsa")
-        this.resetSize();
 
         ipcRenderer.on("ChangeLangEvent", (e, lang) => {
             console.warn("tray wind ChangeLangEvent", lang);
@@ -65,9 +65,14 @@ export default {
             });
         })
 
-        ipcRenderer.on(AlConst.GlobalViewUpdate, () => {
-            this.diskList = getStoreForDiskList();
-            console.warn(`${AlConst.GlobalViewUpdate} come tray ...`, this.diskList);
+        ipcRenderer.on(AlConst.GlobalViewUpdate, (event,args) => {
+            console.warn("Tray GlobalViewUpdate Come",{
+                args,event
+            })
+
+            this.diskMap = filter_menu_show(args);
+
+            // console.warn(`${AlConst.GlobalViewUpdate} come tray ...`, this.diskMap);
             this.resetSize();
         });
 
@@ -82,12 +87,11 @@ export default {
             var _this = this;
             console.warn(item, "select_item");
             if (item.group == 'inner') {
-                alert(this.$i18n.t('Internaldiskcannotbeunmounted') + ":" + item.name);
+                alert(_this.$i18n.t('Internaldiskcannotbeunmounted') + ":" + item._name);
                 return;
             }
 
-
-            var confirm_status = confirm(this.$i18n.t('OKtounmountthedisk') + ":" + item.name)
+            var confirm_status = confirm(item._name ? _this.$i18n.t('OKtounmountthedisk') + ": " + item._name + "?" : _this.$i18n.t('OKtounmountthedisk'))
             console.warn(confirm_status, "confirm confirm_status")
 
             if (confirm_status) {
@@ -95,32 +99,34 @@ export default {
                     console.warn("uMountDisk res", res);
                     let option = {
                         title: "NTFSTool",
-                        body: item.name + " " + _this.$i18n.t('Diskuninstallsucceeded'),
+                        body: item._name + " " + _this.$i18n.t('Diskuninstallsucceeded'),
                     };
                     new window.Notification(option.title, option);
-                    _this.refreshDevice();
+                }).catch(err => {
+                    console.warn(err,"uMountDisk");
+                    alert(_this.$i18n.t('Uninstallfailed'));
                 })
             }
         },
         mountDisk(item) {
+            console.warn("start mountDisk_______________________")
             var _this = this;
             mountDisk(item).then(res => {
                 console.warn("mountDisk res", res)
                 let option = {
                     title: "NTFSTool",
-                    body: item.name + " " + _this.$i18n.t('Diskmountedsuccessfully'),
+                    body: item._name + " " + _this.$i18n.t('Diskmountedsuccessfully'),
                 };
                 new window.Notification(option.title, option);
-                _this.refreshDevice();
             })
         },
         openDisk(item) {
-            console.warn("dbclick ", item);
-            if (!item.info.mountpoint) {
+            console.warn("openDisk ", item);
+            if (!item.mount_point) {
                 alert(this.$i18n.t('Thediskisnotmounted'));
                 return;
             }
-            openInFinder(item.info.mountpoint).catch(() => {
+            openInFinder(item.mount_point).catch(() => {
                 alert("openDisk fail!");
             });
         },
@@ -138,11 +144,13 @@ export default {
             }
         },
         resetSize: function () {
-            console.warn(this.$refs, "this.$refs")
-            let height0 = this.$refs.trayref_h.offsetHeight;  //100
-            let height = this.$refs.trayref.offsetHeight;  //100
-            console.warn(height, "traywin height");
-            remote.getCurrentWindow().setSize(380, height0 + height + 30)
+            var nums = parseInt(_.get(this.diskMap,"inner",[]).length + _.get(this.diskMap,"ext",[]).length + _.get(this.diskMap,"image",0).length);
+
+            if(isNaN(nums)){
+                nums = 1;
+            }
+
+            remote.getCurrentWindow().setSize(380, nums * 55 + 120);
         },
         openWebsite: () => {
             shell.openExternal("http://www.ntfstool.com")

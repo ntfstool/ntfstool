@@ -17,15 +17,17 @@
  * along with this program (in the main directory of the NTFS Tool
  * distribution in the file COPYING); if not, write to the service@ntfstool.com
  */
-import {execShell,execShellSudo} from '@/common/utils/AlfwShell'
+import {execShell, execShellSudo} from '@/common/utils/AlfwShell'
 import {t} from 'element-ui/lib/locale'
 import {remote} from 'electron'
-import {ignoreItem,delIgnoreItem} from '@/common/utils/AlfwStore'
+import {ignoreItem, getStore} from '@/common/utils/AlfwStore'
 import {app, ipcMain, ipcRenderer, Notification, dialog, shell, powerMonitor} from 'electron'
+
 const {getAspInfo} = require('ntfstool')
 const {_} = require('lodash')
 const saveLog = require('electron-log');
 const get = require('get');
+
 /**
  * check is dev
  */
@@ -115,7 +117,7 @@ export function noticeTheSystemError(_error, setOption) {
         checkSudoPasswordError: 10041,
         opendevmod: 10030,
         FEEDBACK_ERROR: 10040,
-        UNCLEANERROR:10050
+        UNCLEANERROR: 10050
     };
     var error = (typeof _error != "undefined") ? _error : "system";
     console.warn(error, "error")
@@ -256,13 +258,13 @@ export function queueExec(type, callback, timeout) {
  */
 export function filterNtfsNeedMountByDiskList(diskList) {
     var ignoreItemList = ignoreItem();
-    console.warn(ignoreItemList,"ignoreItemList")
+    console.warn(ignoreItemList, "ignoreItemList")
 
     var ret = [];
     if (typeof diskList != "undefined" && typeof diskList["ext"] != "undefined" && diskList["ext"].length > 0) {
         for (var i in diskList["ext"]) {
-            if(_.indexOf( ignoreItemList,diskList["ext"][i]["index"]) === -1){
-                console.warn({list:diskList["ext"][i],ignorelist:ignoreItemList},
+            if (_.indexOf(ignoreItemList, diskList["ext"][i]["index"]) === -1) {
+                console.warn({list: diskList["ext"][i], ignorelist: ignoreItemList},
                     "ignoreChose false");
 
                 //NTFS needs to be remounted
@@ -271,9 +273,9 @@ export function filterNtfsNeedMountByDiskList(diskList) {
                         ret.push(diskList["ext"][i]);
                     }
                 }
-            }else{
-               console.warn({list:diskList["ext"][i],ignorelist:ignoreItemList},
-                   "ignoreChose true");
+            } else {
+                console.warn({list: diskList["ext"][i], ignorelist: ignoreItemList},
+                    "ignoreChose true");
             }
         }
     }
@@ -304,23 +306,22 @@ export function choseDefaultNode(diskList) {
 }
 
 
-
 /**
  * versionStringCompare
  * @param preVersion
  * @param lastVersion
  * @returns {number}
  */
-function versionStringCompare(preVersion='', lastVersion=''){
+function versionStringCompare(preVersion = '', lastVersion = '') {
     var sources = preVersion.split('.');
     var dests = lastVersion.split('.');
     var maxL = Math.max(sources.length, dests.length);
     var result = 0;
     for (let i = 0; i < maxL; i++) {
-        let preValue = sources.length>i ? sources[i]:0;
+        let preValue = sources.length > i ? sources[i] : 0;
         let preNum = isNaN(Number(preValue)) ? preValue.charCodeAt() : Number(preValue);
-        let lastValue = dests.length>i ? dests[i]:0;
-        let lastNum =  isNaN(Number(lastValue)) ? lastValue.charCodeAt() : Number(lastValue);
+        let lastValue = dests.length > i ? dests[i] : 0;
+        let lastNum = isNaN(Number(lastValue)) ? lastValue.charCodeAt() : Number(lastValue);
         if (preNum < lastNum) {
             result = -1;
             break;
@@ -342,7 +343,7 @@ export function checkUpdate() {
     try {
         get('https://ntfstool.com/version.json').asString(function (err, ret) {
             if (err) {
-                saveLog.error("get api update version.json error",err);
+                saveLog.error("get api update version.json error", err);
                 return;
             }
             var data = {
@@ -371,7 +372,7 @@ export function checkUpdate() {
                     data.detail = getData.detail;
                 }
             } catch (e) {
-                saveLog.warn("check version format error!",e)
+                saveLog.warn("check version format error!", e)
             }
 
             if (typeof data.version != "undefined" && data.version) {
@@ -379,12 +380,12 @@ export function checkUpdate() {
                     cur_version: cur_version,
                     check_version: data.version
                 })
-                if (cur_version != data.version && versionStringCompare(cur_version,data.version) < 0) {
+                if (cur_version != data.version && versionStringCompare(cur_version, data.version) < 0) {
                     const dialogOpts = {
                         type: 'info',
                         buttons: ['Cancel', "OK"],
                         title: 'Application Update',
-                        message: data.title + "("+cur_version+"->"+data.version+")",
+                        message: data.title + "(" + cur_version + "->" + data.version + ")",
                         detail: data.detail
                     }
 
@@ -402,4 +403,31 @@ export function checkUpdate() {
     } catch (e) {
         saveLog.error("get update error!", e);
     }
+}
+
+
+export function filter_menu_show(list) {
+    var menu_show_conf = getStore("menu_show_conf");
+    console.warn(menu_show_conf,"filter_menu_show #");
+
+    console.warn(list,"filter_menu_show 0");
+
+    if (typeof menu_show_conf.inner != "undefined" && menu_show_conf.inner == false) {
+        if (typeof list.inner != "undefined") {
+            list.inner = [];
+        }
+    }
+    if (typeof menu_show_conf.ext != "undefined" && menu_show_conf.ext == false) {
+        if (typeof list.ext != "undefined") {
+            list.ext = [];
+        }
+    }
+
+    if (typeof menu_show_conf.image != "undefined" && menu_show_conf.image == false) {
+        if (typeof list.image != "undefined") {
+            list.image = [];
+        }
+    }
+    console.warn(list,"filter_menu_show 1");
+    return list;
 }

@@ -51,44 +51,29 @@ export function autoMountNtfsDisk(mountInfo,cb) {
  * @param force
  * @returns {Promise<any>}
  */
-function reMountNtfs(index, force = false) {
+function reMountNtfs(item, force = false) {
+    var index = item.bsd_name;
     console.warn(index, "reMountNtfs start +++++++++++TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT++++++++++");
     reMountLock[index] = true;
     var link_dev = "/dev/" + index;
     return new Promise(async (resolve, reject) => {
         try {
-            var info = await getDiskInfo(index);
-            console.log(info, "reMountNtfs info");
-            if(!info){
-                console.warn(index,"reMountNtfs Fail");
-                reject("reMountNtfs Fail");
-                return false;
-            }
+            // var info = await getDiskInfo(index);
+            // console.log(info, "reMountNtfs info");
+            // if(!info){
+            //     console.warn(index,"reMountNtfs Fail");
+            //     reject("reMountNtfs Fail");
+            //     return false;
+            // }
+            //
+            // if (info.typebundle != "ntfs") {
+            //     reMountLock[index] = false;
+            //     reject("not is ntfs disk[" + index + "]!");
+            //     return;
+            // }
 
-            if (info.typebundle != "ntfs") {
-                reMountLock[index] = false;
-                reject("not is ntfs disk[" + index + "]!");
-                return;
-            }
 
-           // if(_.get(info,"readonly") == true || force == true){
-           //      var check_res1 = await execShell("mount |grep '" + link_dev + "'");
-           //      if (check_res1) {
-           //          if (force === true || check_res1.indexOf("read-only") >= 0) {
-           //              console.warn("start to mount disk...",link_dev)
-           //              setDiskMountPrending(index,-1)
-           //
-           //              await execShellSudo("diskutil unmount " + link_dev);
-           //
-           //          } else {
-           //              reMountLock[index] = false;
-           //              reject("disk is already mounted.[" + index + "]");
-           //              return;
-           //          }
-           //      }
-           //  }
-
-            if(_.get(info,"mounted") == true){
+            if(_.get(item,"mounted") == true){
                 if(force === false && _.get(info,"readonly") != true){
                     reMountLock[index] = false;
                     console.warn("succ[" + index + "] is Already Moubted!");
@@ -104,13 +89,13 @@ function reMountNtfs(index, force = false) {
             // WatchStatus = false
             watchStatus(false);
 
-            var volumename = info.volumename ? info.volumename : getAutoVolumeName();
+            var volumename = item._name ? item._name : getAutoVolumeName();
             volumename = volumename.replace( /volumes/gi , '').replace( /\//gi , '');
             var mount_path = '/Volumes/' + volumename;
 
             if(getMountType() == "inner"){
                 if (!fs.existsSync(mount_path)) {
-                    await execShellSudo("mkdir -p '" + mount_path + "'");
+                    await execShellSudo("mkdir '" + mount_path + "'");
                     //TODO ======================= this should be ignore
                 }else{
                     //the same name volumes
@@ -149,18 +134,23 @@ function reMountNtfs(index, force = false) {
             var check_res2 = await execShell("mount |grep '" + index + "'");
             if (check_res2 && check_res2.indexOf("read-only") <= 0) {
                 reMountLock[index] = false;
-                setDiskMountPrending(index,0)
+                // setDiskMountPrending(index,0)
                 console.warn("start to mount disk...[ok]",link_dev)
 
                 resolve("succ[" + index + "]");
             } else {
-                setDiskMountPrending(index,-99)
+                // setDiskMountPrending(index,-99)
                 reMountLock[index] = false;
                 reject("mount fail[" + index + "]");
             }
         } catch (e) {
             reMountLock[index] = false;
             watchStatus(true);
+            if(typeof e == "string" && e.indexOf("itself") >= 0 && e.indexOf("OSXFUSE") >= 0){
+                console.warn("reMountNtfs busy try ...",e);
+                resolve("succ2[" + index + "]");
+            }
+
             if(typeof e == "string" && e.indexOf("unclean") >= 0){
                 //The disk contains an unclean file system (0, 0).
                 // Metadata kept in Windows cache, refused to mount.
@@ -217,10 +207,10 @@ export function mountDisk(item) {
     return new Promise(async (resolve, reject) => {
         try {
             //del ignore item
-            delIgnoreItem(item.index);
-            if (typeof item.info.typebundle != "undefined" && item.info.typebundle == "ntfs") {
-                console.warn(item.index, "[ntfs mount]mountDisk start +++++++++++++++++++++TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
-                reMountNtfs(item.index, true).then((res) => {
+            delIgnoreItem(item.bsd_name);
+            if (typeof item.file_system == 'string' && item.file_system.toLowerCase().indexOf('ntfs') >= 0) {
+                console.warn(item.bsd_name, "[ntfs mount]mountDisk start +++++++++++++++++++++TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
+                reMountNtfs(item, true).then((res) => {
                     resolve(res);
                 }).catch((err) => {
                     reject(err);
@@ -246,11 +236,11 @@ export function uMountDisk(item) {
     return new Promise(async (resolve, reject) => {
         try {
             //add ignore item
-            ignoreItem(item.index);
+            ignoreItem(item.bsd_name);
 
-            var dev_path = "/dev/" + item.index;
+            var dev_path = "/dev/" + item.bsd_name;
             //NTFS
-            if (typeof item.info.typebundle != "undefined" && item.info.typebundle == "ntfs") {
+            if (typeof item.file_system != "undefined" && item.file_system.toLowerCase().indexOf('ntfs') >= 0) {
                 console.warn(item, "[NTFS]uMountDisk start +++++++++++++++++++++TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
                 resolve(await execShellSudo(`umount ${dev_path}`));
             } else {

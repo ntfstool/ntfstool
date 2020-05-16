@@ -25,15 +25,14 @@
 
 
                     <div class="trayref_h_1_3">
-                        <div class="trayref_h_1_3_1" style="position: relative">
-                            <i class="iconfont mr10 ico_color"  @click="openHomePage" @mouseover="setTitle('Open Desktop')" @mouseout="setTitle()">&#xe8e2;</i>
+                        <div class="trayref_h_1_3_1" style="position: relative" @blur="menu_box1 = false" tabindex="0">
+                            <i class="iconfont mr10 ico_color" @click="openHomePage"
+                               @mouseover="setTitle('Open Desktop')" @mouseout="setTitle()">&#xe8e2;</i>
                             <i class="iconfont ico_color"
                                @click="openMenuBox('menu_box1')"
 
                                @mouseover="setTitle('Open Menu')" @mouseout="setTitle()"
                                style="transform: scaleX(-1);">&#xe601;</i>
-
-
                             <div class="menu_box" v-show="menu_box1">
                                 <div @click="openAboutPage">{{$t('About')}}</div>
                                 <span class="line"></span>
@@ -53,20 +52,20 @@
                 </div>
             </div>
 
-            <div v-for="(list,index)  in diskList">
+            <div v-for="(list,index)  in diskMap">
                 <div v-for="(item)  in list">
                     <!--disk block-->
                     <div class="diskb"
                          v-on:dblclick="openDisk(item)"
                     >
                         <div class="diskb_1">
-                            <div v-if="typeof item.info != 'undefined' && typeof item.info.mounted != 'undefined' && item.info.mounted == true"
+                            <div v-if="item.mounted == true"
                                  @click="uMountDisk(item)" @click.stop>
-                                <i  v-if="index == 'inner'" class="iconfont ico_color mr10">&#xe61a;</i>
-                                <i  v-else class="iconfont ico_color mr10">&#xe769;</i>
+                                <i v-if="index == 'inner'" class="iconfont ico_color mr10">&#xe61a;</i>
+                                <i v-else class="iconfont ico_color mr10" title="点击卸载磁盘">&#xe769;</i>
                             </div>
 
-                            <div v-else @click="mountDisk(item)" @click.stop>
+                            <div v-else @click="mountDisk(item)" @click.stop title="点击挂载磁盘">
                                 <i class="iconfont ico_color mr10">&#xe609;</i>
                             </div>
                         </div>
@@ -78,7 +77,7 @@
                                 </div>
 
                                 <div v-else-if="index == 'ext'">
-                                    <img v-if="typeof item.info != 'undefined' && typeof item.info.typebundle != 'undefined' &&  item.info.typebundle == 'ntfs'"
+                                    <img v-if="typeof item.file_system == 'string' && item.file_system.toLowerCase().indexOf('ntfs') >= 0"
                                          src="../assets/disk01.png">
 
                                     <img v-else src="../assets/disk02.png">
@@ -94,41 +93,37 @@
                         <div class="diskb_3" :title="$t('dbclicktoopen')">
                             <div class="diskb_3_1">
                                 <div>
-                                    <i class="iconfont ico_color">&#xe607;</i>
+                                    <i class="iconfont ico_color"  v-bind:style="{color:item.percentage_color}">&#xe607;</i>
 
                                     <span v-if="typeof item.status != 'undefined' && (item.status == 0)">
                                         mounting...
                                     </span>
 
-                                    <span v-else>{{item.name}}</span>
+                                    <span v-else>{{item._name}}</span>
                                 </div>
 
 
-                                <div v-if="typeof item.info != 'undefined' && typeof item.info.readonly !='undefined' && item.info.readonly"  style="font-size: 14px;color: #f56c6c">
-                                    Readonly
+                                <div v-if="typeof item.writable == 'string' && item.writable.toLowerCase() == 'no'" class="readonly_txt">
+                                    {{$t('Readonly')}}
+                                </div>
+
+                                <div  v-else-if="item.mounted == false" class="readonly_txt" style="background-color: #c0c4cc;cursor: pointer" @click="mountDisk(item)" @click.stop>
+                                    {{$t('Unmounted')}}
                                 </div>
                             </div>
 
                             <div class="diskb_3_2">
                                 <div class="diskb_3_2_1"
-                                     v-bind:style="{ width: item.info.percentage + '%'}">
+                                     v-bind:style="{ width: item.percentage + '%',background:item.percentage_color}">
                                 </div>
                             </div>
 
                             <div class="diskb_3_3">
                                 <div style="font-size: 14px;">
-                                    {{$t('total')}}:
-                                    {{typeof item.info != 'undefined' && typeof item.info.total_size != "undefined"
-                                    ? item.info.total_size : "" }}
-                                    {{typeof item.info != 'undefined' && typeof item.info.total_size_wei !=
-                                    "undefined" ? item.info.total_size_wei : "" }}
+                                    {{$t('total')}}: {{item.total_size}}
                                 </div>
                                 <div style="    font-size: 14px;">
-                                    {{$t('used')}}:
-                                    {{typeof item.info != 'undefined' && typeof item.info.used_size != "undefined"
-                                    ? item.info.used_size : "" }}
-                                    {{typeof item.info != 'undefined' && typeof item.info.used_size_wei !=
-                                    "undefined" ? item.info.used_size_wei : "" }}
+                                    {{$t('used')}}: {{item.used_size}}
                                 </div>
                             </div>
                         </div>
@@ -140,6 +135,7 @@
 </template>
 <script>
     import tray from '@/renderer/lib/tray.js'
+
     export default tray
 </script>
 
