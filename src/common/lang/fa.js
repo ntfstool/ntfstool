@@ -115,7 +115,7 @@ export default {
     Youhavegivenupsu: "شما از ارسال داده های عملیاتی ، گزارش ها و سایر اطلاعات صرف نظر کرده اید ، ممکن است نتوانیم سوال شما را درک کنیم ، آیا مطمئن هستید که به ارسال ادامه می دهید؟",
     Submitinformation: "ارسال اطلاعات با موفقت انجام شد",
     Failedtosubmitinformation: "ارسال اطلاعات انجام نشد",
-    Disksintheignore: "Disks in the ignore list will no longer appear in the disk list",
+    Disksintheignore: "دیسک هایی که جزو لیست نادیده گرفته ها قرار دارند، در لیست دیسک ها نمایش داده نمیشوند.",
     Opendesktop: "نمایش پنجره برنامه",
     Submittherunninglog: "ثبت برنامه موجود در برنامه NTFSTool را ارسال کنید تا به توسعه دهندگان در بهبود برنامه های خود کمک کند",
     Theanalysisdata: "داده های تجزیه و تحلیل ارسال شده است و به صفحه راهنمای آنلاین می رود ...",
