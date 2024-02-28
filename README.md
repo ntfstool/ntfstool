@@ -1,4 +1,5 @@
 # NTFS Tool
+# Support apple chip M1/M2/M3  2024 Start...
 
 <a href="https://ntfstool.com">
   <img src="https://github.com/ntfstool/ntfstool/blob/1.0.2/static/github/256x256@2x.png?raw=true" /></a>
