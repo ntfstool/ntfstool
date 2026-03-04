@@ -1,0 +1,10 @@
+.build/
+.build-*/
+build/
+.DS_Store
+.swiftpm/
+xcuserdata/
+*.provisionprofile
+# The prebuilt NTFS engine is part of the repository.
+!/Vendor/
+!/Vendor/**
