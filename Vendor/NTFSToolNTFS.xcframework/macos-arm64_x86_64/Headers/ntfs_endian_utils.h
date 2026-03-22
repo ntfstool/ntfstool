@@ -1,0 +1,287 @@
+/**
+ * ntfstool-driver - NTFS Engine for macOS
+ *
+ * Copyright (c) 2019-2026 NTFSTool. Released under the MIT License.
+ * Contact: service@ntfstool.com
+ */
+#ifndef NTFSDRV_NTFS_ENDIAN_UTILS_H
+#define NTFSDRV_NTFS_ENDIAN_UTILS_H
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+/*
+ * Note:
+ * Define conversion functions that include type casts, because the default functions do not necessarily perform suitable casts.
+ * Custom functions also make it easy to switch to unaligned access macros when needed
+ *(for architectures that require aligned memory access).
+ */
+
+#ifdef HAVE_ENDIAN_H
+#include <endian.h>
+#endif
+#ifdef HAVE_SYS_ENDIAN_H
+#include <sys/endian.h>
+#endif
+#ifdef HAVE_MACHINE_ENDIAN_H
+#include <machine/endian.h>
+#endif
+#ifdef HAVE_SYS_BYTEORDER_H
+#include <sys/byteorder.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+
+#ifndef __BYTE_ORDER
+#	if defined(_BYTE_ORDER)
+#		define __BYTE_ORDER _BYTE_ORDER
+#		define __LITTLE_ENDIAN _LITTLE_ENDIAN
+#		define __BIG_ENDIAN _BIG_ENDIAN
+#	elif defined(BYTE_ORDER)
+#		define __BYTE_ORDER BYTE_ORDER
+#		define __LITTLE_ENDIAN LITTLE_ENDIAN
+#		define __BIG_ENDIAN BIG_ENDIAN
+#	elif defined(__BYTE_ORDER__) && defined(__LITTLE_ENDIAN__) && \
+			defined(__BIG_ENDIAN__)
+#		define __BYTE_ORDER __BYTE_ORDER__
+#		define __LITTLE_ENDIAN __LITTLE_ENDIAN__
+#		define __BIG_ENDIAN __BIG_ENDIAN__
+#	elif defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && \
+			defined(__ORDER_BIG_ENDIAN__)
+#		define __BYTE_ORDER __BYTE_ORDER__
+#		define __LITTLE_ENDIAN __ORDER_LITTLE_ENDIAN__
+#		define __BIG_ENDIAN __ORDER_BIG_ENDIAN__
+#	elif (defined(_LITTLE_ENDIAN) && !defined(_BIG_ENDIAN)) || \
+			defined(WORDS_LITTLEENDIAN)
+#		define __BYTE_ORDER 1
+#		define __LITTLE_ENDIAN 1
+#		define __BIG_ENDIAN 0
+#	elif (!defined(_LITTLE_ENDIAN) && defined(_BIG_ENDIAN)) || \
+			defined(WORDS_BIGENDIAN)
+#		define __BYTE_ORDER 0
+#		define __LITTLE_ENDIAN 1
+#		define __BIG_ENDIAN 0
+#	else
+#		error "__BYTE_ORDER is not defined."
+#	endif
+#endif
+
+#define __ntfs_bswap_constant_16(x)		\
+	  (u16)((((u16)(x) & 0xff00) >> 8) |	\
+		(((u16)(x) & 0x00ff) << 8))
+
+#define __ntfs_bswap_constant_32(x)			\
+	  (u32)((((u32)(x) & 0xff000000u) >> 24) |	\
+		(((u32)(x) & 0x00ff0000u) >>  8) |	\
+		(((u32)(x) & 0x0000ff00u) <<  8) |	\
+		(((u32)(x) & 0x000000ffu) << 24))
+
+#define __ntfs_bswap_constant_64(x)				\
+	  (u64)((((u64)(x) & 0xff00000000000000ull) >> 56) |	\
+		(((u64)(x) & 0x00ff000000000000ull) >> 40) |	\
+		(((u64)(x) & 0x0000ff0000000000ull) >> 24) |	\
+		(((u64)(x) & 0x000000ff00000000ull) >>  8) |	\
+		(((u64)(x) & 0x00000000ff000000ull) <<  8) |	\
+		(((u64)(x) & 0x0000000000ff0000ull) << 24) |	\
+		(((u64)(x) & 0x000000000000ff00ull) << 40) |	\
+		(((u64)(x) & 0x00000000000000ffull) << 56))
+
+#ifdef HAVE_BYTESWAP_H
+#	include <byteswap.h>
+#else
+#	define bswap_16(x) __ntfs_bswap_constant_16(x)
+#	define bswap_32(x) __ntfs_bswap_constant_32(x)
+#	define bswap_64(x) __ntfs_bswap_constant_64(x)
+#endif
+
+#if defined(__LITTLE_ENDIAN) && (__BYTE_ORDER == __LITTLE_ENDIAN)
+
+#define __le16_to_cpu(x) (x)
+#define __le32_to_cpu(x) (x)
+#define __le64_to_cpu(x) (x)
+
+#define __cpu_to_le16(x) (x)
+#define __cpu_to_le32(x) (x)
+#define __cpu_to_le64(x) (x)
+
+#define __constant_le16_to_cpu(x) (x)
+#define __constant_le32_to_cpu(x) (x)
+#define __constant_le64_to_cpu(x) (x)
+
+#define __constant_cpu_to_le16(x) (x)
+#define __constant_cpu_to_le32(x) (x)
+#define __constant_cpu_to_le64(x) (x)
+
+#define __be16_to_cpu(x) bswap_16(x)
+#define __be32_to_cpu(x) bswap_32(x)
+#define __be64_to_cpu(x) bswap_64(x)
+
+#define __cpu_to_be16(x) bswap_16(x)
+#define __cpu_to_be32(x) bswap_32(x)
+#define __cpu_to_be64(x) bswap_64(x)
+
+#define __constant_be16_to_cpu(x) __ntfs_bswap_constant_16((u16)(x))
+#define __constant_be32_to_cpu(x) __ntfs_bswap_constant_32((u32)(x))
+#define __constant_be64_to_cpu(x) __ntfs_bswap_constant_64((u64)(x))
+
+#define __constant_cpu_to_be16(x) __ntfs_bswap_constant_16((u16)(x))
+#define __constant_cpu_to_be32(x) __ntfs_bswap_constant_32((u32)(x))
+#define __constant_cpu_to_be64(x) __ntfs_bswap_constant_64((u64)(x))
+
+#elif defined(__BIG_ENDIAN) && (__BYTE_ORDER == __BIG_ENDIAN)
+
+#define __le16_to_cpu(x) bswap_16(x)
+#define __le32_to_cpu(x) bswap_32(x)
+#define __le64_to_cpu(x) bswap_64(x)
+
+#define __cpu_to_le16(x) bswap_16(x)
+#define __cpu_to_le32(x) bswap_32(x)
+#define __cpu_to_le64(x) bswap_64(x)
+
+#define __constant_le16_to_cpu(x) __ntfs_bswap_constant_16((u16)(x))
+#define __constant_le32_to_cpu(x) __ntfs_bswap_constant_32((u32)(x))
+#define __constant_le64_to_cpu(x) __ntfs_bswap_constant_64((u64)(x))
+
+#define __constant_cpu_to_le16(x) __ntfs_bswap_constant_16((u16)(x))
+#define __constant_cpu_to_le32(x) __ntfs_bswap_constant_32((u32)(x))
+#define __constant_cpu_to_le64(x) __ntfs_bswap_constant_64((u64)(x))
+
+#define __be16_to_cpu(x) (x)
+#define __be32_to_cpu(x) (x)
+#define __be64_to_cpu(x) (x)
+
+#define __cpu_to_be16(x) (x)
+#define __cpu_to_be32(x) (x)
+#define __cpu_to_be64(x) (x)
+
+#define __constant_be16_to_cpu(x) (x)
+#define __constant_be32_to_cpu(x) (x)
+#define __constant_be64_to_cpu(x) (x)
+
+#define __constant_cpu_to_be16(x) (x)
+#define __constant_cpu_to_be32(x) (x)
+#define __constant_cpu_to_be64(x) (x)
+
+#else
+
+#error "You must define __BYTE_ORDER to be __LITTLE_ENDIAN or __BIG_ENDIAN."
+
+#endif
+
+/* Unsigned little-endian to CPU byte order.*/
+
+#define le16_to_cpu(x)		(u16)__le16_to_cpu((u16)(x))
+#define le32_to_cpu(x)		(u32)__le32_to_cpu((u32)(x))
+#define le64_to_cpu(x)		(u64)__le64_to_cpu((u64)(x))
+
+#define le16_to_cpup(x)		(u16)__le16_to_cpu(*(const u16*)(x))
+#define le32_to_cpup(x)		(u32)__le32_to_cpu(*(const u32*)(x))
+#define le64_to_cpup(x)		(u64)__le64_to_cpu(*(const u64*)(x))
+
+/* Signed little-endian to CPU byte order.*/
+
+#define sle16_to_cpu(x)		(s16)__le16_to_cpu((s16)(x))
+#define sle32_to_cpu(x)		(s32)__le32_to_cpu((s32)(x))
+#define sle64_to_cpu(x)		(s64)__le64_to_cpu((s64)(x))
+
+#define sle16_to_cpup(x)	(s16)__le16_to_cpu(*(s16*)(x))
+#define sle32_to_cpup(x)	(s32)__le32_to_cpu(*(s32*)(x))
+#define sle64_to_cpup(x)	(s64)__le64_to_cpu(*(s64*)(x))
+
+/* Unsigned CPU byte order to little-endian.*/
+
+#define cpu_to_le16(x)		(u16)__cpu_to_le16((u16)(x))
+#define cpu_to_le32(x)		(u32)__cpu_to_le32((u32)(x))
+#define cpu_to_le64(x)		(u64)__cpu_to_le64((u64)(x))
+
+#define cpu_to_le16p(x)		(u16)__cpu_to_le16(*(u16*)(x))
+#define cpu_to_le32p(x)		(u32)__cpu_to_le32(*(u32*)(x))
+#define cpu_to_le64p(x)		(u64)__cpu_to_le64(*(u64*)(x))
+
+/* Signed CPU byte order to little-endian.*/
+
+#define cpu_to_sle16(x)		(s16)__cpu_to_le16((s16)(x))
+#define cpu_to_sle32(x)		(s32)__cpu_to_le32((s32)(x))
+#define cpu_to_sle64(x)		(s64)__cpu_to_le64((s64)(x))
+
+#define cpu_to_sle16p(x)	(s16)__cpu_to_le16(*(s16*)(x))
+#define cpu_to_sle32p(x)	(s32)__cpu_to_le32(*(s32*)(x))
+#define cpu_to_sle64p(x)	(s64)__cpu_to_le64(*(s64*)(x))
+
+/* Unsigned big-endian to CPU byte order.*/
+
+#define be16_to_cpu(x)		(u16)__be16_to_cpu((u16)(x))
+#define be32_to_cpu(x)		(u32)__be32_to_cpu((u32)(x))
+#define be64_to_cpu(x)		(u64)__be64_to_cpu((u64)(x))
+
+#define be16_to_cpup(x)		(u16)__be16_to_cpu(*(const u16*)(x))
+#define be32_to_cpup(x)		(u32)__be32_to_cpu(*(const u32*)(x))
+#define be64_to_cpup(x)		(u64)__be64_to_cpu(*(const u64*)(x))
+
+/* Signed big-endian to CPU byte order.*/
+
+#define sbe16_to_cpu(x)		(s16)__be16_to_cpu((s16)(x))
+#define sbe32_to_cpu(x)		(s32)__be32_to_cpu((s32)(x))
+#define sbe64_to_cpu(x)		(s64)__be64_to_cpu((s64)(x))
+
+#define sbe16_to_cpup(x)	(s16)__be16_to_cpu(*(s16*)(x))
+#define sbe32_to_cpup(x)	(s32)__be32_to_cpu(*(s32*)(x))
+#define sbe64_to_cpup(x)	(s64)__be64_to_cpu(*(s64*)(x))
+
+/* Unsigned CPU byte order to big-endian.*/
+
+#define cpu_to_be16(x)		(u16)__cpu_to_be16((u16)(x))
+#define cpu_to_be32(x)		(u32)__cpu_to_be32((u32)(x))
+#define cpu_to_be64(x)		(u64)__cpu_to_be64((u64)(x))
+
+#define cpu_to_be16p(x)		(u16)__cpu_to_be16(*(u16*)(x))
+#define cpu_to_be32p(x)		(u32)__cpu_to_be32(*(u32*)(x))
+#define cpu_to_be64p(x)		(u64)__cpu_to_be64(*(u64*)(x))
+
+/* Signed CPU byte order to big-endian.*/
+
+#define cpu_to_sbe16(x)		(s16)__cpu_to_be16((s16)(x))
+#define cpu_to_sbe32(x)		(s32)__cpu_to_be32((s32)(x))
+#define cpu_to_sbe64(x)		(s64)__cpu_to_be64((s64)(x))
+
+#define cpu_to_sbe16p(x)	(s16)__cpu_to_be16(*(s16*)(x))
+#define cpu_to_sbe32p(x)	(s32)__cpu_to_be32(*(s32*)(x))
+#define cpu_to_sbe64p(x)	(s64)__cpu_to_be64(*(s64*)(x))
+
+/* Compile-time constant byte order conversion macros.*/
+
+#define const_le16_to_cpu(x)	((u16) __constant_le16_to_cpu(x))
+#define const_le32_to_cpu(x)	((u32) __constant_le32_to_cpu(x))
+#define const_le64_to_cpu(x)	((u64) __constant_le64_to_cpu(x))
+
+#define const_cpu_to_le16(x)	((le16) __constant_cpu_to_le16(x))
+#define const_cpu_to_le32(x)	((le32) __constant_cpu_to_le32(x))
+#define const_cpu_to_le64(x)	((le64) __constant_cpu_to_le64(x))
+
+#define const_sle16_to_cpu(x)	((s16) __constant_le16_to_cpu((le16) x))
+#define const_sle32_to_cpu(x)	((s32) __constant_le32_to_cpu((le32) x))
+#define const_sle64_to_cpu(x)	((s64) __constant_le64_to_cpu((le64) x))
+
+#define const_cpu_to_sle16(x)	((sle16) __constant_cpu_to_le16((u16) x))
+#define const_cpu_to_sle32(x)	((sle32) __constant_cpu_to_le32((u32) x))
+#define const_cpu_to_sle64(x)	((sle64) __constant_cpu_to_le64((u64) x))
+
+#define const_be16_to_cpu(x)	((u16) __constant_be16_to_cpu(x)))
+#define const_be32_to_cpu(x)	((u32) __constant_be32_to_cpu(x)))
+#define const_be64_to_cpu(x)	((u64) __constant_be64_to_cpu(x)))
+
+#define const_cpu_to_be16(x)	((be16) __constant_cpu_to_be16(x))
+#define const_cpu_to_be32(x)	((be32) __constant_cpu_to_be32(x))
+#define const_cpu_to_be64(x)	((be64) __constant_cpu_to_be64(x))
+
+#define const_sbe16_to_cpu(x)	((s16) __constant_be16_to_cpu((be16) x))
+#define const_sbe32_to_cpu(x)	((s32) __constant_be32_to_cpu((be32) x))
+#define const_sbe64_to_cpu(x)	((s64) __constant_be64_to_cpu((be64) x))
+
+#define const_cpu_to_sbe16(x)	((sbe16) __constant_cpu_to_be16((u16) x))
+#define const_cpu_to_sbe32(x)	((sbe32) __constant_cpu_to_be32((u32) x))
+#define const_cpu_to_sbe64(x)	((sbe64) __constant_cpu_to_be64((u64) x))
+
+#endif /* defined NTFSDRV_NTFS_ENDIAN_UTILS_H */
