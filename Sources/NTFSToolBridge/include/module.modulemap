@@ -1,0 +1,6 @@
+// Copyright © 2019-2026 NTFSTool.
+// SPDX-License-Identifier: MIT
+module NTFSToolBridge {
+    header "ntfstool_bridge.h"
+    export *
+}
