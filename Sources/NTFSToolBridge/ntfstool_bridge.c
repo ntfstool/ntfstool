@@ -262,3 +262,129 @@ static struct ntfsdrv_device_operations ntfstool_dev_ops = {
     .open = d_open, .close = d_close, .seek = d_seek, .read = d_read, .write = d_write,
     .pread = d_pread, .pwrite = d_pwrite, .sync = d_sync, .stat = d_stat, .ioctl = d_ioctl,
 };
+
+/* ===================================================================== */
+/* Helpers                                                               */
+/* ===================================================================== */
+
+/* Map "libntfstool-driver failed" to an errno, falling back when it did not set one. */
+static int err_or(int fallback) { return errno ? errno : fallback; }
+
+/* Read the boot sector, check the NTFS signature and return the volume serial number. */
+static uint64_t read_serial(const ntfstool_io *io, int *is_ntfs)
+{
+    uint8_t bs[512];
+    *is_ntfs = 0;
+    if (io->size < 512 || io_read(io, bs, 0, 512)) return 0;
+    if (memcmp(bs + 3, "NTFS    ", 8) != 0) return 0;      /* OEM ID */
+    if (bs[510] != 0x55 || bs[511] != 0xAA) return 0;      /* boot sector signature */
+    *is_ntfs = 1;
+    uint64_t s = 0;
+    for (int i = 7; i >= 0; i--) s = (s << 8) | bs[0x48 + i]; /* little-endian serial at 0x48 */
+    return s;
+}
+
+/* Open MFT record `ino`; on failure errno is always set (ENOENT if libntfstool-driver left it 0). */
+static ntfsdrv_inode *open_ino(ntfstool_vol *v, uint64_t ino)
+{
+    errno = 0;
+    ntfsdrv_inode *ni = ntfsdrv_inode_open(v->vol, (MFT_REF)ino);
+    if (!ni && !errno) errno = ENOENT;
+    return ni;
+}
+
+/* Validate a file name and convert it to NTFS UTF-16. Returns the length or -1 (errno set). */
+static int uname_of(const char *name, ntfschar **u)
+{
+    *u = NULL;
+    if (!name || !*name || !strcmp(name, ".") || !strcmp(name, "..") || strchr(name, '/')) { errno = EINVAL; return -1; }
+    int len = ntfsdrv_mbstoucs(name, u);
+    if (len < 0) return -1;
+    if (len > NTFS_MAX_NAME_LEN) { free(*u); *u = NULL; errno = ENAMETOOLONG; return -1; }
+    return len;
+}
+
+/* Look up `name` in an already open directory and return its MFT record number. */
+static int lookup_in(ntfsdrv_inode *dir_ni, const char *name, uint64_t *ino)
+{
+    /* Deliberately not ntfsdrv_inode_lookup_by_mbsname(): it consults a name cache
+     * that also caches negative results and is only invalidated by path-based
+     * deletes, so an inode-based caller could see stale answers. Searching the
+     * directory's B+tree index directly is always current. */
+    ntfschar *u = NULL;
+    errno = 0;
+    int len = ntfsdrv_mbstoucs(name, &u);
+    if (len <= 0) return err_or(EINVAL);
+    u64 mref = ntfsdrv_inode_lookup_by_name(dir_ni, u, len);
+    free(u);
+    if (mref == (u64)-1) return err_or(ENOENT);
+    *ino = MREF(mref); /* strip the sequence number, keep the record number */
+    return 0;
+}
+
+static int is_dir(ntfsdrv_inode *ni) { return (ni->mrec->flags & MFT_RECORD_IS_DIRECTORY) != 0; }
+
+static const char intx_magic[8] = { 'I', 'n', 't', 'x', 'L', 'N', 'K', 1 };
+
+/* Interix-style symlink (the common kind): SYSTEM attribute and data starting with "IntxLNK\1". */
+static int is_interix_link(ntfsdrv_inode *ni)
+{
+    if (!(ni->flags & FILE_ATTR_SYSTEM) || is_dir(ni)) return 0;
+    ntfsdrv_attr *na = ntfsdrv_attr_open(ni, AT_DATA, AT_UNNAMED, 0);
+    if (!na) return 0;
+    int ok = 0;
+    char magic[8];
+    if (na->data_size > 8 && na->data_size < 4096 && ntfsdrv_attr_pread(na, 0, 8, magic) == 8 && !memcmp(magic, intx_magic, 8)) ok = 1;
+    ntfsdrv_attr_close(na);
+    return ok;
+}
+
+/* Fill ntfstool_attr from an open inode. */
+static int fill_attr(ntfsdrv_inode *ni, ntfstool_attr *a)
+{
+    memset(a, 0, sizeof(*a));
+    a->ino = ni->mft_no;
+    a->atime = ntfs2timespec(ni->last_access_time);
+    a->mtime = ntfs2timespec(ni->last_data_change_time);
+    a->ctime = ntfs2timespec(ni->last_mft_change_time);
+    a->btime = ntfs2timespec(ni->creation_time);
+    if (ni->flags & FILE_ATTR_HIDDEN) a->flags |= NTB_F_HIDDEN;
+    if (ni->flags & FILE_ATTR_READONLY) a->flags |= NTB_F_READONLY;
+    if (ni->flags & FILE_ATTR_SYSTEM) a->flags |= NTB_F_SYSTEM;
+    if (ni->flags & FILE_ATTR_COMPRESSED) a->flags |= NTB_F_COMPRESSED;
+    if (ni->flags & FILE_ATTR_REPARSE_POINT) a->flags |= NTB_F_REPARSE;
+    if (is_dir(ni)) {
+        a->type = NTB_DIR;
+        a->nlink = 2;
+        /* A directory's "size" is the size of its $I30 index allocation. */
+        ntfsdrv_attr *na = ntfsdrv_attr_open(ni, AT_INDEX_ALLOCATION, NTFS_INDEX_I30, 4);
+        if (na) { a->size = na->data_size; a->alloc = na->allocated_size; ntfsdrv_attr_close(na); }
+        /* Directory reparse points (junctions, directory symlinks) are presented as symlinks. */
+        if ((ni->flags & FILE_ATTR_REPARSE_POINT)) {
+            char *t = ntfsdrv_make_symlink(ni, "");
+            if (t) { a->type = NTB_SYMLINK; a->size = strlen(t); free(t); }
+        }
+        return 0;
+    }
+    a->type = NTB_FILE;
+    a->nlink = le16_to_cpu(ni->mrec->link_count);
+    if (a->nlink == 0) a->nlink = 1;
+    /* Windows symlinks are reparse points; ntfsdrv_make_symlink() translates the target. */
+    if (ni->flags & FILE_ATTR_REPARSE_POINT) {
+        char *t = ntfsdrv_make_symlink(ni, "");
+        if (t) { a->type = NTB_SYMLINK; a->size = strlen(t); free(t); return 0; }
+    }
+    ntfsdrv_attr *na = ntfsdrv_attr_open(ni, AT_DATA, AT_UNNAMED, 0);
+    if (na) {
+        a->size = na->data_size;
+        /* For compressed/sparse files the space really used is compressed_size. */
+        a->alloc = (na->data_flags & (ATTR_COMPRESSION_MASK | ATTR_IS_SPARSE)) ? na->compressed_size : na->allocated_size;
+        ntfsdrv_attr_close(na);
+    }
+    if (is_interix_link(ni)) {
+        a->type = NTB_SYMLINK;
+        /* Data = 8-byte magic + UTF-16 target; report the target length in characters. */
+        a->size = a->size > 8 ? (a->size - 8) / 2 : 0;
+    }
+    return 0;
+}
