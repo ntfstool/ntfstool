@@ -388,3 +388,112 @@ static int fill_attr(ntfsdrv_inode *ni, ntfstool_attr *a)
     }
     return 0;
 }
+
+/* ===================================================================== */
+/* Probe / mount / volume-wide operations                                */
+/* ===================================================================== */
+
+int ntfstool_probe(const ntfstool_io *io, uint64_t *serial)
+{
+    int ok;
+    uint64_t s = read_serial(io, &ok);
+    if (!ok) return EINVAL;
+    if (serial) *serial = s;
+    return 0;
+}
+
+ntfstool_vol *ntfstool_mount(const ntfstool_io *io, int readonly, int *err)
+{
+    int is_ntfs;
+    *err = 0;
+    ntfstool_vol *v = calloc(1, sizeof(*v));
+    devpriv *p = calloc(1, sizeof(*p));
+    if (!v || !p) { free(v); free(p); *err = ENOMEM; return NULL; }
+    v->io = *io;
+    v->readonly = readonly;
+    v->serial = read_serial(io, &is_ntfs);
+    if (!is_ntfs) { free(v); free(p); *err = EINVAL; return NULL; }
+    p->io = *io;
+    p->readonly = readonly;
+    ntfsdrv_log_set_handler(ntfsdrv_log_handler_null); /* keep libntfstool-driver quiet; errors come back as errno */
+    struct ntfsdrv_device *dev = ntfsdrv_device_alloc("ntfstool", 0, &ntfstool_dev_ops, p);
+    if (!dev) { *err = err_or(ENOMEM); free(v); free(p); return NULL; }
+    errno = 0;
+    /* NTFS_MNT_RECOVER lets libntfstool-driver replay/reset an unclean $LogFile as expected.
+     * A hibernated or Fast Startup volume fails here with EPERM; the caller may retry read-only. */
+    v->vol = ntfsdrv_device_mount(dev, readonly ? NTFS_MNT_RDONLY : NTFS_MNT_RECOVER);
+    if (!v->vol) {
+        *err = err_or(EIO);
+        ntfsdrv_device_free(dev);
+        free(v); free(p);
+        return NULL;
+    }
+    /* Create the LRU caches as a regular mount does. This is needed for
+     * correctness, not just speed: without them, name lookups in case-sensitive
+     * mode reach ntfs_inode_lookup_by_mbsname() with a NULL name buffer and fail
+     * with EINVAL (a regular mount never hits this because it always creates the caches). */
+    ntfsdrv_create_lru_caches(v->vol);
+    /* Hide system metadata files ($MFT, ...) and DOS short names from listings. */
+    ntfsdrv_set_shown_files(v->vol, FALSE, TRUE, FALSE);
+    /* Load the free cluster / free MFT record counts used by statfs. */
+    if (ntfsdrv_volume_get_free_space(v->vol)) {
+        *err = err_or(EIO);
+        ntfsdrv_umount(v->vol, TRUE);
+        free(v); free(p);
+        return NULL;
+    }
+    return v;
+}
+
+int ntfstool_umount(ntfstool_vol *v)
+{
+    if (!v) return 0;
+    devpriv *p = P(v->vol->dev);
+    /* ntfsdrv_umount() writes back the volume state, closes the system files and calls d_close(). */
+    int r = ntfsdrv_umount(v->vol, FALSE) ? err_or(EIO) : 0;
+    free(p);
+    free(v);
+    return r;
+}
+
+int ntfstool_sync(ntfstool_vol *v)
+{
+    if (v->readonly) return 0;
+    struct ntfsdrv_device *dev = v->vol->dev;
+    return dev->d_ops->sync(dev) ? err_or(EIO) : 0;
+}
+
+int ntfstool_is_readonly(ntfstool_vol *v) { return v->readonly || NVolReadOnly(v->vol); }
+uint64_t ntfstool_serial(ntfstool_vol *v) { return v->serial; }
+
+char *ntfstool_label(ntfstool_vol *v) { return strdup(v->vol->vol_name ? v->vol->vol_name : ""); }
+
+int ntfstool_set_label(ntfstool_vol *v, const char *label)
+{
+    if (ntfstool_is_readonly(v)) return EROFS;
+    ntfschar *u = NULL;
+    int len = ntfsdrv_mbstoucs(label, &u);
+    if (len < 0) return err_or(EINVAL);
+    if (len > 128) { free(u); return ENAMETOOLONG; } /* $VOLUME_NAME holds at most 128 UTF-16 units */
+    int r = ntfsdrv_volume_rename(v->vol, u, len) ? err_or(EIO) : 0;
+    free(u);
+    if (!r) { free(v->vol->vol_name); v->vol->vol_name = strdup(label); }
+    return r;
+}
+
+int ntfstool_statfs_get(ntfstool_vol *v, ntfstool_statfs *o)
+{
+    ntfsdrv_volume *vol = v->vol;
+    o->cluster_size = vol->cluster_size;
+    o->total_clusters = (uint64_t)vol->nr_clusters;
+    o->free_clusters = vol->free_clusters > 0 ? (uint64_t)vol->free_clusters : 0;
+    /* Free "files" = free MFT records plus the records that would fit into the
+     * free clusters if $MFT grew (same estimate as the usual statfs). */
+    s64 freefiles = vol->free_clusters > 0 ? vol->free_clusters : 0;
+    int delta = vol->cluster_size_bits - vol->mft_record_size_bits;
+    freefiles = delta >= 0 ? freefiles << delta : freefiles >> -delta;
+    if (vol->free_mft_records > 0) freefiles += vol->free_mft_records;
+    o->free_files = (uint64_t)freefiles;
+    o->total_files = (uint64_t)(vol->mftbmp_na ? vol->mftbmp_na->allocated_size << 3 : 0) + o->free_files;
+    return 0;
+}
