@@ -497,3 +497,66 @@ int ntfstool_statfs_get(ntfstool_vol *v, ntfstool_statfs *o)
     o->total_files = (uint64_t)(vol->mftbmp_na ? vol->mftbmp_na->allocated_size << 3 : 0) + o->free_files;
     return 0;
 }
+
+/* ===================================================================== */
+/* Lookup / attributes / directory listing                               */
+/* ===================================================================== */
+
+int ntfstool_lookup(ntfstool_vol *v, uint64_t dir, const char *name, uint64_t *ino)
+{
+    ntfsdrv_inode *dir_ni = open_ino(v, dir);
+    if (!dir_ni) return err_or(ENOENT);
+    int r = is_dir(dir_ni) ? lookup_in(dir_ni, name, ino) : ENOTDIR;
+    ntfsdrv_inode_close(dir_ni);
+    /* Records 0..15 are NTFS metadata files ($MFT, $LogFile, ...); never expose them. */
+    if (!r && *ino < FILE_first_user && *ino != FILE_root) r = ENOENT;
+    return r;
+}
+
+int ntfstool_getattr(ntfstool_vol *v, uint64_t ino, ntfstool_attr *out)
+{
+    ntfsdrv_inode *ni = open_ino(v, ino);
+    if (!ni) return err_or(ENOENT);
+    int r = fill_attr(ni, out);
+    ntfsdrv_inode_close(ni);
+    return r;
+}
+
+/* State passed through ntfsdrv_readdir() to filler(). */
+typedef struct {
+    ntfstool_dir_cb cb;
+    void *ctx;
+    int stop;
+} rdctx;
+
+/* ntfsdrv_readdir() callback: filter and convert one index entry. */
+static int filler(void *dirent, const ntfschar *name, const int name_len, const int name_type,
+                  const s64 pos, const MFT_REF mref, const unsigned dt_type)
+{
+    rdctx *c = dirent;
+    (void)pos;
+    if (c->stop) return 1;
+    if (name_type == FILE_NAME_DOS) return 0;            /* 8.3 alias of a long name: skip duplicate */
+    if (MREF(mref) < FILE_first_user) return 0;          /* metadata files, and "." / ".." in the root */
+    char *s = NULL;
+    if (ntfsdrv_ucstombs(name, name_len, &s, 0) < 0) return 0;
+    if (!strcmp(s, ".") || !strcmp(s, "..")) { free(s); return 0; }
+    uint32_t t = dt_type == NTFS_DT_DIR ? NTB_DIR : (dt_type == NTFS_DT_LNK || dt_type == NTFS_DT_REPARSE) ? NTB_SYMLINK : NTB_FILE;
+    if (c->cb(c->ctx, s, MREF(mref), t)) c->stop = 1;
+    free(s);
+    return c->stop;
+}
+
+int ntfstool_readdir(ntfstool_vol *v, uint64_t dir, ntfstool_dir_cb cb, void *ctx)
+{
+    ntfsdrv_inode *ni = open_ino(v, dir);
+    if (!ni) return err_or(ENOENT);
+    if (!is_dir(ni)) { ntfsdrv_inode_close(ni); return ENOTDIR; }
+    rdctx c = { cb, ctx, 0 };
+    s64 pos = 0;
+    errno = 0;
+    int r = ntfsdrv_readdir(ni, &pos, &c, filler);
+    int e = (r && !c.stop) ? err_or(EIO) : 0; /* a stop requested by the callback is not an error */
+    ntfsdrv_inode_close(ni);
+    return e;
+}
