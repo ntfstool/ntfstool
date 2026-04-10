@@ -560,3 +560,90 @@ int ntfstool_readdir(ntfstool_vol *v, uint64_t dir, ntfstool_dir_cb cb, void *ct
     ntfsdrv_inode_close(ni);
     return e;
 }
+
+/* ===================================================================== */
+/* File data                                                             */
+/* ===================================================================== */
+
+int ntfstool_read(ntfstool_vol *v, uint64_t ino, uint64_t off, void *buf, size_t len, size_t *done)
+{
+    *done = 0;
+    ntfsdrv_inode *ni = open_ino(v, ino);
+    if (!ni) return err_or(ENOENT);
+    if (is_dir(ni)) { ntfsdrv_inode_close(ni); return EISDIR; }
+    ntfsdrv_attr *na = ntfsdrv_attr_open(ni, AT_DATA, AT_UNNAMED, 0); /* the unnamed $DATA stream = file contents */
+    if (!na) { int e = err_or(EIO); ntfsdrv_inode_close(ni); return e; }
+    int r = 0;
+    if ((s64)off < na->data_size) {
+        if ((s64)(off + len) > na->data_size) len = (size_t)(na->data_size - (s64)off);
+        size_t total = 0;
+        /* ntfsdrv_attr_pread may return short counts (e.g. at compression block boundaries). */
+        while (total < len) {
+            s64 n = ntfsdrv_attr_pread(na, (s64)(off + total), (s64)(len - total), (char *)buf + total);
+            if (n <= 0) { if (n < 0) r = err_or(EIO); break; }
+            total += (size_t)n;
+        }
+        *done = total;
+    }
+    ntfsdrv_attr_close(na);
+    ntfsdrv_inode_close(ni);
+    return r;
+}
+
+int ntfstool_write(ntfstool_vol *v, uint64_t ino, uint64_t off, const void *buf, size_t len, size_t *done)
+{
+    *done = 0;
+    if (ntfstool_is_readonly(v)) return EROFS;
+    ntfsdrv_inode *ni = open_ino(v, ino);
+    if (!ni) return err_or(ENOENT);
+    if (is_dir(ni)) { ntfsdrv_inode_close(ni); return EISDIR; }
+    ntfsdrv_attr *na = ntfsdrv_attr_open(ni, AT_DATA, AT_UNNAMED, 0);
+    if (!na) { int e = err_or(EIO); ntfsdrv_inode_close(ni); return e; }
+    int r = 0;
+    size_t total = 0;
+    while (total < len) {
+        errno = 0;
+        s64 n = ntfsdrv_attr_pwrite(na, (s64)(off + total), (s64)(len - total), (const char *)buf + total);
+        if (n <= 0) { r = err_or(EIO); break; }
+        total += (size_t)n;
+    }
+    *done = total;
+    /* Compressed files: ntfsdrv_attr_pclose() writes out the last partial compression block. */
+    if (total && (na->data_flags & ATTR_COMPRESSION_MASK)) ntfsdrv_attr_pclose(na);
+    ntfsdrv_attr_close(na);
+    if (total) ntfsdrv_inode_update_times(ni, NTFS_UPDATE_MCTIME);
+    /* Closing the inode writes the MFT record (size, times) back to the device. */
+    if (ntfsdrv_inode_close(ni) && !r) r = err_or(EIO);
+    return r;
+}
+
+int ntfstool_truncate(ntfstool_vol *v, uint64_t ino, uint64_t size)
+{
+    if (ntfstool_is_readonly(v)) return EROFS;
+    ntfsdrv_inode *ni = open_ino(v, ino);
+    if (!ni) return err_or(ENOENT);
+    if (is_dir(ni)) { ntfsdrv_inode_close(ni); return EISDIR; }
+    ntfsdrv_attr *na = ntfsdrv_attr_open(ni, AT_DATA, AT_UNNAMED, 0);
+    if (!na) { int e = err_or(EIO); ntfsdrv_inode_close(ni); return e; }
+    int r = 0;
+    if (na->data_size != (s64)size) {
+        errno = 0;
+        if (ntfsdrv_attr_truncate(na, (s64)size)) r = err_or(EIO);
+        else ntfsdrv_inode_update_times(ni, NTFS_UPDATE_MCTIME);
+    }
+    ntfsdrv_attr_close(na);
+    if (ntfsdrv_inode_close(ni) && !r) r = err_or(EIO);
+    return r;
+}
+
+int ntfstool_flush(ntfstool_vol *v, uint64_t ino)
+{
+    if (ntfstool_is_readonly(v)) return 0;
+    ntfsdrv_inode *ni = open_ino(v, ino);
+    if (!ni) return err_or(ENOENT);
+    /* Also refreshes the FILE_NAME copies in the parent directory indexes. */
+    int r = ntfsdrv_inode_sync(ni) ? err_or(EIO) : 0;
+    ntfsdrv_inode_close(ni);
+    if (!r) r = ntfstool_sync(v);
+    return r;
+}
