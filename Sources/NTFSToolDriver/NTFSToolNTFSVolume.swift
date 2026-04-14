@@ -151,3 +151,116 @@ public struct NTFSStatFS: Equatable {
     public var totalBytes: UInt64 { UInt64(clusterSize) * totalClusters }
     public var freeBytes: UInt64 { UInt64(clusterSize) * freeClusters }
 }
+
+/// Context object handed to the C callbacks (passed as an unretained `ctx` pointer).
+final class DeviceBox {
+    let device: BlockDevice
+    init(_ d: BlockDevice) { device = d }
+}
+
+/// Build the C callback table for a device. The C side copies the struct; `box`
+/// must outlive the mount (NTFSVolume keeps it in a stored property).
+private func makeIO(_ box: DeviceBox) -> ntfstool_io {
+    var io = ntfstool_io()
+    io.ctx = Unmanaged.passUnretained(box).toOpaque()
+    io.size = box.device.size
+    io.block_size = box.device.blockSize
+    io.read = { ctx, buf, off, len in
+        Unmanaged<DeviceBox>.fromOpaque(ctx!).takeUnretainedValue().device.read(into: buf!, offset: off, length: len)
+    }
+    io.write = { ctx, buf, off, len in
+        Unmanaged<DeviceBox>.fromOpaque(ctx!).takeUnretainedValue().device.write(from: buf!, offset: off, length: len)
+    }
+    io.sync = { ctx in Unmanaged<DeviceBox>.fromOpaque(ctx!).takeUnretainedValue().device.sync() }
+    return io
+}
+
+/// A mounted NTFS volume, addressed by inode number (MFT record number).
+///
+/// Thread safety: libntfstool-driver is not thread safe and FSKit calls the module from
+/// many threads, so every operation takes one lock for its whole duration.
+/// That also preserves the bridge's "only one open ntfs_inode per MFT record"
+/// rule: an operation's inodes are always closed before the next one starts.
+public final class NTFSVolume {
+    /// MFT record number of the NTFS root directory (5).
+    public static let rootIno: UInt64 = UInt64(NTB_ROOT)
+
+    let box: DeviceBox
+    var vol: OpaquePointer?
+    let lock = NSLock()
+    /// True if mounted read-only (requested, or forced by libntfstool-driver).
+    public let readOnly: Bool
+    /// NTFS volume serial number (stable per formatted volume).
+    public let serial: UInt64
+
+    /// Returns the volume serial number if `device` contains NTFS, else nil.
+    public static func probe(_ device: BlockDevice) -> UInt64? {
+        let box = DeviceBox(device)
+        var io = makeIO(box)
+        var serial: UInt64 = 0
+        return withExtendedLifetime(box) { ntfstool_probe(&io, &serial) == 0 ? serial : nil }
+    }
+
+    /// Mount. Throws `NTFSError(EINVAL)` for non-NTFS, `EPERM` for a hibernated /
+    /// Fast Startup volume opened writable.
+    public init(device: BlockDevice, readOnly: Bool = false) throws {
+        box = DeviceBox(device)
+        var io = makeIO(box)
+        var err: Int32 = 0
+        guard let v = ntfstool_mount(&io, readOnly ? 1 : 0, &err) else { throw NTFSError(err == 0 ? EIO : err) }
+        vol = v
+        self.readOnly = ntfstool_is_readonly(v) != 0
+        serial = ntfstool_serial(v)
+    }
+
+    deinit { try? unmount() }
+
+    /// Reject file names Windows cannot open (same rule as the `windows_names` option).
+    public var windowsNames: Bool {
+        get { lock.lock(); defer { lock.unlock() }; return vol.map { ntfstool_windows_names($0) != 0 } ?? false }
+        set { lock.lock(); defer { lock.unlock() }; if let v = vol { ntfstool_set_windows_names(v, newValue ? 1 : 0) } }
+    }
+
+    /// Run `body` with the volume lock held; throws ENXIO once unmounted.
+    func locked<T>(_ body: (OpaquePointer) throws -> T) throws -> T {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let v = vol else { throw NTFSError(ENXIO) }
+        return try body(v)
+    }
+
+    /// Convert a bridge return value (0 or errno) into a Swift error.
+    func check(_ r: Int32) throws { if r != 0 { throw NTFSError(r) } }
+
+    /// Write everything back and release the volume. Safe to call more than once.
+    public func unmount() throws {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let v = vol else { return }
+        vol = nil
+        let r = ntfstool_umount(v)
+        if r != 0 { throw NTFSError(r) }
+    }
+
+    public var isMounted: Bool { lock.lock(); defer { lock.unlock() }; return vol != nil }
+
+    public func label() throws -> String {
+        try locked { v in
+            guard let c = ntfstool_label(v) else { return "" }
+            defer { free(c) }
+            return String(cString: c)
+        }
+    }
+
+    public func setLabel(_ name: String) throws { try locked { v in try check(ntfstool_set_label(v, name)) } }
+
+    public func statfs() throws -> NTFSStatFS {
+        try locked { v in
+            var s = ntfstool_statfs()
+            try check(ntfstool_statfs_get(v, &s))
+            return NTFSStatFS(clusterSize: s.cluster_size, totalClusters: s.total_clusters, freeClusters: s.free_clusters,
+                              totalFiles: s.total_files, freeFiles: s.free_files)
+        }
+    }
+
+}
