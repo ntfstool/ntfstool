@@ -647,3 +647,108 @@ int ntfstool_flush(ntfstool_vol *v, uint64_t ino)
     if (!r) r = ntfstool_sync(v);
     return r;
 }
+
+/* ===================================================================== */
+/* Create / delete / rename                                              */
+/* ===================================================================== */
+
+void ntfstool_set_windows_names(ntfstool_vol *v, int on) { v->win_names = on ? 1 : 0; }
+int ntfstool_windows_names(ntfstool_vol *v) { return v->win_names; }
+
+/* With windows_names on, reject names Windows cannot handle: forbidden characters
+ * (" * / : < > ? \ |), reserved device names (CON, AUX, ...), and trailing dots or
+ * spaces. Same rule set (ntfsdrv_forbidden_names) as the `windows_names` mount option. */
+static int forbidden_name(ntfstool_vol *v, const char *name)
+{
+    if (!v->win_names) return 0;
+    ntfschar *u = NULL;
+    int ulen = uname_of(name, &u);
+    if (ulen < 0) return 0; /* invalid names are reported by the normal path below */
+    int bad = ntfsdrv_forbidden_names(v->vol, u, ulen, TRUE);
+    free(u);
+    return bad ? EINVAL : 0;
+}
+
+int ntfstool_create(ntfstool_vol *v, uint64_t dir, const char *name, uint32_t type, uint64_t *ino)
+{
+    { int fb = forbidden_name(v, name); if (fb) return fb; }
+    if (ntfstool_is_readonly(v)) return EROFS;
+    ntfschar *u;
+    int ulen = uname_of(name, &u);
+    if (ulen < 0) return err_or(EINVAL);
+    ntfsdrv_inode *dir_ni = open_ino(v, dir);
+    if (!dir_ni) { free(u); return err_or(ENOENT); }
+    int r = 0;
+    uint64_t existing;
+    if (!is_dir(dir_ni)) r = ENOTDIR;
+    else if (dir == FILE_Extend) r = EPERM; /* $Extend is a metadata directory */
+    else if (!lookup_in(dir_ni, name, &existing)) r = EEXIST;
+    if (!r) {
+        errno = 0;
+        ntfsdrv_inode *ni = ntfsdrv_create(dir_ni, const_cpu_to_le32(0), u, (u8)ulen, type == NTB_DIR ? S_IFDIR : S_IFREG);
+        if (!ni) r = err_or(EIO);
+        else {
+            *ino = ni->mft_no;
+            /* close_in_dir updates the new entry in dir_ni's index without reopening the directory. */
+            if (ntfsdrv_inode_close_in_dir(ni, dir_ni)) r = err_or(EIO);
+        }
+    }
+    if (ntfsdrv_inode_close(dir_ni) && !r) r = err_or(EIO);
+    free(u);
+    return r;
+}
+
+int ntfstool_symlink(ntfstool_vol *v, uint64_t dir, const char *name, const char *target, uint64_t *ino)
+{
+    { int fb = forbidden_name(v, name); if (fb) return fb; }
+    if (ntfstool_is_readonly(v)) return EROFS;
+    ntfschar *u, *ut = NULL;
+    int ulen = uname_of(name, &u);
+    if (ulen < 0) return err_or(EINVAL);
+    int tlen = ntfsdrv_mbstoucs(target, &ut);
+    if (tlen <= 0) { free(u); return err_or(EINVAL); }
+    ntfsdrv_inode *dir_ni = open_ino(v, dir);
+    if (!dir_ni) { free(u); free(ut); return err_or(ENOENT); }
+    int r = 0;
+    uint64_t existing;
+    if (!is_dir(dir_ni)) r = ENOTDIR;
+    else if (!lookup_in(dir_ni, name, &existing)) r = EEXIST;
+    if (!r) {
+        errno = 0;
+        /* Creates an Interix symlink, the common default format. */
+        ntfsdrv_inode *ni = ntfsdrv_create_symlink(dir_ni, const_cpu_to_le32(0), u, (u8)ulen, ut, tlen);
+        if (!ni) r = err_or(EIO);
+        else {
+            *ino = ni->mft_no;
+            if (ntfsdrv_inode_close_in_dir(ni, dir_ni)) r = err_or(EIO);
+        }
+    }
+    if (ntfsdrv_inode_close(dir_ni) && !r) r = err_or(EIO);
+    free(u); free(ut);
+    return r;
+}
+
+int ntfstool_readlink(ntfstool_vol *v, uint64_t ino, char **target)
+{
+    *target = NULL;
+    ntfsdrv_inode *ni = open_ino(v, ino);
+    if (!ni) return err_or(ENOENT);
+    int r = EINVAL; /* not a link */
+    if (ni->flags & FILE_ATTR_REPARSE_POINT) {
+        /* Windows symlink / junction: libntfstool-driver translates the reparse data to a POSIX path. */
+        *target = ntfsdrv_make_symlink(ni, "");
+        r = *target ? 0 : EINVAL;
+    } else if (is_interix_link(ni)) {
+        /* Interix link: UTF-16 target follows the 8-byte magic. */
+        ntfsdrv_attr *na = ntfsdrv_attr_open(ni, AT_DATA, AT_UNNAMED, 0);
+        if (na) {
+            s64 n = na->data_size - 8;
+            ntfschar *buf = malloc((size_t)n);
+            if (buf && ntfsdrv_attr_pread(na, 8, n, buf) == n && ntfsdrv_ucstombs(buf, (int)(n / 2), target, 0) >= 0) r = 0;
+            free(buf);
+            ntfsdrv_attr_close(na);
+        }
+    }
+    ntfsdrv_inode_close(ni);
+    return r;
+}
