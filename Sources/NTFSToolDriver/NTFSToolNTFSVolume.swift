@@ -263,4 +263,43 @@ public final class NTFSVolume {
         }
     }
 
+    /// Find `name` in directory `dir` and return its inode number.
+    public func lookup(_ name: String, in dir: UInt64) throws -> UInt64 {
+        try locked { v in
+            var ino: UInt64 = 0
+            try check(ntfstool_lookup(v, dir, name, &ino))
+            return ino
+        }
+    }
+
+    public func attributes(_ ino: UInt64) throws -> NTFSAttributes {
+        try locked { v in
+            var a = ntfstool_attr()
+            try check(ntfstool_getattr(v, ino, &a))
+            return NTFSAttributes(ino: a.ino, type: NTFSItemType(rawValue: a.type) ?? .file, linkCount: a.nlink, size: a.size, allocSize: a.alloc,
+                                  hidden: a.flags & UInt32(NTB_F_HIDDEN) != 0, readOnly: a.flags & UInt32(NTB_F_READONLY) != 0,
+                                  system: a.flags & UInt32(NTB_F_SYSTEM) != 0, compressed: a.flags & UInt32(NTB_F_COMPRESSED) != 0,
+                                  accessTime: a.atime, modifyTime: a.mtime, changeTime: a.ctime, birthTime: a.btime)
+        }
+    }
+
+    /// Collects entries from the C readdir callback.
+    final class ListBox { var items: [NTFSDirEntry] = [] }
+
+    /// List a directory (without ".", "..", DOS short names and metadata files).
+    public func list(_ dir: UInt64) throws -> [NTFSDirEntry] {
+        try locked { v in
+            let box = ListBox()
+            let r = withExtendedLifetime(box) {
+                ntfstool_readdir(v, dir, { ctx, name, ino, type in
+                    let b = Unmanaged<ListBox>.fromOpaque(ctx!).takeUnretainedValue()
+                    b.items.append(NTFSDirEntry(name: String(cString: name!), ino: ino, type: NTFSItemType(rawValue: type) ?? .file))
+                    return 0
+                }, Unmanaged.passUnretained(box).toOpaque())
+            }
+            try check(r)
+            return box.items
+        }
+    }
+
 }
