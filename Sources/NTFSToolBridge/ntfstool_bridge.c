@@ -752,3 +752,133 @@ int ntfstool_readlink(ntfstool_vol *v, uint64_t ino, char **target)
     ntfsdrv_inode_close(ni);
     return r;
 }
+
+/* Remove the name `name` from `dir`. When check_empty is set a non-empty directory
+ * fails with ENOTEMPTY; rename() clears it to drop the old name of a directory that
+ * already has its new name. */
+static int unlink_impl(ntfstool_vol *v, uint64_t dir, const char *name, int check_empty)
+{
+    if (ntfstool_is_readonly(v)) return EROFS;
+    ntfschar *u;
+    int ulen = uname_of(name, &u);
+    if (ulen < 0) return err_or(EINVAL);
+    ntfsdrv_inode *dir_ni = open_ino(v, dir);
+    if (!dir_ni) { free(u); return err_or(ENOENT); }
+    uint64_t ino = 0;
+    int r = is_dir(dir_ni) ? lookup_in(dir_ni, name, &ino) : ENOTDIR;
+    if (!r && (ino < FILE_first_user || dir == FILE_Extend)) r = EPERM; /* never delete metadata */
+    ntfsdrv_inode *ni = NULL;
+    if (!r && !(ni = open_ino(v, ino))) r = err_or(ENOENT);
+    if (!r && check_empty && is_dir(ni)) {
+        errno = 0;
+        int e = ntfsdrv_check_empty_dir(ni);
+        if (e < 0) r = err_or(ENOTEMPTY);
+    }
+    if (!r) {
+        errno = 0;
+        /* ntfsdrv_delete() always closes both ni and dir_ni, success or not. If this was
+         * the last name, the record and its clusters are freed. */
+        if (ntfsdrv_delete(v->vol, NULL, ni, dir_ni, u, (u8)ulen)) r = err_or(EIO);
+        ni = dir_ni = NULL;
+    }
+    if (ni) ntfsdrv_inode_close(ni);
+    if (dir_ni) ntfsdrv_inode_close(dir_ni);
+    free(u);
+    return r;
+}
+
+int ntfstool_unlink(ntfstool_vol *v, uint64_t dir, const char *name) { return unlink_impl(v, dir, name, 1); }
+
+/* Add an additional name for `ino` in directory `dir` (a hard link). Used by rename. */
+static int link_name(ntfstool_vol *v, uint64_t ino, uint64_t dir, const char *name)
+{
+    ntfschar *u;
+    int ulen = uname_of(name, &u);
+    if (ulen < 0) return err_or(EINVAL);
+    int r = 0;
+    ntfsdrv_inode *ni = open_ino(v, ino);
+    if (!ni) { free(u); return err_or(ENOENT); }
+    /* Never open the same record twice: linking a directory into itself is invalid anyway. */
+    ntfsdrv_inode *dir_ni = ino == dir ? NULL : open_ino(v, dir);
+    if (!dir_ni) r = ino == dir ? EINVAL : err_or(ENOENT);
+    if (!r) {
+        errno = 0;
+        if (ntfsdrv_link(ni, dir_ni, u, (u8)ulen)) r = err_or(EIO);
+        else ntfsdrv_inode_update_times(ni, NTFS_UPDATE_CTIME);
+    }
+    /* At this point ni may have names in two different directories (the middle of a
+     * cross-directory move), so ntfs_inode_close_in_dir() - which assumes all names
+     * live in dir_ni - must not be used. Close the directory first (writing its
+     * index back), then the inode; libntfstool-driver then opens each parent itself to
+     * update the FILE_NAME copies, and no record is ever open twice. */
+    if (dir_ni && ntfsdrv_inode_close(dir_ni) && !r) r = err_or(EIO);
+    if (ntfsdrv_inode_close(ni) && !r) r = err_or(EIO);
+    free(u);
+    return r;
+}
+
+/* Is `dir` equal to `ino` or one of its descendants? Walks parent links up to the
+ * root. Used to refuse moving a directory into itself, which would detach a cycle
+ * from the tree. The depth limit guards against corrupted parent chains. */
+static int is_descendant(ntfstool_vol *v, uint64_t dir, uint64_t ino)
+{
+    uint64_t cur = dir;
+    for (int depth = 0; depth < 4096 && cur != FILE_root; depth++) {
+        if (cur == ino) return 1;
+        ntfsdrv_inode *ni = open_ino(v, cur);
+        if (!ni) return 0;
+        ntfsdrv_inode *parent = ntfsdrv_dir_parent_inode(ni);
+        uint64_t next = parent ? parent->mft_no : FILE_root;
+        if (parent) ntfsdrv_inode_close(parent);
+        ntfsdrv_inode_close(ni);
+        if (next == cur) break;
+        cur = next;
+    }
+    return cur == ino;
+}
+
+/*
+ * rename(2) semantics built from link + unlink, because libntfstool-driver has no rename
+ * primitive. Order matters for crash safety: the new name is added before the old
+ * one is removed, so the file always has at least one name and is never freed.
+ */
+int ntfstool_rename(ntfstool_vol *v, uint64_t sdir, const char *sname, uint64_t ddir, const char *dname)
+{
+    if (ntfstool_is_readonly(v)) return EROFS;
+    if (sdir == ddir && !strcmp(sname, dname)) return 0;
+    { int fb = forbidden_name(v, dname); if (fb) return fb; }
+    uint64_t src, dst = 0;
+    int r = ntfstool_lookup(v, sdir, sname, &src);
+    if (r) return r;
+    if (src < FILE_first_user) return EPERM;
+    ntfstool_attr sa;
+    if ((r = ntfstool_getattr(v, src, &sa))) return r;
+    if (sa.type == NTB_DIR && is_descendant(v, ddir, src)) return EINVAL;
+    int dexists = !ntfstool_lookup(v, ddir, dname, &dst);
+    if (dexists && dst == src) {
+        /* Destination resolves to the same file: a case-only rename (Win32 names are
+         * case-insensitive, so "a" and "A" collide). Park the file under a temporary
+         * name first so it never ends up with zero names (which would delete it). */
+        char tmp[64];
+        snprintf(tmp, sizeof tmp, ".ntfstool-rename-%llu", (unsigned long long)src);
+        if ((r = link_name(v, src, sdir, tmp))) return r;
+        if ((r = unlink_impl(v, sdir, sname, 0))) { unlink_impl(v, sdir, tmp, 0); return r; }
+        r = link_name(v, src, ddir, dname);
+        if (r) link_name(v, src, sdir, sname); /* roll back to the original name */
+        unlink_impl(v, sdir, tmp, 0);
+        return r;
+    }
+    if (dexists) {
+        /* Replacing an existing target: types must match, a directory must be empty. */
+        ntfstool_attr da;
+        if ((r = ntfstool_getattr(v, dst, &da))) return r;
+        if (sa.type == NTB_DIR && da.type != NTB_DIR) return ENOTDIR;
+        if (sa.type != NTB_DIR && da.type == NTB_DIR) return EISDIR;
+        if ((r = ntfstool_unlink(v, ddir, dname))) return r; /* non-empty directory -> ENOTEMPTY */
+    }
+    if ((r = link_name(v, src, ddir, dname))) return r;
+    /* Now the item has both names; drop the old one (no emptiness check, even for directories). */
+    r = unlink_impl(v, sdir, sname, 0);
+    if (r) unlink_impl(v, ddir, dname, 0);
+    return r;
+}
