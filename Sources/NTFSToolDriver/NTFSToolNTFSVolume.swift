@@ -302,4 +302,42 @@ public final class NTFSVolume {
         }
     }
 
+    /// Read into `buffer`; returns the number of bytes read (fewer at end of file).
+    public func read(_ ino: UInt64, offset: UInt64, into buffer: UnsafeMutableRawPointer, length: Int) throws -> Int {
+        try locked { v in
+            var done = 0
+            try check(ntfstool_read(v, ino, offset, buffer, length, &done))
+            return done
+        }
+    }
+
+    /// Convenience read returning `Data`.
+    public func read(_ ino: UInt64, offset: UInt64 = 0, length: Int) throws -> Data {
+        var d = Data(count: length)
+        let n = try d.withUnsafeMutableBytes { try read(ino, offset: offset, into: $0.baseAddress!, length: length) }
+        return d.prefix(n)
+    }
+
+    /// Write from `buffer`; the file grows as needed. Returns bytes written.
+    @discardableResult
+    public func write(_ ino: UInt64, offset: UInt64, from buffer: UnsafeRawPointer, length: Int) throws -> Int {
+        try locked { v in
+            var done = 0
+            try check(ntfstool_write(v, ino, offset, buffer, length, &done))
+            return done
+        }
+    }
+
+    @discardableResult
+    public func write(_ ino: UInt64, offset: UInt64, data: Data) throws -> Int {
+        if data.isEmpty { return 0 }
+        return try data.withUnsafeBytes { try write(ino, offset: offset, from: $0.baseAddress!, length: data.count) }
+    }
+
+    public func truncate(_ ino: UInt64, size: UInt64) throws { try locked { v in try check(ntfstool_truncate(v, ino, size)) } }
+    /// Write the item's metadata back and flush the device (called on last close).
+    public func flush(_ ino: UInt64) throws { try locked { v in try check(ntfstool_flush(v, ino)) } }
+    /// Flush the device.
+    public func sync() throws { try locked { v in try check(ntfstool_sync(v)) } }
+
 }
