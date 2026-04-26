@@ -882,3 +882,33 @@ int ntfstool_rename(ntfstool_vol *v, uint64_t sdir, const char *sname, uint64_t 
     if (r) unlink_impl(v, ddir, dname, 0);
     return r;
 }
+
+/* ===================================================================== */
+/* Attribute changes                                                     */
+/* ===================================================================== */
+
+int ntfstool_set_times(ntfstool_vol *v, uint64_t ino, const struct timespec *atime, const struct timespec *mtime,
+                       const struct timespec *ctime, const struct timespec *btime)
+{
+    if (ntfstool_is_readonly(v)) return EROFS;
+    ntfsdrv_inode *ni = open_ino(v, ino);
+    if (!ni) return err_or(ENOENT);
+    if (atime) ni->last_access_time = timespec2ntfs(*atime);
+    if (mtime) ni->last_data_change_time = timespec2ntfs(*mtime);
+    if (ctime) ni->last_mft_change_time = timespec2ntfs(*ctime);
+    if (btime) ni->creation_time = timespec2ntfs(*btime);
+    ntfsdrv_inode_mark_dirty(ni);
+    NInoFileNameSetDirty(ni); /* times are duplicated in the parent's index entry; update it too */
+    return ntfsdrv_inode_close(ni) ? err_or(EIO) : 0;
+}
+
+int ntfstool_set_hidden(ntfstool_vol *v, uint64_t ino, int hidden)
+{
+    if (ntfstool_is_readonly(v)) return EROFS;
+    ntfsdrv_inode *ni = open_ino(v, ino);
+    if (!ni) return err_or(ENOENT);
+    if (hidden) ni->flags |= FILE_ATTR_HIDDEN; else ni->flags &= ~FILE_ATTR_HIDDEN;
+    ntfsdrv_inode_mark_dirty(ni);
+    NInoFileNameSetDirty(ni);
+    return ntfsdrv_inode_close(ni) ? err_or(EIO) : 0;
+}
