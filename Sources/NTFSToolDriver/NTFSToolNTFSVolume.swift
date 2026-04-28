@@ -340,4 +340,53 @@ public final class NTFSVolume {
     /// Flush the device.
     public func sync() throws { try locked { v in try check(ntfstool_sync(v)) } }
 
+    /// Create a file or directory; returns the new inode number.
+    public func create(_ name: String, in dir: UInt64, type: NTFSItemType) throws -> UInt64 {
+        try locked { v in
+            var ino: UInt64 = 0
+            try check(ntfstool_create(v, dir, name, type.rawValue, &ino))
+            return ino
+        }
+    }
+
+    public func symlink(_ name: String, in dir: UInt64, target: String) throws -> UInt64 {
+        try locked { v in
+            var ino: UInt64 = 0
+            try check(ntfstool_symlink(v, dir, name, target, &ino))
+            return ino
+        }
+    }
+
+    public func readlink(_ ino: UInt64) throws -> String {
+        try locked { v in
+            var t: UnsafeMutablePointer<CChar>?
+            try check(ntfstool_readlink(v, ino, &t))
+            defer { free(t) }
+            return String(cString: t!)
+        }
+    }
+
+    /// Remove a file or an empty directory.
+    public func remove(_ name: String, in dir: UInt64) throws { try locked { v in try check(ntfstool_unlink(v, dir, name)) } }
+
+    /// rename(2): replaces an existing file / empty directory at the destination.
+    public func rename(_ name: String, in dir: UInt64, to newName: String, in newDir: UInt64) throws {
+        try locked { v in try check(ntfstool_rename(v, dir, name, newDir, newName)) }
+    }
+
+    /// Set any subset of the four NTFS times (nil = unchanged).
+    public func setTimes(_ ino: UInt64, access: timespec? = nil, modify: timespec? = nil, change: timespec? = nil, birth: timespec? = nil) throws {
+        try locked { v in
+            // Turn each optional timespec into an optional pointer for the C call.
+            func ptr(_ t: timespec?, _ body: (UnsafePointer<timespec>?) -> Int32) -> Int32 {
+                guard var t = t else { return body(nil) }
+                return withUnsafePointer(to: &t) { body($0) }
+            }
+            let r = ptr(access) { a in ptr(modify) { m in ptr(change) { c in ptr(birth) { b in ntfstool_set_times(v, ino, a, m, c, b) } } } }
+            try check(r)
+        }
+    }
+
+    public func setHidden(_ ino: UInt64, _ hidden: Bool) throws { try locked { v in try check(ntfstool_set_hidden(v, ino, hidden ? 1 : 0)) } }
+
 }
