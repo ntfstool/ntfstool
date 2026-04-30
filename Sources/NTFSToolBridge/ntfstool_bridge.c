@@ -912,3 +912,140 @@ int ntfstool_set_hidden(ntfstool_vol *v, uint64_t ino, int hidden)
     NInoFileNameSetDirty(ni);
     return ntfsdrv_inode_close(ni) ? err_or(EIO) : 0;
 }
+
+/* ===================================================================== */
+/* Extended attributes = named $DATA streams                             */
+/* ===================================================================== */
+
+static int is_link_ni(ntfsdrv_inode *ni) { return (ni->flags & FILE_ATTR_REPARSE_POINT) || is_interix_link(ni); }
+
+/* xattr name -> stream name (UTF-16). Returns the length or -1 (errno set). */
+static int xname_of(const char *name, ntfschar **u)
+{
+    *u = NULL;
+    if (!name || !*name) { errno = EINVAL; return -1; }
+    int len = ntfsdrv_mbstoucs(name, u);
+    if (len < 0) return -1;
+    if (len > NTFS_MAX_NAME_LEN) { free(*u); *u = NULL; errno = ENAMETOOLONG; return -1; }
+    return len;
+}
+
+int ntfstool_listxattr(ntfstool_vol *v, uint64_t ino, ntfstool_name_cb cb, void *ctx)
+{
+    ntfsdrv_inode *ni = open_ino(v, ino);
+    if (!ni) return err_or(ENOENT);
+    int r = 0;
+    if (is_link_ni(ni)) { ntfsdrv_inode_close(ni); return 0; }
+    ntfsdrv_attr_search_ctx *actx = ntfsdrv_attr_get_search_ctx(ni, NULL);
+    if (!actx) { r = err_or(ENOMEM); ntfsdrv_inode_close(ni); return r; }
+    /* Enumerate every $DATA attribute; the named ones are the streams. */
+    while (!ntfsdrv_attr_lookup(AT_DATA, NULL, 0, CASE_SENSITIVE, 0, NULL, 0, actx)) {
+        if (!actx->attr->name_length) continue; /* unnamed = file contents */
+        char *s = NULL;
+        if (ntfsdrv_ucstombs((ntfschar *)((u8 *)actx->attr + le16_to_cpu(actx->attr->name_offset)), actx->attr->name_length, &s, 0) < 0) continue;
+        int stop = cb(ctx, s);
+        free(s);
+        if (stop) break;
+    }
+    ntfsdrv_attr_put_search_ctx(actx);
+    ntfsdrv_inode_close(ni);
+    return r;
+}
+
+int ntfstool_getxattr(ntfstool_vol *v, uint64_t ino, const char *name, void **value, size_t *len)
+{
+    *value = NULL;
+    *len = 0;
+    ntfschar *u;
+    int ulen = xname_of(name, &u);
+    if (ulen < 0) return err_or(EINVAL);
+    ntfsdrv_inode *ni = open_ino(v, ino);
+    if (!ni) { free(u); return err_or(ENOENT); }
+    int r = 0;
+    ntfsdrv_attr *na = is_link_ni(ni) ? NULL : ntfsdrv_attr_open(ni, AT_DATA, u, ulen);
+    if (!na) r = ENOATTR;
+    else {
+        s64 size = na->data_size;
+        uint8_t *buf = malloc(size > 0 ? (size_t)size : 1);
+        if (!buf) r = ENOMEM;
+        else {
+            s64 total = 0;
+            while (total < size) {
+                s64 n = ntfsdrv_attr_pread(na, total, size - total, buf + total);
+                if (n <= 0) { r = err_or(EIO); break; }
+                total += n;
+            }
+            if (r) free(buf);
+            else { *value = buf; *len = (size_t)size; }
+        }
+        ntfsdrv_attr_close(na);
+    }
+    ntfsdrv_inode_close(ni);
+    free(u);
+    return r;
+}
+
+int ntfstool_setxattr(ntfstool_vol *v, uint64_t ino, const char *name, const void *value, size_t len, int flags)
+{
+    if (ntfstool_is_readonly(v)) return EROFS;
+    ntfschar *u;
+    int ulen = xname_of(name, &u);
+    if (ulen < 0) return err_or(EINVAL);
+    ntfsdrv_inode *ni = open_ino(v, ino);
+    if (!ni) { free(u); return err_or(ENOENT); }
+    int r = 0;
+    ntfsdrv_attr *na = NULL;
+    if (is_link_ni(ni)) r = EPERM; /* same as other NTFS drivers: no streams on symlinks */
+    else {
+        na = ntfsdrv_attr_open(ni, AT_DATA, u, ulen);
+        if (na && (flags & NTB_XATTR_CREATE)) r = EEXIST;
+        else if (!na && (flags & NTB_XATTR_REPLACE)) r = ENOATTR;
+        else if (!na) {
+            /* Like the usual setxattr: add an empty stream, then write into it. */
+            errno = 0;
+            if (ntfsdrv_attr_add(ni, AT_DATA, u, (u8)ulen, NULL, 0)) r = err_or(EIO);
+            else if (!(na = ntfsdrv_attr_open(ni, AT_DATA, u, ulen))) r = err_or(EIO);
+        } else {
+            /* Replacing: drop the old value first so a shorter value leaves no tail. */
+            errno = 0;
+            if (ntfsdrv_attr_truncate(na, 0)) r = err_or(EIO);
+        }
+    }
+    if (!r && len) {
+        size_t total = 0;
+        while (total < len) {
+            errno = 0;
+            s64 n = ntfsdrv_attr_pwrite(na, (s64)total, (s64)(len - total), (const char *)value + total);
+            if (n <= 0) { r = err_or(EIO); break; }
+            total += (size_t)n;
+        }
+    }
+    if (!r && na && ntfsdrv_attr_pclose(na)) r = err_or(EIO);
+    if (na) ntfsdrv_attr_close(na);
+    if (!r) {
+        ni->flags |= FILE_ATTR_ARCHIVE;
+        NInoFileNameSetDirty(ni);
+        ntfsdrv_inode_update_times(ni, NTFS_UPDATE_CTIME);
+    }
+    if (ntfsdrv_inode_close(ni) && !r) r = err_or(EIO);
+    free(u);
+    return r;
+}
+
+int ntfstool_removexattr(ntfstool_vol *v, uint64_t ino, const char *name)
+{
+    if (ntfstool_is_readonly(v)) return EROFS;
+    ntfschar *u;
+    int ulen = xname_of(name, &u);
+    if (ulen < 0) return err_or(EINVAL);
+    ntfsdrv_inode *ni = open_ino(v, ino);
+    if (!ni) { free(u); return err_or(ENOENT); }
+    int r = 0;
+    errno = 0;
+    if (is_link_ni(ni) || !ntfsdrv_attr_exist(ni, AT_DATA, u, ulen)) r = ENOATTR;
+    else if (ntfsdrv_attr_remove(ni, AT_DATA, u, ulen)) r = err_or(EIO);
+    else ntfsdrv_inode_update_times(ni, NTFS_UPDATE_CTIME);
+    if (ntfsdrv_inode_close(ni) && !r) r = err_or(EIO);
+    free(u);
+    return r;
+}

@@ -114,3 +114,38 @@ int ntfstool_write(ntfstool_vol *v, uint64_t ino, uint64_t off, const void *buf,
 int ntfstool_truncate(ntfstool_vol *v, uint64_t ino, uint64_t size);
 /** On file close: write the inode's metadata (size, times) back and flush the device. */
 int ntfstool_flush(ntfstool_vol *v, uint64_t ino);
+
+/** Create a file (NTB_FILE) or directory (NTB_DIR). EEXIST if the name is taken. */
+int ntfstool_create(ntfstool_vol *v, uint64_t dir, const char *name, uint32_t type, uint64_t *ino);
+/** Create an (Interix-style) symbolic link. */
+int ntfstool_symlink(ntfstool_vol *v, uint64_t dir, const char *name, const char *target, uint64_t *ino);
+/** Symlink target as UTF-8 (caller frees). EINVAL if not a link. */
+int ntfstool_readlink(ntfstool_vol *v, uint64_t ino, char **target);
+/** Remove a file or an empty directory (ENOTEMPTY otherwise). */
+int ntfstool_unlink(ntfstool_vol *v, uint64_t dir, const char *name);
+/** Rename/move. An existing target is replaced if it is a file, or an empty directory. */
+int ntfstool_rename(ntfstool_vol *v, uint64_t sdir, const char *sname, uint64_t ddir, const char *dname);
+/** Set times; NULL leaves a time unchanged. */
+int ntfstool_set_times(ntfstool_vol *v, uint64_t ino, const struct timespec *atime, const struct timespec *mtime,
+                       const struct timespec *ctime, const struct timespec *btime);
+/** Set or clear the NTFS hidden attribute (maps to UF_HIDDEN). */
+int ntfstool_set_hidden(ntfstool_vol *v, uint64_t ino, int hidden);
+
+/**
+ * Extended attributes are stored as NTFS named data streams, using the xattr
+ * name verbatim as the stream name (the usual mapping on macOS with
+ * user_xattr / streams_interface=openxattr), so they are interoperable.
+ * Missing attribute -> ENOATTR; setting one on a symlink -> EPERM.
+ */
+enum { NTB_XATTR_CREATE = 1, NTB_XATTR_REPLACE = 2 };
+typedef int (*ntfstool_name_cb)(void *ctx, const char *name);
+int ntfstool_listxattr(ntfstool_vol *v, uint64_t ino, ntfstool_name_cb cb, void *ctx);
+/** *value is malloc'ed and freed by the caller (may be non-NULL even when *len is 0). */
+int ntfstool_getxattr(ntfstool_vol *v, uint64_t ino, const char *name, void **value, size_t *len);
+int ntfstool_setxattr(ntfstool_vol *v, uint64_t ino, const char *name, const void *value, size_t len, int flags);
+int ntfstool_removexattr(ntfstool_vol *v, uint64_t ino, const char *name);
+
+#ifdef __cplusplus
+}
+#endif
+#endif /* NTFSTOOL_BRIDGE_H */
