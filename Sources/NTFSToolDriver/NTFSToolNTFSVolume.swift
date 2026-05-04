@@ -389,4 +389,51 @@ public final class NTFSVolume {
 
     public func setHidden(_ ino: UInt64, _ hidden: Bool) throws { try locked { v in try check(ntfstool_set_hidden(v, ino, hidden ? 1 : 0)) } }
 
+    // MARK: Extended attributes (stored as NTFS named data streams, name used verbatim)
+
+    /// Create/replace semantics for `setXattr` (XATTR_CREATE / XATTR_REPLACE).
+    public enum XattrPolicy { case always, mustCreate, mustReplace }
+
+    final class NameBox { var names: [String] = [] }
+
+    public func xattrNames(_ ino: UInt64) throws -> [String] {
+        try locked { v in
+            let box = NameBox()
+            let r = withExtendedLifetime(box) {
+                ntfstool_listxattr(v, ino, { ctx, name in
+                    Unmanaged<NameBox>.fromOpaque(ctx!).takeUnretainedValue().names.append(String(cString: name!))
+                    return 0
+                }, Unmanaged.passUnretained(box).toOpaque())
+            }
+            try check(r)
+            return box.names
+        }
+    }
+
+    /// Value of an attribute; throws ENOATTR if missing.
+    public func xattr(_ name: String, of ino: UInt64) throws -> Data {
+        try locked { v in
+            var p: UnsafeMutableRawPointer?
+            var len = 0
+            try check(ntfstool_getxattr(v, ino, name, &p, &len))
+            defer { free(p) }
+            return len > 0 ? Data(bytes: p!, count: len) : Data()
+        }
+    }
+
+    public func setXattr(_ name: String, of ino: UInt64, to value: Data, policy: XattrPolicy = .always) throws {
+        let flags: Int32 = policy == .mustCreate ? Int32(NTB_XATTR_CREATE) : policy == .mustReplace ? Int32(NTB_XATTR_REPLACE) : 0
+        try locked { v in
+            try check(value.withUnsafeBytes { ntfstool_setxattr(v, ino, name, $0.baseAddress, value.count, flags) })
+        }
+    }
+
+    public func removeXattr(_ name: String, of ino: UInt64) throws { try locked { v in try check(ntfstool_removexattr(v, ino, name)) } }
+
+    /// Resolve a slash-separated path from the root (for tests and diagnostics).
+    public func resolve(_ path: String) throws -> UInt64 {
+        var ino = Self.rootIno
+        for part in path.split(separator: "/") where !part.isEmpty { ino = try lookup(String(part), in: ino) }
+        return ino
+    }
 }
