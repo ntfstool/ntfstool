@@ -19,5 +19,6 @@ let package = Package(
                 linkerSettings: [.linkedFramework("CoreFoundation")]),
         // Swift core of the FSKit driver (no FSKit dependency, so it builds and tests on macOS 12).
         .target(name: "NTFSToolDriver", dependencies: ["NTFSToolBridge"], path: "Sources/NTFSToolDriver"),
+        .testTarget(name: "NTFSToolDriverTests", dependencies: ["NTFSToolDriver"], path: "Tests/NTFSToolDriverTests"),
     ]
 )
