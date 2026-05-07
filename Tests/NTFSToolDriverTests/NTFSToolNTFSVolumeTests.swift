@@ -119,4 +119,75 @@ final class NTFSVolumeTests: XCTestCase {
         posix(EINVAL) { _ = try NTFSVolume(device: d) }
     }
 
+    // MARK: - Read / write
+
+    func testCreateWriteReadBackAndPersist() throws {
+        let f = try vol.create("hello.txt", in: R, type: .file)
+        XCTAssertEqual(try vol.write(f, offset: 0, data: Data("hello ntfs".utf8)), 10)
+        XCTAssertEqual(try vol.read(f, length: 100), Data("hello ntfs".utf8))
+        XCTAssertEqual(try vol.attributes(f).size, 10)
+        try vol.flush(f)
+        try remount()
+        let g = try vol.lookup("hello.txt", in: R)
+        XCTAssertEqual(g, f)
+        XCTAssertEqual(try vol.read(g, length: 100), Data("hello ntfs".utf8))
+        posix(ENOENT) { _ = try vol.lookup("HELLO.TXT", in: R) } // POSIX (case-sensitive) lookups, like other NTFS drivers
+    }
+
+    func testUnalignedAndLargeWritesThroughAlignmentLayer() throws {
+        let f = try vol.create("big.bin", in: R, type: .file)
+        let big = random(9 << 20 + 777)
+        try vol.write(f, offset: 0, data: big)
+        // Unaligned overwrite crossing a block boundary.
+        let patch = random(5000, seed: 7)
+        try vol.write(f, offset: 4093, data: patch)
+        var expect = big
+        expect.replaceSubrange(4093..<(4093 + 5000), with: patch)
+        // Unaligned append.
+        try vol.write(f, offset: UInt64(expect.count), data: Data("tail".utf8))
+        expect.append(Data("tail".utf8))
+        try remount()
+        let g = try vol.lookup("big.bin", in: R)
+        XCTAssertEqual(try vol.attributes(g).size, UInt64(expect.count))
+        XCTAssertEqual(try vol.read(g, length: expect.count + 100), expect)
+        XCTAssertEqual(try vol.read(g, offset: 4090, length: 10), expect[4090..<4100])
+        XCTAssertEqual(dev.misaligned, 0, "every device request must be block aligned")
+    }
+
+    /// Writes are write-through: once a call returns, another mount of the same
+    /// device sees the data without an explicit sync (as after a sudden unplug).
+    func testWritesAreVisibleOnDeviceImmediately() throws {
+        let d = try vol.create("dir", in: R, type: .directory)
+        let f = try vol.create("now.txt", in: d, type: .file)
+        try vol.write(f, offset: 0, data: Data(repeating: 1, count: 10_000))
+        try vol.write(f, offset: 4090, data: Data("XYZ".utf8)) // small unaligned overwrite
+        let expect = Data([1]) + Data("XYZ".utf8) + Data([1])
+        XCTAssertEqual(try vol.read(f, offset: 4089, length: 5), expect)
+        let other = try NTFSVolume(device: try FileBlockDevice(path: image.path, readOnly: true), readOnly: true)
+        XCTAssertEqual(try other.read(try other.resolve("dir/now.txt"), offset: 4089, length: 5), expect)
+        try other.unmount()
+    }
+
+    func testSparseWriteAndTruncate() throws {
+        let f = try vol.create("sparse", in: R, type: .file)
+        try vol.write(f, offset: 3 << 20, data: Data("x".utf8))
+        XCTAssertEqual(try vol.attributes(f).size, (3 << 20) + 1)
+        XCTAssertEqual(try vol.read(f, offset: 1000, length: 4), Data(count: 4), "holes read as zeros")
+        try vol.truncate(f, size: 10)
+        XCTAssertEqual(try vol.attributes(f).size, 10)
+        try vol.truncate(f, size: 1 << 20)
+        XCTAssertEqual(try vol.read(f, offset: (1 << 20) - 2, length: 10).count, 2)
+        XCTAssertEqual(try vol.read(f, offset: 2 << 20, length: 10).count, 0, "nothing past end of file")
+    }
+
+    func testFreeSpaceTracksWrites() throws {
+        let before = try vol.statfs().freeBytes
+        let f = try vol.create("fill", in: R, type: .file)
+        try vol.write(f, offset: 0, data: random(8 << 20))
+        let after = try vol.statfs().freeBytes
+        XCTAssertLessThanOrEqual(after, before - (8 << 20))
+        try vol.remove("fill", in: R)
+        XCTAssertGreaterThanOrEqual(try vol.statfs().freeBytes, before - (64 << 10))
+    }
+
 }
