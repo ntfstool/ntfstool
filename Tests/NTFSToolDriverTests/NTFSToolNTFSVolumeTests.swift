@@ -190,4 +190,108 @@ final class NTFSVolumeTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(try vol.statfs().freeBytes, before - (64 << 10))
     }
 
+    // MARK: - Directories / names
+
+    func testDirectoriesAndUnicodeNames() throws {
+        let d = try vol.create("Données Photos", in: R, type: .directory)
+        let sub = try vol.create("2026", in: d, type: .directory)
+        _ = try vol.create("Résumé Ω.docx", in: sub, type: .file)
+        let nfd = "Cafe\u{301}.txt" // decomposed form, as the Finder often sends it
+        _ = try vol.create(nfd, in: d, type: .file)
+        XCTAssertEqual(try names(R), ["Données Photos"])
+        XCTAssertEqual(try vol.list(d).count, 2)
+        XCTAssertNoThrow(try vol.lookup("Café.txt", in: d), "an NFC name finds a file created with NFD")
+        XCTAssertEqual(try vol.resolve("Données Photos/2026/Résumé Ω.docx"), try vol.lookup("Résumé Ω.docx", in: sub))
+        XCTAssertEqual(try vol.attributes(d).type, .directory)
+        posix(EEXIST) { _ = try vol.create("2026", in: d, type: .file) }
+        posix(ENOTDIR) { _ = try vol.create("x", in: try vol.resolve("Données Photos/2026/Résumé Ω.docx"), type: .file) }
+        posix(EINVAL) { _ = try vol.create("a/b", in: R, type: .file) }
+        posix(ENAMETOOLONG) { _ = try vol.create(String(repeating: "é", count: 256), in: R, type: .file) }
+    }
+
+    func testRemoveFilesAndDirectories() throws {
+        let d = try vol.create("dir", in: R, type: .directory)
+        _ = try vol.create("f", in: d, type: .file)
+        posix(ENOTEMPTY) { try vol.remove("dir", in: R) }
+        try vol.remove("f", in: d)
+        try vol.remove("dir", in: R)
+        XCTAssertEqual(try names(R), [])
+        posix(ENOENT) { try vol.remove("nope", in: R) }
+    }
+
+    /// windows_names: the usual rules (ntfsdrv_forbidden_names): forbidden
+    /// characters, reserved device names, trailing dot or space.
+    func testWindowsNamesRule() throws {
+        XCTAssertFalse(vol.windowsNames, "off by default")
+        _ = try vol.create("off-a:b.txt", in: R, type: .file)
+        vol.windowsNames = true
+        for bad in ["a:b.txt", "q?.txt", "star*.txt", "pipe|.txt", "lt<.txt", "quote\".txt", "CON", "aux.txt", "dot.", "space "] {
+            posix(EINVAL) { _ = try vol.create(bad, in: R, type: .file) }
+        }
+        posix(EINVAL) { _ = try vol.create("dir:x", in: R, type: .directory) }
+        posix(EINVAL) { _ = try vol.symlink("ln?", in: R, target: "x") }
+        let ok = try vol.create("Ünïcode ok.txt", in: R, type: .file)
+        XCTAssertGreaterThan(ok, 0)
+        posix(EINVAL) { try vol.rename("Ünïcode ok.txt", in: R, to: "re:name.txt", in: R) }
+        XCTAssertTrue(try names(R).contains("Ünïcode ok.txt"), "a rejected rename leaves the file untouched")
+        try vol.rename("Ünïcode ok.txt", in: R, to: "renamed.txt", in: R)
+        vol.windowsNames = false
+        _ = try vol.create("again:ok.txt", in: R, type: .file)
+    }
+
+    func testRenameCases() throws {
+        let a = try vol.create("a.txt", in: R, type: .file)
+        try vol.write(a, offset: 0, data: Data("A".utf8))
+        let b = try vol.create("b.txt", in: R, type: .file)
+        try vol.write(b, offset: 0, data: Data("B".utf8))
+        let d = try vol.create("docs", in: R, type: .directory)
+
+        // Same directory.
+        try vol.rename("a.txt", in: R, to: "a2.txt", in: R)
+        XCTAssertEqual(try vol.lookup("a2.txt", in: R), a)
+        posix(ENOENT) { _ = try vol.lookup("a.txt", in: R) }
+        // Case-only change.
+        try vol.rename("a2.txt", in: R, to: "A2.TXT", in: R)
+        XCTAssertTrue(try names(R).contains("A2.TXT"))
+        XCTAssertFalse(try names(R).contains("a2.txt"))
+        XCTAssertEqual(try vol.read(a, length: 5), Data("A".utf8), "content survives a case-only rename")
+        // Replace an existing file.
+        try vol.rename("A2.TXT", in: R, to: "b.txt", in: R)
+        XCTAssertEqual(try vol.read(try vol.lookup("b.txt", in: R), length: 5), Data("A".utf8))
+        // Move to another directory.
+        try vol.rename("b.txt", in: R, to: "moved.txt", in: d)
+        XCTAssertEqual(try names(d), ["moved.txt"])
+        // Move a non-empty directory.
+        let e = try vol.create("archive", in: R, type: .directory)
+        try vol.rename("docs", in: R, to: "docs-2026", in: e)
+        XCTAssertEqual(try vol.resolve("archive/docs-2026/moved.txt"), a)
+        // A directory cannot move into its own subtree.
+        posix(EINVAL) { try vol.rename("archive", in: R, to: "loop", in: try vol.resolve("archive/docs-2026")) }
+        // A directory cannot replace a file.
+        _ = try vol.create("file", in: R, type: .file)
+        posix(ENOTDIR) { try vol.rename("archive", in: R, to: "file", in: R) }
+        XCTAssertEqual(try names(R), ["archive", "file"])
+        try remount()
+        XCTAssertEqual(try vol.read(try vol.resolve("archive/docs-2026/moved.txt"), length: 5), Data("A".utf8))
+    }
+
+    func testTimesHiddenAndSymlink() throws {
+        let f = try vol.create("t.txt", in: R, type: .file)
+        let when = timespec(tv_sec: 1_700_000_000, tv_nsec: 500_000_000)
+        try vol.setTimes(f, access: when, modify: when, birth: when)
+        try vol.setHidden(f, true)
+        try remount()
+        let a = try vol.attributes(f)
+        XCTAssertEqual(a.modifyTime.tv_sec, when.tv_sec)
+        XCTAssertEqual(a.birthTime.tv_sec, when.tv_sec)
+        XCTAssertTrue(a.hidden)
+        try vol.setHidden(f, false)
+        XCTAssertFalse(try vol.attributes(f).hidden)
+
+        let l = try vol.symlink("link", in: R, target: "t.txt")
+        XCTAssertEqual(try vol.attributes(l).type, .symlink)
+        XCTAssertEqual(try vol.readlink(l), "t.txt")
+        posix(EINVAL) { _ = try vol.readlink(f) }
+    }
+
 }
