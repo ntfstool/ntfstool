@@ -294,4 +294,76 @@ final class NTFSVolumeTests: XCTestCase {
         posix(EINVAL) { _ = try vol.readlink(f) }
     }
 
+    // MARK: - Extended attributes = NTFS named data streams (name used verbatim, like other NTFS drivers)
+
+    func testXattrsAsNamedStreams() throws {
+        let f = try vol.create("x.txt", in: R, type: .file)
+        let content = random(10_000, seed: 7)
+        try vol.write(f, offset: 0, data: content)
+        XCTAssertEqual(try vol.xattrNames(f), [])
+        posix(ENOATTR) { _ = try vol.xattr("com.apple.provenance", of: f) }
+
+        let small = Data([1, 2, 3, 4, 5, 0, 7])
+        let big = random(200_000, seed: 9) // too big for the MFT record: non-resident stream
+        try vol.setXattr("com.apple.provenance", of: f, to: small)
+        try vol.setXattr("user.big", of: f, to: big)
+        try vol.setXattr("empty", of: f, to: Data())
+        try vol.setXattr("étiquette", of: f, to: Data("rouge".utf8))
+        XCTAssertEqual(try vol.xattrNames(f).sorted(), ["com.apple.provenance", "empty", "user.big", "étiquette"])
+        XCTAssertEqual(try vol.xattr("com.apple.provenance", of: f), small)
+        XCTAssertEqual(try vol.xattr("user.big", of: f), big)
+        XCTAssertEqual(try vol.xattr("empty", of: f), Data())
+
+        // Overwrite with a shorter value; create/replace policies.
+        try vol.setXattr("user.big", of: f, to: Data("short".utf8))
+        XCTAssertEqual(try vol.xattr("user.big", of: f), Data("short".utf8))
+        posix(EEXIST) { try vol.setXattr("empty", of: f, to: small, policy: .mustCreate) }
+        posix(ENOATTR) { try vol.setXattr("missing", of: f, to: small, policy: .mustReplace) }
+        try vol.setXattr("empty", of: f, to: small, policy: .mustReplace)
+        try vol.setXattr("new", of: f, to: small, policy: .mustCreate)
+
+        // Removal and invalid names.
+        try vol.removeXattr("new", of: f)
+        posix(ENOATTR) { try vol.removeXattr("new", of: f) }
+        posix(EINVAL) { try vol.setXattr("", of: f, to: small) }
+        posix(ENAMETOOLONG) { try vol.setXattr(String(repeating: "a", count: 256), of: f, to: small) }
+
+        // The file's own contents are unaffected.
+        XCTAssertEqual(try vol.attributes(f).size, UInt64(content.count))
+        XCTAssertEqual(try vol.read(f, length: content.count + 10), content)
+
+        // Directories can carry xattrs; symlinks cannot (same as other NTFS drivers).
+        let d = try vol.create("dir", in: R, type: .directory)
+        try vol.setXattr("com.apple.FinderInfo", of: d, to: Data(count: 32))
+        XCTAssertEqual(try vol.xattrNames(d), ["com.apple.FinderInfo"])
+        let l = try vol.symlink("link", in: R, target: "x.txt")
+        posix(EPERM) { try vol.setXattr("a", of: l, to: small) }
+        XCTAssertEqual(try vol.xattrNames(l), [])
+
+        // Survive rename and remount; read-only mounts can read but not write.
+        try vol.rename("x.txt", in: R, to: "y.txt", in: d)
+        try remount(readOnly: true)
+        let g = try vol.resolve("dir/y.txt")
+        XCTAssertEqual(try vol.xattrNames(g).sorted(), ["com.apple.provenance", "empty", "user.big", "étiquette"])
+        XCTAssertEqual(try vol.xattr("étiquette", of: g), Data("rouge".utf8))
+        XCTAssertEqual(try vol.xattr("empty", of: g), small)
+        posix(EROFS) { try vol.setXattr("a", of: g, to: small) }
+        posix(EROFS) { try vol.removeXattr("empty", of: g) }
+
+        // Deleting a file with streams leaves nothing behind (checked by ntfsfix in tearDown).
+        try remount()
+        try vol.remove("y.txt", in: try vol.resolve("dir"))
+    }
+
+    func testLabelAndReadOnlyMount() throws {
+        try vol.setLabel("Nouveau Volume")
+        try remount(readOnly: true)
+        XCTAssertEqual(try vol.label(), "Nouveau Volume")
+        XCTAssertTrue(vol.readOnly)
+        posix(EROFS) { _ = try vol.create("x", in: R, type: .file) }
+        posix(EROFS) { try vol.setLabel("y") }
+        try vol.unmount()
+        posix(ENXIO) { _ = try vol.label() }
+    }
+
 }
