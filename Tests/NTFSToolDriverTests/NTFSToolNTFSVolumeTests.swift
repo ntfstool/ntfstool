@@ -366,4 +366,39 @@ final class NTFSVolumeTests: XCTestCase {
         posix(ENXIO) { _ = try vol.label() }
     }
 
+    // MARK: - Consistency: a volume written by this driver passes ntfsfix and reads back intact
+
+    func testConsistencyAfterManyChanges() throws {
+        let d = try vol.create("from-driver", in: R, type: .directory)
+        let f = try vol.create("data.bin", in: d, type: .file)
+        let payload = random(3 << 20 + 123, seed: 42)
+        try vol.write(f, offset: 0, data: payload)
+        for i in 0..<200 { _ = try vol.create("f\(i).txt", in: d, type: .file) } // grows an index allocation
+        for i in stride(from: 0, to: 200, by: 3) { try vol.remove("f\(i).txt", in: d) }
+        try vol.unmount()
+        vol = nil
+
+        let (rc, out) = Self.sh(Self.tools!.appendingPathComponent("ntfsfix").path, ["-n", image.path])
+        XCTAssertEqual(rc, 0, "ntfsfix -n failed: \(out)")
+
+        dev = try FileBlockDevice(path: image.path)
+        vol = try NTFSVolume(device: dev, readOnly: true)
+        XCTAssertEqual(try vol.read(try vol.resolve("from-driver/data.bin"), length: payload.count), payload)
+        XCTAssertEqual(try vol.list(try vol.resolve("from-driver")).count, 1 + 200 - 67)
+    }
+
+    // MARK: - Concurrency: FSKit calls from many threads; NTFSVolume must serialize
+
+    func testConcurrentAccessIsSerialized() throws {
+        let files = try (0..<8).map { try vol.create("c\($0)", in: R, type: .file) }
+        DispatchQueue.concurrentPerform(iterations: 64) { i in
+            let f = files[i % files.count]
+            _ = try? vol.write(f, offset: UInt64(i / files.count) * 4096, data: random(4096, seed: UInt64(i)))
+            _ = try? vol.list(R)
+        }
+        for (k, f) in files.enumerated() {
+            let d = try vol.read(f, length: 8 * 4096)
+            for j in 0..<8 { XCTAssertEqual(d[(j * 4096)..<((j + 1) * 4096)], random(4096, seed: UInt64(j * files.count + k))) }
+        }
+    }
 }
