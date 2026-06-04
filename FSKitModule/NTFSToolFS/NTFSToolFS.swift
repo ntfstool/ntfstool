@@ -134,3 +134,94 @@ final class ResourceDevice: BlockDevice {
     /// in this module, so there is nothing extra to flush here.
     func sync() -> Int32 { 0 }
 }
+
+/// The file system object FSKit instantiates (named in Info.plist as EXExtensionPrincipalClass).
+///
+/// A "unary" file system serves one volume per resource (disk partition).
+@objc(NTFSToolFileSystem)
+final class NTFSToolFileSystem: FSUnaryFileSystem, FSUnaryFileSystemOperations {
+    var volume: NTFSToolVolume?
+    /// File system type name reported by statfs / shown in `mount` output: the module's FSShortName.
+    static let typeName = NTFSToolFSKit.shortName(info: Bundle.main.infoDictionary)
+
+    override init() {
+        super.init()
+        events.event("module_start", ["version": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
+                                      "build": Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "",
+                                      "os": ProcessInfo.processInfo.operatingSystemVersionString])
+    }
+
+    /// Called when the system asks "is this disk yours?". We answer `.usable` for
+    /// NTFS and give the volume name and a stable container ID (from the serial).
+    func probeResource(resource: FSResource, replyHandler: @escaping (FSProbeResult?, Error?) -> Void) {
+        guard let block = resource as? FSBlockDeviceResource else {
+            events.event("probe", ["result": "not_block_device"])
+            replyHandler(.notRecognized, nil); return
+        }
+        let dev = ResourceDevice(block)
+        guard let serial = NTFSVolume.probe(dev) else {
+            events.event("probe", ["result": "not_ntfs", "bsd": block.bsdName, "size": block.blockCount * block.blockSize])
+            replyHandler(.notRecognized, nil); return
+        }
+        // Mount read-only briefly to read the label (shown in Disk Utility / mount dialogs).
+        var name = "NTFS"
+        if let v = try? NTFSVolume(device: dev, readOnly: true) {
+            name = (try? v.label()).flatMap { $0.isEmpty ? nil : $0 } ?? name
+            try? v.unmount()
+        }
+        log.info("probe: NTFS serial=\(serial, format: .hex) name=\(name)")
+        events.event("probe", ["result": "usable", "bsd": block.bsdName, "size": block.blockCount * block.blockSize,
+                               "block": block.blockSize, "writable": block.isWritable])
+        replyHandler(.usable(name: name, containerID: FSContainerIdentifier(uuid: NTFSToolFSKit.volumeUUID(serial: serial))), nil)
+    }
+
+    /// Open the volume with libntfstool-driver and hand FSKit an FSVolume for it.
+    func loadResource(resource: FSResource, options: FSTaskOptions, replyHandler: @escaping (FSVolume?, Error?) -> Void) {
+        guard let block = resource as? FSBlockDeviceResource else {
+            events.event("load", ["ok": false, "errno": Int(ENODEV), "why": "not_block_device"])
+            replyHandler(nil, fs_errorForPOSIXError(ENODEV)); return
+        }
+        let opts = NTFSToolFSKit.MountOptions(options.taskOptions)
+        let started = Date()
+        errorTally.reset()
+        deviceErrorEvents = 0
+        do {
+            let dev = ResourceDevice(block)
+            // A volume left hibernated by Windows (or Fast Startup) must not be
+            // written; fall back to read-only so the user can still read it.
+            let opened = try NTFSToolFSKit.openWithReadOnlyFallback(readOnly: opts.readOnly || !block.isWritable) { ro in
+                try NTFSVolume(device: dev, readOnly: ro)
+            }
+            let ntfs = opened.value
+            ntfs.windowsNames = opts.windowsNames // usually empty here; `mount -o` options arrive in activate
+            if opened.fellBack { log.info("load: volume is hibernated or write-protected, mounted read-only") }
+            let v = NTFSToolVolume(ntfs)
+            volume = v
+            containerStatus = .ready
+            log.info("load: mounted readOnly=\(ntfs.readOnly, privacy: .public) options=\(options.taskOptions.joined(separator: " "), privacy: .public)")
+            events.event("load", ["ok": true, "bsd": block.bsdName, "ro_req": opts.readOnly, "media_writable": block.isWritable,
+                                  "fell_back": opened.fellBack, "ro": ntfs.readOnly, "ms": Int(Date().timeIntervalSince(started) * 1000),
+                                  "options": options.taskOptions.joined(separator: " ")])
+            replyHandler(v, nil)
+        } catch {
+            log.error("load failed: \(String(describing: error))")
+            events.event("load", ["ok": false, "bsd": block.bsdName, "ro_req": opts.readOnly, "media_writable": block.isWritable,
+                                  "errno": Int((error as? NTFSError)?.code ?? EIO), "err": String(describing: error).prefix(300).description,
+                                  "ms": Int(Date().timeIntervalSince(started) * 1000), "options": options.taskOptions.joined(separator: " ")])
+            replyHandler(nil, posixError(error))
+        }
+    }
+
+    /// Release the volume: libntfstool-driver writes back the volume state and the device is flushed.
+    func unloadResource(resource: FSResource, options: FSTaskOptions, replyHandler: @escaping (Error?) -> Void) {
+        do {
+            try volume?.ntfs.unmount()
+            events.event("unload", ["ok": true, "errors": errorTally.summary()])
+            replyHandler(nil)
+        } catch {
+            events.event("unload", ["ok": false, "errno": Int((error as? NTFSError)?.code ?? EIO), "errors": errorTally.summary()])
+            replyHandler(posixError(error))
+        }
+        volume = nil
+    }
+}
