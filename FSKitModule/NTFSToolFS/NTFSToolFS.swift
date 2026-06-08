@@ -225,3 +225,35 @@ final class NTFSToolFileSystem: FSUnaryFileSystem, FSUnaryFileSystemOperations {
         volume = nil
     }
 }
+
+/// File system check / format requests (fsck_fskit, newfs_fskit).
+///
+/// DiskArbitration runs a quick check (`-q`) before auto-mounting and mounts
+/// only if it succeeds. The policy is in `NTFSToolFSKit.checkError` (unit tested).
+extension NTFSToolFileSystem: FSManageableResourceMaintenanceOperations {
+    func startCheck(task: FSTask, options: FSTaskOptions) throws -> Progress {
+        let mode: NTFSToolFSKit.CheckMode
+        do { mode = try NTFSToolFSKit.CheckMode(options.taskOptions) } catch {
+            events.event("check", ["options": options.taskOptions.joined(separator: " "), "errno": Int(EINVAL)])
+            throw fs_errorForPOSIXError(EINVAL)
+        }
+        if let code = NTFSToolFSKit.checkError(mode: mode, volumeLoaded: volume != nil) {
+            log.info("check: mode=\(String(describing: mode)) -> errno \(code)")
+            events.event("check", ["mode": String(describing: mode), "errno": Int(code), "loaded": volume != nil])
+            throw fs_errorForPOSIXError(code)
+        }
+        events.event("check", ["mode": String(describing: mode), "errno": 0])
+        // The check itself is instantaneous; complete the task asynchronously as FSKit expects.
+        let progress = Progress(totalUnitCount: 1)
+        DispatchQueue.global(qos: .utility).async {
+            progress.completedUnitCount = 1
+            task.didComplete(error: nil)
+        }
+        return progress
+    }
+
+    /// Formatting is not supported (use mkntfs or Windows).
+    func startFormat(task: FSTask, options: FSTaskOptions) throws -> Progress {
+        throw fs_errorForPOSIXError(ENOTSUP)
+    }
+}
