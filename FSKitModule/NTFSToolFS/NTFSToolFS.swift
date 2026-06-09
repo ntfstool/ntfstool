@@ -257,3 +257,116 @@ extension NTFSToolFileSystem: FSManageableResourceMaintenanceOperations {
         throw fs_errorForPOSIXError(ENOTSUP)
     }
 }
+
+/// FSKit item for one NTFS file or directory.
+///
+/// FSKit keeps FSItem objects alive while the kernel references the vnode, and
+/// tells us via `reclaimItem` when it is done. We remember the parent inode for
+/// `..` and `parentID`, and, for directories, the current enumeration snapshot.
+final class NItem: FSItem {
+    let ino: UInt64
+    var parent: UInt64
+    var snapshot: NTFSToolFSKit.DirectorySnapshot?
+    init(ino: UInt64, parent: UInt64) {
+        self.ino = ino
+        self.parent = parent
+    }
+}
+
+/// The mounted volume as seen by FSKit.
+///
+/// Concurrency: FSKit may call these methods concurrently from several threads.
+/// NTFSVolume serializes all NTFS access with its own lock; `items` below only
+/// protects this class's item registry and directory snapshots.
+final class NTFSToolVolume: FSVolume, FSVolume.Operations, FSVolume.OpenCloseOperations, FSVolume.ReadWriteOperations,
+    FSVolume.RenameOperations, FSVolume.XattrOperations {
+    let ntfs: NTFSVolume
+    /// Protects `registry`, `generation` and NItem.snapshot.
+    let items = NSLock()
+    /// One NItem per inode number, so FSKit always gets the same object for the same file.
+    var registry: [UInt64: NItem] = [:]
+    /// Bumped on every directory modification; used as the enumeration verifier.
+    var generation: UInt64 = 1
+    lazy var root = item(NTFSVolume.rootIno, parent: NTFSVolume.rootIno)
+
+    init(_ ntfs: NTFSVolume) {
+        self.ntfs = ntfs
+        let label = (try? ntfs.label()) ?? "NTFS"
+        super.init(volumeID: FSVolume.Identifier(uuid: NTFSToolFSKit.volumeUUID(serial: ntfs.serial)),
+                   volumeName: FSFileName(string: label.isEmpty ? "NTFS" : label))
+    }
+
+    /// The registered NItem for `ino`, creating it if needed.
+    func item(_ ino: UInt64, parent: UInt64) -> NItem {
+        items.lock()
+        defer { items.unlock() }
+        if let i = registry[ino] { i.parent = parent; return i }
+        let i = NItem(ino: ino, parent: parent)
+        registry[ino] = i
+        return i
+    }
+
+    /// A directory's contents changed: invalidate its snapshot and change the verifier.
+    func changed(_ dir: FSItem) {
+        items.lock()
+        generation += 1
+        (dir as? NItem)?.snapshot = nil
+        items.unlock()
+    }
+
+    func n(_ i: FSItem) -> NItem { i as! NItem }
+
+    /// FSKit can pass a nil object where the Swift signature promises a non-optional
+    /// FSItem (observed for the replaced target after a rename). Touching it would
+    /// crash, so every entry point that receives an item checks this first.
+    func isNull(_ i: FSItem) -> Bool { unsafeBitCast(i, to: UInt.self) == 0 }
+
+    func name(_ f: FSFileName) throws -> String {
+        guard let s = f.string, !s.isEmpty else { throw NTFSError(EINVAL) }
+        return s
+    }
+
+    // MARK: Volume capabilities and statistics
+
+    var supportedVolumeCapabilities: FSVolume.SupportedCapabilities {
+        let c = FSVolume.SupportedCapabilities()
+        c.supportsPersistentObjectIDs = true   // item IDs are MFT record numbers
+        c.supportsSymbolicLinks = true
+        c.supportsHardLinks = false            // createLink is not implemented
+        c.supportsSparseFiles = true
+        c.supports2TBFiles = true
+        c.supportsHiddenFiles = true           // NTFS hidden attribute <-> UF_HIDDEN
+        c.supports64BitObjectIDs = true
+        c.supportsFastStatFS = true
+        c.doesNotSupportSettingFilePermissions = true
+        c.caseFormat = .sensitive              // POSIX names, the usual default
+        return c
+    }
+
+    var volumeStatistics: FSStatFSResult {
+        let r = FSStatFSResult(fileSystemTypeName: NTFSToolFileSystem.typeName)
+        if let s = try? ntfs.statfs() {
+            r.blockSize = Int(s.clusterSize)
+            r.ioSize = 1 << 20
+            r.totalBlocks = s.totalClusters
+            r.freeBlocks = s.freeClusters
+            r.availableBlocks = s.freeClusters
+            r.usedBlocks = s.totalClusters - s.freeClusters
+            r.totalBytes = s.totalBytes
+            r.freeBytes = s.freeBytes
+            r.availableBytes = s.freeBytes
+            r.usedBytes = s.totalBytes - s.freeBytes
+            r.totalFiles = s.totalFiles
+            r.freeFiles = s.freeFiles
+        }
+        return r
+    }
+
+    var maximumLinkCount: Int { 1024 }
+    var maximumNameLength: Int { 255 }         // NTFS: 255 UTF-16 code units
+    var restrictsOwnershipChanges: Bool { false }
+    var truncatesLongNames: Bool { false }
+    var maximumFileSize: UInt64 { 1 << 44 }
+    var maximumXattrSize: Int { 64 << 20 }     // matches macOS XATTR_MAXSIZE
+
+}
