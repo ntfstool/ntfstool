@@ -369,4 +369,33 @@ final class NTFSToolVolume: FSVolume, FSVolume.Operations, FSVolume.OpenCloseOpe
     var maximumFileSize: UInt64 { 1 << 44 }
     var maximumXattrSize: Int { 64 << 20 }     // matches macOS XATTR_MAXSIZE
 
+    // MARK: Lifecycle
+
+    func mount(options: FSTaskOptions, replyHandler: @escaping (Error?) -> Void) { replyHandler(nil) }
+
+    func unmount(replyHandler: @escaping () -> Void) {
+        try? ntfs.sync()
+        replyHandler()
+    }
+
+    /// sync(2) / fsync / unmount: flush the volume.
+    func synchronize(flags: FSSyncFlags, replyHandler: @escaping (Error?) -> Void) {
+        do { try ntfs.sync(); replyHandler(nil) } catch { replyHandler(posixError(error)) }
+    }
+
+    /// Called when the volume is attached to a mount point; returns the root item.
+    func activate(options: FSTaskOptions, replyHandler: @escaping (FSItem?, Error?) -> Void) {
+        // `mount -o ...` options are delivered here, not in loadResource.
+        let opts = NTFSToolFSKit.MountOptions(options.taskOptions)
+        if opts.windowsNames { ntfs.windowsNames = true }
+        log.info("activate: windowsNames=\(self.ntfs.windowsNames, privacy: .public) options=\(options.taskOptions.joined(separator: " "), privacy: .public)")
+        events.event("activate", ["ro": ntfs.readOnly, "options": options.taskOptions.joined(separator: " ")])
+        replyHandler(root, nil)
+    }
+
+    func deactivate(options: FSDeactivateOptions = [], replyHandler: @escaping (Error?) -> Void) {
+        events.event("deactivate", ["errors": errorTally.summary()])
+        do { try ntfs.sync(); replyHandler(nil) } catch { replyHandler(posixError(error)) }
+    }
+
 }
