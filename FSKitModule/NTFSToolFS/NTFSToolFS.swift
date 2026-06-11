@@ -398,4 +398,72 @@ final class NTFSToolVolume: FSVolume, FSVolume.Operations, FSVolume.OpenCloseOpe
         do { try ntfs.sync(); replyHandler(nil) } catch { replyHandler(posixError(error)) }
     }
 
+    // MARK: Attributes
+
+    /// Build FSKit attributes for an item. Item IDs are mapped with
+    /// `NTFSToolFSKit.itemID(forIno:)` (root 5 <-> FSKit root 2).
+    func attributes(of i: NItem) throws -> FSItem.Attributes {
+        let a = try ntfs.attributes(i.ino)
+        let r = FSItem.Attributes()
+        r.type = a.type == .directory ? .directory : a.type == .symlink ? .symlink : .file
+        r.mode = NTFSToolFSKit.mode(for: a.type)
+        // No NTFS ownership mapping: every item appears to belong to the current user.
+        r.uid = getuid()
+        r.gid = getgid()
+        r.linkCount = a.linkCount
+        r.flags = a.hidden ? UInt32(UF_HIDDEN) : 0
+        r.size = a.size
+        r.allocSize = a.allocSize
+        r.fileID = FSItem.Identifier(rawValue: NTFSToolFSKit.itemID(forIno: i.ino)) ?? .invalid
+        r.parentID = i.ino == NTFSVolume.rootIno ? .parentOfRoot : FSItem.Identifier(rawValue: NTFSToolFSKit.itemID(forIno: i.parent)) ?? .invalid
+        r.accessTime = a.accessTime
+        r.modifyTime = a.modifyTime
+        r.changeTime = a.changeTime
+        r.birthTime = a.birthTime
+        r.addedTime = a.birthTime
+        r.backupTime = timespec()
+        // Full xattr support (XattrOperations below); otherwise macOS would fall
+        // back to AppleDouble "._" companion files.
+        r.supportsLimitedXAttrs = false
+        return r
+    }
+
+    func getAttributes(_ desired: FSItem.GetAttributesRequest, of item: FSItem, replyHandler: @escaping (FSItem.Attributes?, Error?) -> Void) {
+        if isNull(item) { replyHandler(nil, fs_errorForPOSIXError(ENOENT)); return }
+        do { replyHandler(try attributes(of: n(item)), nil) } catch { replyHandler(nil, posixError(error)) }
+    }
+
+    /// Apply a setattr request. Each handled attribute is added to consumedAttributes.
+    func apply(_ req: FSItem.SetAttributesRequest, to i: NItem) throws {
+        if req.isValid(.size) {
+            try ntfs.truncate(i.ino, size: req.size)
+            req.consumedAttributes.insert(.size)
+        }
+        let a: timespec? = req.isValid(.accessTime) ? req.accessTime : nil
+        let m: timespec? = req.isValid(.modifyTime) ? req.modifyTime : nil
+        let c: timespec? = req.isValid(.changeTime) ? req.changeTime : nil
+        let b: timespec? = req.isValid(.birthTime) ? req.birthTime : nil
+        if a != nil || m != nil || c != nil || b != nil {
+            try ntfs.setTimes(i.ino, access: a, modify: m, change: c, birth: b)
+            for (on, attr) in [(a, FSItem.Attribute.accessTime), (m, .modifyTime), (c, .changeTime), (b, .birthTime)] where on != nil {
+                req.consumedAttributes.insert(attr)
+            }
+        }
+        if req.isValid(.flags) {
+            try ntfs.setHidden(i.ino, req.flags & UInt32(UF_HIDDEN) != 0)
+            req.consumedAttributes.insert(.flags)
+        }
+        // NTFS has no POSIX mode/owner: accept and ignore (like other NTFS drivers without permission mapping),
+        // so tools such as cp -p do not fail.
+        for attr in [FSItem.Attribute.mode, .uid, .gid] where req.isValid(attr) { req.consumedAttributes.insert(attr) }
+    }
+
+    func setAttributes(_ new: FSItem.SetAttributesRequest, on item: FSItem, replyHandler: @escaping (FSItem.Attributes?, Error?) -> Void) {
+        if isNull(item) { replyHandler(nil, fs_errorForPOSIXError(ENOENT)); return }
+        do {
+            try apply(new, to: n(item))
+            replyHandler(try attributes(of: n(item)), nil)
+        } catch { replyHandler(nil, posixError(error)) }
+    }
+
 }
