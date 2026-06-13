@@ -466,4 +466,141 @@ final class NTFSToolVolume: FSVolume, FSVolume.Operations, FSVolume.OpenCloseOpe
         } catch { replyHandler(nil, posixError(error)) }
     }
 
+    // MARK: Namespace
+
+    func lookupItem(named name: FSFileName, inDirectory directory: FSItem, replyHandler: @escaping (FSItem?, FSFileName?, Error?) -> Void) {
+        do {
+            let dir = n(directory)
+            let ino = try ntfs.lookup(try self.name(name), in: dir.ino)
+            replyHandler(item(ino, parent: dir.ino), name, nil)
+        } catch { replyHandler(nil, nil, posixError(error)) }
+    }
+
+    /// The kernel no longer references this item: drop it from the registry (never the root).
+    func reclaimItem(_ item: FSItem, replyHandler: @escaping (Error?) -> Void) {
+        if isNull(item) { replyHandler(nil); return }
+        let i = n(item)
+        if i.ino != NTFSVolume.rootIno {
+            items.lock()
+            if registry[i.ino] === i { registry[i.ino] = nil }
+            items.unlock()
+        }
+        replyHandler(nil)
+    }
+
+    func readSymbolicLink(_ item: FSItem, replyHandler: @escaping (FSFileName?, Error?) -> Void) {
+        do { replyHandler(FSFileName(string: try ntfs.readlink(n(item).ino)), nil) } catch { replyHandler(nil, posixError(error)) }
+    }
+
+    func createItem(named name: FSFileName, type: FSItem.ItemType, inDirectory directory: FSItem, attributes: FSItem.SetAttributesRequest,
+                    replyHandler: @escaping (FSItem?, FSFileName?, Error?) -> Void) {
+        guard type == .file || type == .directory else { replyHandler(nil, nil, fs_errorForPOSIXError(ENOTSUP)); return }
+        do {
+            let dir = n(directory)
+            let ino = try ntfs.create(try self.name(name), in: dir.ino, type: type == .directory ? .directory : .file)
+            let it = item(ino, parent: dir.ino)
+            // Initial attributes (times, flags) are best effort: the item already exists.
+            attributes.consumedAttributes = []
+            try? apply(attributes, to: it)
+            changed(directory)
+            replyHandler(it, name, nil)
+        } catch { replyHandler(nil, nil, posixError(error)) }
+    }
+
+    func createSymbolicLink(named name: FSFileName, inDirectory directory: FSItem, attributes: FSItem.SetAttributesRequest,
+                            linkContents contents: FSFileName, replyHandler: @escaping (FSItem?, FSFileName?, Error?) -> Void) {
+        do {
+            let dir = n(directory)
+            let ino = try ntfs.symlink(try self.name(name), in: dir.ino, target: try self.name(contents))
+            changed(directory)
+            replyHandler(item(ino, parent: dir.ino), name, nil)
+        } catch { replyHandler(nil, nil, posixError(error)) }
+    }
+
+    /// Hard links are not supported by this module.
+    func createLink(to item: FSItem, named name: FSFileName, inDirectory directory: FSItem, replyHandler: @escaping (FSFileName?, Error?) -> Void) {
+        replyHandler(nil, fs_errorForPOSIXError(ENOTSUP))
+    }
+
+    func removeItem(_ item: FSItem, named name: FSFileName, fromDirectory directory: FSItem, replyHandler: @escaping (Error?) -> Void) {
+        do {
+            try ntfs.remove(try self.name(name), in: n(directory).ino)
+            changed(directory)
+            replyHandler(nil)
+        } catch { replyHandler(posixError(error)) }
+    }
+
+    func renameItem(_ item: FSItem, inDirectory sourceDirectory: FSItem, named sourceName: FSFileName, to destinationName: FSFileName,
+                    inDirectory destinationDirectory: FSItem, overItem: FSItem?, replyHandler: @escaping (FSFileName?, Error?) -> Void) {
+        do {
+            try ntfs.rename(try name(sourceName), in: n(sourceDirectory).ino, to: try name(destinationName), in: n(destinationDirectory).ino)
+            if !isNull(item) { n(item).parent = n(destinationDirectory).ino }
+            if let over = overItem, !isNull(over) { // the replaced target no longer exists
+                items.lock()
+                if registry[n(over).ino] === over { registry[n(over).ino] = nil }
+                items.unlock()
+            }
+            changed(sourceDirectory)
+            changed(destinationDirectory)
+            replyHandler(destinationName, nil)
+        } catch { replyHandler(nil, posixError(error)) }
+    }
+
+    /// Directory enumeration with cookies.
+    ///
+    /// Cookie 0 starts a new pass and takes a fresh `DirectorySnapshot`; later
+    /// calls continue from the cookie as long as the verifier still matches.
+    /// For plain readdir (no attributes requested) "." and ".." are emitted
+    /// first with cookies 0 and 1, so real entries are numbered from 2.
+    /// For getattrlistbulk-style calls (attributes requested) they are omitted.
+    func enumerateDirectory(_ directory: FSItem, startingAt cookie: FSDirectoryCookie, verifier: FSDirectoryVerifier,
+                            attributes: FSItem.GetAttributesRequest?, packer: FSDirectoryEntryPacker,
+                            replyHandler: @escaping (FSDirectoryVerifier, Error?) -> Void) {
+        let dir = n(directory)
+        do {
+            items.lock()
+            var snap = dir.snapshot
+            let gen = generation
+            items.unlock()
+            if cookie.rawValue == 0 || snap == nil || snap!.verifier != verifier.rawValue {
+                snap = NTFSToolFSKit.DirectorySnapshot(entries: try ntfs.list(dir.ino), verifier: gen)
+                items.lock(); dir.snapshot = snap; items.unlock()
+            }
+            guard let s = snap else { replyHandler(verifier, nil); return }
+            var next = cookie.rawValue
+            if attributes == nil {
+                if next == 0 {
+                    guard packer.packEntry(name: FSFileName(string: "."), itemType: .directory,
+                                           itemID: FSItem.Identifier(rawValue: NTFSToolFSKit.itemID(forIno: dir.ino)) ?? .invalid,
+                                           nextCookie: FSDirectoryCookie(rawValue: 1), attributes: nil) else {
+                        replyHandler(FSDirectoryVerifier(rawValue: s.verifier), nil); return
+                    }
+                    next = 1
+                }
+                if next == 1 {
+                    guard packer.packEntry(name: FSFileName(string: ".."), itemType: .directory,
+                                           itemID: FSItem.Identifier(rawValue: NTFSToolFSKit.itemID(forIno: dir.parent)) ?? .invalid,
+                                           nextCookie: FSDirectoryCookie(rawValue: 2), attributes: nil) else {
+                        replyHandler(FSDirectoryVerifier(rawValue: s.verifier), nil); return
+                    }
+                    next = 2
+                }
+            }
+            let base: UInt64 = attributes == nil ? 2 : 0
+            let start = next >= base ? next - base : 0
+            for (k, e) in s.page(from: start).enumerated() {
+                let index = Int(start) + k
+                var attrs: FSItem.Attributes?
+                if attributes != nil { attrs = try? self.attributes(of: item(e.ino, parent: dir.ino)) }
+                // packEntry returns false when the kernel's buffer is full; the next call resumes at that cookie.
+                let ok = packer.packEntry(name: FSFileName(string: e.name),
+                                          itemType: e.type == .directory ? .directory : e.type == .symlink ? .symlink : .file,
+                                          itemID: FSItem.Identifier(rawValue: NTFSToolFSKit.itemID(forIno: e.ino)) ?? .invalid,
+                                          nextCookie: FSDirectoryCookie(rawValue: s.cookie(after: index) + base), attributes: attrs)
+                if !ok { break }
+            }
+            replyHandler(FSDirectoryVerifier(rawValue: s.verifier), nil)
+        } catch { replyHandler(verifier, posixError(error)) }
+    }
+
 }
