@@ -603,4 +603,32 @@ final class NTFSToolVolume: FSVolume, FSVolume.Operations, FSVolume.OpenCloseOpe
         } catch { replyHandler(verifier, posixError(error)) }
     }
 
+    // MARK: Open / close / read / write
+
+    func openItem(_ item: FSItem, modes: FSVolume.OpenModes, replyHandler: @escaping (Error?) -> Void) {
+        replyHandler(isNull(item) ? fs_errorForPOSIXError(ENOENT) : nil)
+    }
+
+    /// `modes` is the set of modes still held after this close; empty = last close.
+    /// On last close write the file's metadata back and flush the device.
+    func closeItem(_ item: FSItem, modes: FSVolume.OpenModes, replyHandler: @escaping (Error?) -> Void) {
+        if !isNull(item), modes.isEmpty, !ntfs.readOnly { try? ntfs.flush(n(item).ino) }
+        replyHandler(nil)
+    }
+
+    func read(from item: FSItem, at offset: off_t, length: Int, into buffer: FSMutableFileDataBuffer, replyHandler: @escaping (Int, Error?) -> Void) {
+        if isNull(item) { replyHandler(0, fs_errorForPOSIXError(ENOENT)); return }
+        do {
+            let ino = n(item).ino
+            let len = min(length, buffer.length)
+            let got = try buffer.withUnsafeMutableBytes { p in try ntfs.read(ino, offset: UInt64(offset), into: p.baseAddress!, length: len) }
+            replyHandler(got, nil)
+        } catch { replyHandler(0, posixError(error)) }
+    }
+
+    func write(contents: Data, to item: FSItem, at offset: off_t, replyHandler: @escaping (Int, Error?) -> Void) {
+        if isNull(item) { replyHandler(0, fs_errorForPOSIXError(ENOENT)); return }
+        do { replyHandler(try ntfs.write(n(item).ino, offset: UInt64(offset), data: contents), nil) } catch { replyHandler(0, posixError(error)) }
+    }
+
 }
