@@ -631,4 +631,31 @@ final class NTFSToolVolume: FSVolume, FSVolume.Operations, FSVolume.OpenCloseOpe
         do { replyHandler(try ntfs.write(n(item).ino, offset: UInt64(offset), data: contents), nil) } catch { replyHandler(0, posixError(error)) }
     }
 
+    // MARK: Extended attributes (NTFS named data streams, same mapping as the usual user_xattr)
+
+    func getXattr(named name: FSFileName, of item: FSItem, replyHandler: @escaping (Data?, Error?) -> Void) {
+        if isNull(item) { replyHandler(nil, fs_errorForPOSIXError(ENOENT)); return }
+        do { replyHandler(try ntfs.xattr(try self.name(name), of: n(item).ino), nil) } catch { replyHandler(nil, posixError(error)) }
+    }
+
+    func setXattr(named name: FSFileName, to value: Data?, on item: FSItem, policy: FSVolume.SetXattrPolicy,
+                  replyHandler: @escaping (Error?) -> Void) {
+        if isNull(item) { replyHandler(fs_errorForPOSIXError(ENOENT)); return }
+        do {
+            let key = try self.name(name), ino = n(item).ino
+            switch policy {
+            case .delete: try ntfs.removeXattr(key, of: ino)
+            case .mustCreate: try ntfs.setXattr(key, of: ino, to: value ?? Data(), policy: .mustCreate)
+            case .mustReplace: try ntfs.setXattr(key, of: ino, to: value ?? Data(), policy: .mustReplace)
+            default: try ntfs.setXattr(key, of: ino, to: value ?? Data())
+            }
+            replyHandler(nil)
+        } catch { replyHandler(posixError(error)) }
+    }
+
+    func listXattrs(of item: FSItem, replyHandler: @escaping ([FSFileName]?, Error?) -> Void) {
+        if isNull(item) { replyHandler(nil, fs_errorForPOSIXError(ENOENT)); return }
+        do { replyHandler(try ntfs.xattrNames(n(item).ino).map { FSFileName(string: $0) }, nil) } catch { replyHandler(nil, posixError(error)) }
+    }
+
 }
