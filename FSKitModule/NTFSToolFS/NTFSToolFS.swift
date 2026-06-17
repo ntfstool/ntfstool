@@ -658,4 +658,13 @@ final class NTFSToolVolume: FSVolume, FSVolume.Operations, FSVolume.OpenCloseOpe
         do { replyHandler(try ntfs.xattrNames(n(item).ino).map { FSFileName(string: $0) }, nil) } catch { replyHandler(nil, posixError(error)) }
     }
 
+    // MARK: Volume name
+
+    func setVolumeName(_ name: FSFileName, replyHandler: @escaping (FSFileName?, Error?) -> Void) {
+        do {
+            try ntfs.setLabel(try self.name(name))
+            self.name = name
+            replyHandler(name, nil)
+        } catch { replyHandler(nil, posixError(error)) }
+    }
 }
