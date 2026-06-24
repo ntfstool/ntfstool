@@ -7,9 +7,17 @@ let package = Package(
     name: "NTFSTool",
     defaultLocalization: "en",
     platforms: [.macOS(.v12)],
+    products: [
+        .executable(name: "NTFSTool", targets: ["NTFSTool"]),
+    ],
     targets: [
         // Core logic (no AppKit): volume model, languages, event log shared with the driver.
         .target(name: "NTFSToolCore", path: "Sources/NTFSToolCore"),
+        // UI: AppKit shell + SwiftUI views, 20 localizations.
+        .target(name: "NTFSToolApp", dependencies: ["NTFSToolCore"], path: "Sources/NTFSToolApp",
+                resources: [.process("Resources")]),
+        // App entry point (sandboxed; the system mounts NTFS through the FSKit module).
+        .executableTarget(name: "NTFSTool", dependencies: ["NTFSToolApp"], path: "Sources/NTFSTool"),
         // Prebuilt libntfstool-driver (ntfstool-driver release build): static library + headers.
         .binaryTarget(name: "NTFSToolNTFS", path: "Vendor/NTFSToolNTFS.xcframework"),
         // Inode-based C bridge on top of libntfstool-driver.
@@ -20,5 +28,6 @@ let package = Package(
         // Swift core of the FSKit driver (no FSKit dependency, so it builds and tests on macOS 12).
         .target(name: "NTFSToolDriver", dependencies: ["NTFSToolBridge"], path: "Sources/NTFSToolDriver"),
         .testTarget(name: "NTFSToolDriverTests", dependencies: ["NTFSToolDriver"], path: "Tests/NTFSToolDriverTests"),
+        .testTarget(name: "NTFSToolAppTests", dependencies: ["NTFSToolApp", "NTFSToolCore"], path: "Tests/NTFSToolAppTests"),
     ]
 )
