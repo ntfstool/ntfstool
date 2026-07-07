@@ -114,3 +114,94 @@ public enum NTFSToolStateClassifier {
     /// Only non-system NTFS volumes are listed.
     public static func visible(_ v: DiskVolume) -> Bool { v.isNTFS && !v.isSystem }
 }
+
+// MARK: - Live implementation (DiskArbitration)
+
+/// Real disk operations through the DiskArbitration framework.
+///
+/// DiskArbitration is asynchronous: every request takes a callback that runs on
+/// the session's dispatch queue. The methods here wait for that callback with a
+/// semaphore (and a 30-second timeout), so they must be called from a
+/// background thread, which `FlowExecutor.live` guarantees.
+public final class LiveDiskSystem: NTFSToolDiskSystem {
+    /// Keeps the current disk list up to date and reports changes.
+    public let inventory: DAInventory
+    let session: DASession?
+    let queue = DispatchQueue(label: "ntfstool.da")
+
+    public init(inventory: DAInventory = DAInventory()) {
+        self.inventory = inventory
+        session = DASessionCreate(kCFAllocatorDefault)
+        if let s = session { DASessionSetDispatchQueue(s, queue) }
+    }
+
+    public func volumes() -> [NTFSToolVolume] { inventory.volumes() }
+
+    /// Carries the result from the C callback back to the waiting caller.
+    final class Box {
+        var status: DAReturn = 0
+        var message: String?
+        let sem = DispatchSemaphore(value: 0)
+    }
+
+    /// Shared completion callback for mount, unmount and eject. The context
+    /// pointer is a retained `Box`; taking the retained value balances the
+    /// `passRetained` done when the request was made.
+    static let callback: DADiskMountCallback = { _, dissenter, ctx in
+        let box = Unmanaged<Box>.fromOpaque(ctx!).takeRetainedValue()
+        if let d = dissenter {   // a "dissenter" means the request was refused
+            box.status = DADissenterGetStatus(d)
+            box.message = DADissenterGetStatusString(d) as String?
+        }
+        box.sem.signal()
+    }
+
+    func disk(_ bsd: String) -> DADisk? {
+        guard let s = session else { return nil }
+        return DADiskCreateFromBSDName(kCFAllocatorDefault, s, bsd)
+    }
+
+    /// Maps a finished (or timed-out) request to a `NTFSToolDiskResult`.
+    static func result(_ box: Box, timedOut: Bool) -> NTFSToolDiskResult {
+        if timedOut { return .failed("timeout") }
+        switch box.status {
+        case 0: return .ok
+        case DAReturn(kDAReturnNotPrivileged): return .notPrivileged
+        case DAReturn(kDAReturnBusy): return .busy
+        default: return .failed(box.message ?? String(format: "0x%08x", box.status))
+        }
+    }
+
+    func wait(_ box: Box) -> NTFSToolDiskResult {
+        Self.result(box, timedOut: box.sem.wait(timeout: .now() + 30) == .timedOut)
+    }
+
+    public func unmount(_ id: String) -> NTFSToolDiskResult {
+        guard let d = disk(id) else { return .failed("no_disk") }
+        let box = Box()
+        DADiskUnmount(d, DADiskUnmountOptions(kDADiskUnmountOptionDefault), Self.callback, Unmanaged.passRetained(box).toOpaque())
+        return wait(box)
+    }
+
+    public func mount(_ id: String) -> NTFSToolDiskResult {
+        guard let d = disk(id) else { return .failed("no_disk") }
+        let box = Box()
+        // No file system is specified: DiskArbitration probes the volume and,
+        // with the extension enabled, picks our FSKit module for NTFS.
+        DADiskMount(d, nil, DADiskMountOptions(kDADiskMountOptionDefault), Self.callback, Unmanaged.passRetained(box).toOpaque())
+        return wait(box)
+    }
+
+    public func eject(_ wholeDisk: String) -> NTFSToolDiskResult {
+        guard let d = disk(wholeDisk) else { return .failed("no_disk") }
+        // Step 1: unmount every volume on the disk (kDADiskUnmountOptionWhole).
+        let box = Box()
+        DADiskUnmount(d, DADiskUnmountOptions(kDADiskUnmountOptionWhole), Self.callback, Unmanaged.passRetained(box).toOpaque())
+        let r = wait(box)
+        guard r == .ok else { return r }
+        // Step 2: eject the media so it is safe to unplug.
+        let box2 = Box()
+        DADiskEject(d, DADiskEjectOptions(kDADiskEjectOptionDefault), Self.callback, Unmanaged.passRetained(box2).toOpaque())
+        return wait(box2)
+    }
+}
