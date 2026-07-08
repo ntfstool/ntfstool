@@ -205,3 +205,142 @@ public final class LiveDiskSystem: NTFSToolDiskSystem {
         return wait(box2)
     }
 }
+
+// MARK: - Demo / test implementation (in memory)
+
+/// Disks that exist only in memory. Mount, unmount, eject and plugging in all
+/// change the in-memory state the same way the real system would, including
+/// the sandbox rule that physical drives cannot be remounted by the app.
+public class DemoDiskSystem: NTFSToolDiskSystem {
+    /// One simulated disk.
+    public struct Disk {
+        public var volume: DiskVolume
+        public var state: NTFSToolVolumeState
+        /// A real (physical) drive, as opposed to a disk image; see `denyPhysicalMount`.
+        public var physical: Bool
+        public init(volume: DiskVolume, state: NTFSToolVolumeState, physical: Bool = true) {
+            self.volume = volume
+            self.state = state
+            self.physical = physical
+        }
+    }
+
+    public var disks: [Disk]
+    /// Whether the extension is on: decides if mounts use our module (writable)
+    /// or Apple's read-only driver.
+    public var driverEnabled = true
+    /// Volumes that simulate a hibernated Windows: our module mounts them read-only.
+    public var hibernated: Set<String> = []
+    /// Simulates the sandbox refusing to mount physical drives (the real behavior).
+    public var denyPhysicalMount = true
+    /// What `eject` should return (to test failure paths).
+    public var ejectResult: NTFSToolDiskResult = .ok
+    /// Every operation performed, in order (for test assertions).
+    public private(set) var calls: [String] = []
+    let lock = NSLock()
+
+    public init(disks: [Disk] = DemoDiskSystem.sample) { self.disks = disks }
+
+    /// Convenience factory for a demo NTFS volume.
+    public static func vol(_ id: String, _ name: String, size: Int64, used: Int64, bus: String = "USB", mounted: Bool = true, writable: Bool) -> DiskVolume {
+        DiskVolume(id: id, name: name, fileSystemName: "NTFS", fileSystemType: writable ? NTFSToolDriverNames.openSource : "ntfs", content: "Windows_NTFS",
+                   mountPoint: mounted ? "/Volumes/" + name : "", totalSize: size, freeSpace: size - used, isWritable: writable,
+                   isNTFS: true, busProtocol: bus, mediaName: bus == "USB" ? "SanDisk Extreme" : "Samsung T7",
+                   volumeUUID: "6A1C\(id.count)E2F-3B7D-4C1A-9F2E-\(id.uppercased())", removable: true)
+    }
+
+    /// The default demo set: two writable drives and one unmounted drive.
+    public static let sample: [Disk] = [
+        Disk(volume: vol("disk4s1", "BACKUP-2T", size: 2_000_398_934_016, used: 1_243_000_000_000, writable: true), state: .writable),
+        Disk(volume: vol("disk5s2", "Windows Data", size: 512_110_190_592, used: 201_000_000_000, bus: "Thunderbolt", writable: true), state: .writable),
+        Disk(volume: vol("disk6s1", "Camera SSD", size: 1_000_204_886_016, used: 88_000_000_000, mounted: false, writable: false), state: .unmounted),
+    ]
+
+    func record(_ s: String) { lock.lock(); calls.append(s); lock.unlock() }
+
+    public func volumes() -> [NTFSToolVolume] {
+        lock.lock(); defer { lock.unlock() }
+        return disks.map { NTFSToolVolume(volume: $0.volume, state: $0.state) }
+    }
+
+    func update(_ id: String, _ change: (inout Disk) -> Void) {
+        lock.lock(); defer { lock.unlock() }
+        if let i = disks.firstIndex(where: { $0.volume.id == id }) { change(&disks[i]) }
+    }
+
+    func disk(_ id: String) -> Disk? { lock.lock(); defer { lock.unlock() }; return disks.first { $0.volume.id == id } }
+
+    /// The state a fresh mount would get, following the same rules as the system.
+    func mountedState(_ id: String) -> NTFSToolVolumeState {
+        !driverEnabled ? .readOnlySystem : (hibernated.contains(id) ? .readOnlyHibernated : .writable)
+    }
+
+    public func unmount(_ id: String) -> NTFSToolDiskResult {
+        record("unmount \(id)")
+        update(id) { d in
+            d.state = .unmounted
+            d.volume.mountPoint = ""
+            d.volume.isWritable = false
+        }
+        return .ok
+    }
+
+    public func mount(_ id: String) -> NTFSToolDiskResult {
+        record("mount \(id)")
+        guard let d = disk(id) else { return .failed("no_disk") }
+        if d.physical && denyPhysicalMount { return .notPrivileged }
+        let state = mountedState(id)
+        update(id) { d in
+            d.state = state
+            d.volume.mountPoint = "/Volumes/" + d.volume.name
+            d.volume.isWritable = state == .writable
+            d.volume.fileSystemType = state == .readOnlySystem ? "ntfs" : NTFSToolDriverNames.openSource
+        }
+        return .ok
+    }
+
+    public func eject(_ wholeDisk: String) -> NTFSToolDiskResult {
+        record("eject \(wholeDisk)")
+        guard ejectResult == .ok else { return ejectResult }
+        lock.lock(); disks.removeAll { $0.volume.wholeDisk == wholeDisk }; lock.unlock()
+        return .ok
+    }
+
+    /// Simulates plugging a drive in: the system mounts it with our module or
+    /// Apple's driver depending on whether the extension is enabled.
+    public func plugIn(_ v: DiskVolume) {
+        var v = v
+        let state = mountedState(v.id)
+        v.mountPoint = "/Volumes/" + v.name
+        v.isWritable = state == .writable
+        v.fileSystemType = state == .readOnlySystem ? "ntfs" : NTFSToolDriverNames.openSource
+        lock.lock(); disks.append(Disk(volume: v, state: state)); lock.unlock()
+    }
+}
+
+/// A scripted extension status for tests and demo mode.
+public final class DemoDriverStatus: NTFSToolDriverStatusProviding {
+    public var current: NTFSToolDriverStatus
+    /// What `openSettings` returns (true = the system opened the list directly).
+    public var direct = true
+    /// How many times settings were opened.
+    public private(set) var opened = 0
+    /// After settings were opened, the status turns `.ready` on this check
+    /// (simulates the user flipping the switch); nil = never.
+    public var enableAfterChecks: Int?
+    var checks = 0
+    public init(_ status: NTFSToolDriverStatus = .ready) { current = status }
+
+    public func status() -> NTFSToolDriverStatus {
+        if opened > 0, let n = enableAfterChecks {
+            checks += 1
+            if checks >= n { current = .ready }
+        }
+        return current
+    }
+
+    public func openSettings() -> Bool {
+        opened += 1
+        return direct
+    }
+}
