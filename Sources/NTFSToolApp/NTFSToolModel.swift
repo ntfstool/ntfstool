@@ -142,4 +142,98 @@ public final class NTFSToolModel: ObservableObject {
         _ = presenter.alert(title: L(title), message: L(message), buttons: [L("done")], style: style)
     }
 
+    // MARK: Volume actions
+
+    /// Shows a mounted volume in Finder.
+    public func open(_ v: NTFSToolVolume) {
+        guard v.volume.isMounted else { return }
+        presenter.reveal(v.volume.mountPoint)
+    }
+
+    /// Tries to get a volume mounted read-write by our module.
+    public func makeWritable(_ v: NTFSToolVolume) { exec.run { self.makeWritableFlow(v) } }
+
+    /// Mounting an unmounted volume is the same flow.
+    public func mount(_ v: NTFSToolVolume) { makeWritable(v) }
+
+    /// The make-writable flow:
+    ///
+    /// 1. Hibernated volumes cannot be fixed here: explain why and stop.
+    /// 2. Extension off: start the guide instead (unless `quiet`).
+    /// 3. If Apple's read-only driver has it mounted, unmount it first.
+    /// 4. Ask DiskArbitration to mount it again; with the extension on, the
+    ///    system picks our module and the volume becomes writable.
+    /// 5. The sandbox may refuse step 4 for physical drives. Then the only way
+    ///    is to eject the drive and reconnect it, so the user is asked to do that.
+    func makeWritableFlow(_ v: NTFSToolVolume, quiet: Bool = false) {
+        switch v.state {
+        case .writable: return
+        case .readOnlyHibernated:
+            alert("hibernated_title", "hibernated_body", style: .info)
+            return
+        case .readOnlySystem, .unmounted:
+            break
+        }
+        if driverStatus.status() == .needsEnable {
+            refreshNow()
+            if !quiet { startGuide() }
+            return
+        }
+        setBusy(v.id, .mounting)
+        defer { setBusy(v.id, nil) }
+        if v.state == .readOnlySystem {
+            switch system.unmount(v.id) {
+            case .ok: break
+            case .busy:
+                alert("busy_title", "busy_body")
+                return
+            default:
+                reconnectFlow(v, unmountedAlready: false)
+                return
+            }
+        }
+        let r = system.mount(v.id)
+        let after = refreshNow().first { $0.id == v.id }
+        if r == .ok, after?.state == .writable {
+            notifier.notify(id: "mounted-\(v.id)", title: L("notify_writable_title"), body: L("notify_writable_body", ["name": v.volume.displayName]))
+            return
+        }
+        if r == .ok, after?.state == .readOnlyHibernated {
+            alert("hibernated_title", "hibernated_body", style: .info)
+            return
+        }
+        reconnectFlow(v, unmountedAlready: true)
+    }
+
+    /// The app could not remount the drive itself: offer to eject it safely so
+    /// the user can reconnect it (the system then mounts it with our module).
+    /// If the user declines, try to mount it back so it does not stay unmounted.
+    func reconnectFlow(_ v: NTFSToolVolume, unmountedAlready: Bool) {
+        let r = presenter.alert(title: L("reconnect_title"), message: L("reconnect_body", ["name": v.volume.displayName]),
+                                buttons: [L("eject"), L("cancel")], style: .info)
+        guard r == 0 else {
+            if unmountedAlready { _ = system.mount(v.id); refreshNow() }
+            return
+        }
+        ejectFlow(v)
+    }
+
+    /// Ejects the whole disk that holds the volume.
+    public func eject(_ v: NTFSToolVolume) { exec.run { self.ejectFlow(v) } }
+
+    func ejectFlow(_ v: NTFSToolVolume) {
+        setBusy(v.id, .unmounting)
+        defer { setBusy(v.id, nil) }
+        let r = system.eject(v.volume.wholeDisk)
+        refreshNow()
+        switch r {
+        case .ok:
+            notifier.notify(id: "ejected-\(v.id)", title: L("notify_ejected_title"), body: L("notify_ejected_body", ["name": v.volume.displayName]))
+        case .busy:
+            alert("busy_title", "busy_body")
+        case .notPrivileged, .failed:
+            alert("eject_failed_title", "eject_failed_body")
+        }
+    }
+
 }
