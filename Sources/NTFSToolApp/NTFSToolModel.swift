@@ -236,4 +236,70 @@ public final class NTFSToolModel: ObservableObject {
         }
     }
 
+    // MARK: Extension guide
+
+    /// Opens the extension settings and starts polling until the switch is on.
+    public func startGuide() {
+        let direct = driverStatus.openSettings()
+        if !direct { presenter.open(NTFSToolModel.settingsURL) }
+        pollCount = 0
+        ui {
+            self.guideDirect = direct
+            self.guideWaiting = true
+        }
+        pollGuide()
+    }
+
+    /// Stops waiting (the card stays visible while the extension is still off).
+    public func cancelGuide() {
+        ui { self.guideWaiting = false }
+    }
+
+    /// One polling step: stop if cancelled, finish if enabled, give up after the limit.
+    func pollGuide() {
+        exec.after(NTFSToolModel.guidePollInterval) { [weak self] in
+            guard let self = self else { return }
+            var waiting = true
+            AlertPresenter.onMainSync { waiting = self.guideWaiting }
+            guard waiting else { return }
+            self.pollCount += 1
+            if self.driverStatus.status() == .ready {
+                self.guideDone()
+            } else if self.pollCount < NTFSToolModel.guidePollLimit {
+                self.pollGuide()
+            } else {
+                self.ui { self.guideWaiting = false }
+            }
+        }
+    }
+
+    /// The extension was just enabled: drives that Apple's driver mounted
+    /// read-only before are remounted so they become writable too.
+    func guideDone() {
+        ui { self.guideWaiting = false }
+        let vols = refreshNow()
+        notifier.notify(id: "driver-ready", title: L("notify_driver_ready_title"), body: L("notify_driver_ready_body"))
+        for v in vols where v.state == .readOnlySystem { makeWritableFlow(v, quiet: true) }
+    }
+
+    // MARK: Links (opened in the browser only when the user clicks)
+
+    public func openWebsite() { presenter.open(NTFSToolModel.websiteURL) }
+    public func openHelp() { presenter.open(NTFSToolModel.helpURL) }
+    public func openGitHub() { presenter.open(NTFSToolModel.githubURL) }
+    public func openProInfo() { presenter.open(NTFSToolModel.proURL) }
+
+    /// Handles a click on an insertion notification or one of its buttons.
+    public func performInsertion(volumeID: String, action: InsertionAction) {
+        guard let v = volumes.first(where: { $0.id == volumeID }) else { return }
+        switch action {
+        case .show:
+            showWindow()
+            selectedID = volumeID
+        case .open: open(v)
+        case .eject: eject(v)
+        case .mount: makeWritable(v)
+        }
+    }
+
 }
