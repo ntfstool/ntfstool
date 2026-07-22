@@ -302,4 +302,33 @@ public final class NTFSToolModel: ObservableObject {
         }
     }
 
+    // MARK: System events
+
+    /// A disk appeared, disappeared, was mounted or unmounted.
+    public func diskChanged() { refresh() }
+    /// The user came back to the app (maybe from System Settings).
+    public func appDidBecomeActive() { refresh() }
+}
+
+extension AlertPresenter {
+    /// Reads model state synchronously on the main thread (where @Published
+    /// properties are written). In tests the caller is already on the main thread.
+    static func onMainSync(_ block: () -> Void) {
+        if Thread.isMainThread { block() } else { DispatchQueue.main.sync(execute: block) }
+    }
+}
+
+/// The real extension status, queried through FSKit.
+public final class LiveDriverStatus: NTFSToolDriverStatusProviding {
+    /// Bundle id of our FSKit module. The build script names the extension
+    /// `<app bundle id>.fskit`, so it is derived from the running app.
+    public static let bundleID = (Bundle.main.bundleIdentifier ?? "") + ".fskit"
+    public init() {}
+
+    public func status() -> NTFSToolDriverStatus {
+        guard let on = FSKitSystem.isEnabled(bundleID: LiveDriverStatus.bundleID) else { return .unknown }
+        return on ? .ready : .needsEnable
+    }
+
+    public func openSettings() -> Bool { FSKitSystem.openExtensionsSettings() }
 }
