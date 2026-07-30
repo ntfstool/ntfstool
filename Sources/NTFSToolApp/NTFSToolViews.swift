@@ -100,3 +100,130 @@ struct NTFSToolSidebarRow: View {
         }
     }
 }
+
+// MARK: - Detail
+
+/// The detail column: the selected drive, the empty state, or a spinner
+/// before the first refresh.
+struct NTFSToolDetailView: View {
+    @ObservedObject var model: NTFSToolModel
+
+    var body: some View {
+        Group {
+            if let v = model.selected {
+                FitOrScroll { NTFSToolDetailContent(model: model, v: v) }
+                    .overlay(BusyOverlay(volume: v.volume, busy: model.busy[v.id]))
+                    .animation(.easeInOut(duration: 0.18), value: model.busy[v.id])
+            } else if model.loaded {
+                FitOrScroll { NTFSToolEmptyContent(model: model) }
+            } else {
+                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .frame(minWidth: 520, minHeight: 300)
+        .appLayoutDirection()
+    }
+}
+
+/// Everything shown for one drive. The window height is computed from this
+/// view (see `NTFSToolWindowController.fitToContent`).
+struct NTFSToolDetailContent: View {
+    @ObservedObject var model: NTFSToolModel
+    let v: NTFSToolVolume
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            if model.showsGuide || model.suggestsGuide { NTFSToolGuideCard(model: model) }
+            NTFSToolDetailHeader(model: model, v: v)
+            Divider()
+            CapacityView(volume: v.volume)
+            InfoGrid(volume: v.volume)
+            switch v.state {
+            case .readOnlySystem where !model.showsGuide:
+                Banner(symbol: "lock.fill", tint: .orange, text: L("banner_ro_system"), button: L("make_writable")) { model.makeWritable(v) }
+            case .readOnlyHibernated:
+                Banner(symbol: "moon.zzz.fill", tint: .orange, text: L("banner_ro_hibernated"), button: L("learn_more")) { model.makeWritable(v) }
+            case .unmounted:
+                Banner(symbol: "externaldrive.badge.plus", tint: .accentColor, text: L("banner_unmounted"), button: L("mount")) { model.mount(v) }
+            default:
+                EmptyView()
+            }
+            if model.showsProLink(for: v) { NTFSToolProLink(model: model) }
+            HStack(spacing: 10) {
+                if v.volume.isMounted {
+                    Button { model.open(v) } label: { Label(L("show_in_finder"), systemImage: "folder") }
+                }
+                Button { model.eject(v) } label: { Label(L("eject"), systemImage: "eject") }
+                Spacer()
+            }
+            .disabled(model.busy[v.id] != nil)
+        }
+        .padding(.horizontal, 28)
+        .padding(.vertical, 24)
+        .frame(maxWidth: 980, alignment: .leading)
+        .textSelection(.enabled)   // names, sizes and paths can be selected and copied
+    }
+}
+
+/// A single quiet link line pointing to NTFSTool Pro. Shown only for problems
+/// this free app cannot solve (see `NTFSToolModel.showsProLink`); it just
+/// opens the website in the browser.
+struct NTFSToolProLink: View {
+    @ObservedObject var model: NTFSToolModel
+    var body: some View {
+        Button(L("pro_link")) { model.openProInfo() }
+            .buttonStyle(.link)
+            .font(.callout)
+            .accessibilityIdentifier("pro-link")
+    }
+}
+
+/// Icon, name and connection on the left; size and state badge on the right.
+struct NTFSToolDetailHeader: View {
+    @ObservedObject var model: NTFSToolModel
+    let v: NTFSToolVolume
+
+    /// e.g. "USB External Volume · SanDisk Extreme · NTFS".
+    var subtitle: String {
+        let d = v.volume
+        let bus = d.busProtocol == "Disk Image" ? L("disk_image") : d.busProtocol
+        let source = [bus, L(d.isInternal ? "internal_volume" : "external_volume")].filter { !$0.isEmpty }.joined(separator: " ")
+        return [source, d.mediaName.isEmpty || d.mediaName == "Disk Image" ? "" : d.mediaName, "NTFS"].filter { !$0.isEmpty }.joined(separator: " · ")
+    }
+
+    var body: some View {
+        let tint = model.busy[v.id] != nil ? Color.blue : NTFSToolText.color(v.state)
+        HStack(alignment: .center, spacing: 16) {
+            VolumeIcon(volume: v.volume).frame(width: 64, height: 64)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(v.volume.displayName).font(.system(size: 22, weight: .semibold)).lineLimit(1).truncationMode(.middle)
+                Text(subtitle).font(.callout).foregroundColor(.secondary).lineLimit(2)
+            }
+            Spacer(minLength: 12)
+            VStack(alignment: .trailing, spacing: 6) {
+                Text(ByteFormat.string(v.volume.totalSize)).font(.system(size: 22, weight: .regular)).foregroundColor(.primary)
+                HStack(spacing: 5) {
+                    Circle().fill(tint).frame(width: 7, height: 7)
+                    Text(NTFSToolText.status(v, busy: model.busy[v.id])).font(.caption.weight(.medium))
+                }
+                .padding(.horizontal, 9).padding(.vertical, 3)
+                .background(Capsule().fill(tint.opacity(0.14)))
+                .accessibilityIdentifier("status-badge")
+            }
+        }
+    }
+}
+
+/// No drives connected: the guide card (if needed) and a "plug in a drive" hint.
+struct NTFSToolEmptyContent: View {
+    @ObservedObject var model: NTFSToolModel
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            if model.showsGuide || model.suggestsGuide { NTFSToolGuideCard(model: model) }
+            NTFSToolEmptyState()
+        }
+        .padding(.horizontal, 28)
+        .padding(.vertical, 24)
+        .frame(maxWidth: 980, alignment: .leading)
+    }
+}
