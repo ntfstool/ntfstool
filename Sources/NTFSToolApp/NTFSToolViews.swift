@@ -227,3 +227,78 @@ struct NTFSToolEmptyContent: View {
         .frame(maxWidth: 980, alignment: .leading)
     }
 }
+
+/// The "turn on the file system extension" card.
+///
+/// Full version (extension known to be off, or guide running): explanation,
+/// three steps, the button, and a spinner while waiting. Short version (status
+/// unknown on older macOS but a drive is read-only): a one-line hint and the button.
+struct NTFSToolGuideCard: View {
+    @ObservedObject var model: NTFSToolModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                Image(systemName: "puzzlepiece.extension.fill").font(.title2).foregroundColor(.accentColor)
+                Text(model.suggestsGuide && !model.showsGuide ? L("guide_unknown") : L("guide_title"))
+                    .font(.headline).fixedSize(horizontal: false, vertical: true)
+            }
+            if model.showsGuide {
+                Text(L("guide_body")).font(.callout).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 6) {
+                    step(1, L("guide_step1"))
+                    // If settings could not open the list directly, explain the full path.
+                    step(2, model.guideDirect || !model.guideWaiting ? L("guide_step2") : L("guide_step2_full"))
+                    step(3, L("guide_step3"))
+                }
+            }
+            HStack(spacing: 10) {
+                Button(L("guide_open")) { model.startGuide() }.controlSize(.large).keyboardShortcut(.defaultAction)
+                if model.guideWaiting {
+                    ProgressView().controlSize(.small)
+                    Text(L("guide_waiting")).font(.callout).foregroundColor(.secondary)
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color.accentColor.opacity(0.08)))
+        .accessibilityIdentifier("guide-card")
+    }
+
+    func step(_ n: Int, _ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text("\(n)").font(.caption.weight(.bold)).foregroundColor(.white)
+                .frame(width: 18, height: 18).background(Circle().fill(Color.accentColor))
+            Text(text).font(.callout).fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+/// Big "Plug in an NTFS drive" placeholder.
+struct NTFSToolEmptyState: View {
+    var body: some View {
+        VStack(spacing: 14) {
+            Image(systemName: "externaldrive.badge.plus").font(.system(size: 56, weight: .light)).foregroundColor(.secondary)
+            Text(L("empty_title")).font(.title3.weight(.semibold))
+            Text(L("empty_body")).font(.callout).foregroundColor(.secondary).multilineTextAlignment(.center).frame(maxWidth: 400)
+        }
+        .padding(.vertical, 40)
+        .frame(maxWidth: .infinity)
+    }
+}
+
+/// Sidebar and detail side by side in pure SwiftUI. Used by snapshot tests;
+/// the real window is `NTFSToolWindowController`.
+@available(macOS 13.0, *)
+public struct NTFSToolRootView: View {
+    @ObservedObject var model: NTFSToolModel
+    public init(model: NTFSToolModel) { self.model = model }
+    public var body: some View {
+        HStack(spacing: 0) {
+            NTFSToolSidebar(model: model).frame(width: 240)
+            Divider()
+            NTFSToolDetailView(model: model)
+        }
+    }
+}
