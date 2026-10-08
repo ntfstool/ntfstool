@@ -310,3 +310,136 @@ final class NTFSToolModelTests: XCTestCase {
         XCTAssertEqual(DemoDriverStatus(.needsEnable).status(), .needsEnable)
     }
 }
+
+/// Renders every demo scene in English, Simplified Chinese and Arabic (mirrored)
+/// to PNGs under .build/snapshots for visual review.
+final class NTFSToolSnapshotTests: XCTestCase {
+    override func tearDown() { L10n.shared.use(AppLanguage.byLproj("en")!) }
+
+    func render<V: View>(_ view: V, _ name: String, size: NSSize = NSSize(width: 900, height: 600)) throws {
+        let host = NSHostingView(rootView: view.frame(width: size.width, height: size.height))
+        host.frame = NSRect(origin: .zero, size: size)
+        let window = NSWindow(contentRect: host.frame, styleMask: [.titled], backing: .buffered, defer: false)
+        window.contentView = host
+        host.layoutSubtreeIfNeeded()
+        RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+        let rep = try XCTUnwrap(host.bitmapImageRepForCachingDisplay(in: host.bounds))
+        host.cacheDisplay(in: host.bounds, to: rep)
+        try rep.representation(using: .png, properties: [:])?.write(to: SnapshotTests.outDir.appendingPathComponent(name + ".png"))
+    }
+
+    func model(_ scene: String?) -> NTFSToolModel {
+        let (s, d) = NTFSToolDemo.scene(scene)
+        let m = NTFSToolModel(system: s, driver: d, presenter: ScriptedPresenter(), exec: .inline)
+        m.refresh()
+        return m
+    }
+
+    func testAllScenesRender() throws {
+        guard #available(macOS 13.0, *) else { return }
+        for lang in ["en", "zh-Hans", "ar"] {
+            L10n.shared.use(AppLanguage.byLproj(lang)!)
+            for scene in ["main", "guide", "readonly", "empty"] {
+                let m = model(scene)
+                try render(NTFSToolRootView(model: m), "\(scene)-\(lang)")
+                try render(NTFSToolDetailView(model: m), "detail-\(scene)-\(lang)", size: NSSize(width: 760, height: 640))
+                try render(NTFSToolSidebar(model: m), "sidebar-\(scene)-\(lang)", size: NSSize(width: 240, height: 600))
+            }
+            let m = model("main")
+            m.selectedID = "disk6s1"
+            try render(NTFSToolDetailContent(model: m, v: m.selected!), "unmounted-\(lang)", size: NSSize(width: 760, height: 600))
+            let g = model("guide")
+            g.startGuide()
+            try render(NTFSToolGuideCard(model: g), "guide-waiting-\(lang)", size: NSSize(width: 640, height: 260))
+            let u = model("main")
+            (u.driverStatus as? DemoDriverStatus)?.current = .unknown
+            u.refresh()
+            try render(NTFSToolGuideCard(model: u), "guide-unknown-\(lang)", size: NSSize(width: 640, height: 160))
+        }
+        let ab = model("main")
+        try render(NTFSToolAboutView(model: ab, version: "1.0"), "about", size: NSSize(width: 440, height: 380))
+        XCTAssertEqual(NTFSToolText.state(.unmounted), L("state_not_mounted"))
+        XCTAssertEqual(NTFSToolText.color(.writable), .green)
+        XCTAssertEqual(BusyText.of(.mounting), L("busy_mounting"))
+    }
+}
+
+/// Parsing DiskArbitration descriptions (the sandbox-friendly way to list disks).
+final class NTFSToolDiskInfoTests: XCTestCase {
+    /// A description captured from a real NTFS disk image mounted by Apple's read-only driver.
+    static let appleRO: [String: Any] = [
+        "DAMediaBSDName": "disk6s1", "DAMediaContent": "Windows_NTFS", "DAMediaLeaf": true, "DAMediaWhole": false, "DAMediaSize": 314_528_256,
+        "DAMediaName": "Untitled 1", "DAMediaRemovable": true, "DAMediaWritable": true, "DAVolumeKind": "ntfs", "DAVolumeName": "TESTVOL",
+        "DAVolumePath": URL(fileURLWithPath: "/Volumes/TESTVOL/"), "DADeviceModel": "Disk Image", "DADeviceProtocol": "Virtual Interface",
+        "DAVolumeType": "MS-DOS (FAT12)",
+    ]
+
+    func stat(_ fs: String, ro: Bool) -> (String) -> NTFSToolMountStat? {
+        { _ in NTFSToolMountStat(fsType: fs, readOnly: ro, total: 314_000_000, free: 300_000_000) }
+    }
+
+    func testAppleReadOnlyMount() throws {
+        let v = try XCTUnwrap(NTFSToolDiskInfo.volume(Self.appleRO, stat: stat("ntfs", ro: true)))
+        XCTAssertEqual(v.state, .readOnlySystem)
+        XCTAssertEqual(v.volume.id, "disk6s1")
+        XCTAssertEqual(v.volume.wholeDisk, "disk6")
+        XCTAssertEqual(v.volume.name, "TESTVOL")
+        XCTAssertEqual(v.volume.mountPoint, "/Volumes/TESTVOL")
+        XCTAssertEqual(v.volume.totalSize, 314_528_256)
+        XCTAssertEqual(v.volume.freeSpace, 300_000_000)
+        XCTAssertEqual(v.volume.busProtocol, "Disk Image", "Virtual Interface is shown as a disk image")
+        XCTAssertFalse(v.volume.isWritable)
+    }
+
+    func testOurModuleMountsAndHibernated() throws {
+        for name in NTFSToolDriverNames.fskitNTFSNames {
+            var d = Self.appleRO
+            d["DAVolumeKind"] = name
+            d["DADeviceProtocol"] = "USB"
+            d["DADeviceModel"] = "Extreme 55AE"
+            d["DAVolumeUUID"] = CFUUIDCreateFromString(nil, "6A1C7E2F-3B7D-4C1A-9F2E-000000000001" as CFString)!
+            let w = try XCTUnwrap(NTFSToolDiskInfo.volume(d, stat: stat(name, ro: false)))
+            XCTAssertEqual(w.state, .writable, name)
+            XCTAssertTrue(w.volume.isWritable)
+            XCTAssertEqual(w.volume.busProtocol, "USB")
+            XCTAssertEqual(w.volume.mediaName, "Extreme 55AE")
+            XCTAssertEqual(w.volume.volumeUUID, "6A1C7E2F-3B7D-4C1A-9F2E-000000000001")
+            XCTAssertEqual(NTFSToolDiskInfo.volume(d, stat: stat(name, ro: true))?.state, .readOnlyHibernated, name)
+        }
+    }
+
+    func testUnmountedAndFiltering() {
+        var u = Self.appleRO
+        u["DAVolumeKind"] = nil
+        u["DAVolumePath"] = nil
+        XCTAssertEqual(NTFSToolDiskInfo.volume(u, stat: { _ in nil })?.state, .unmounted, "unmounted Windows_NTFS partition")
+        var gpt = u
+        gpt["DAMediaContent"] = "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7"
+        XCTAssertNil(NTFSToolDiskInfo.volume(gpt, stat: { _ in nil }), "an unmounted GPT basic data partition may be exFAT; not listed")
+        var exfat = Self.appleRO
+        exfat["DAVolumeKind"] = "exfat"
+        XCTAssertNil(NTFSToolDiskInfo.volume(exfat, stat: stat("exfat", ro: false)))
+        var whole = Self.appleRO
+        whole["DAMediaLeaf"] = false
+        XCTAssertNil(NTFSToolDiskInfo.volume(whole, stat: stat("ntfs", ro: true)), "partition maps are not listed")
+        var root = Self.appleRO
+        root["DAVolumePath"] = URL(fileURLWithPath: "/")
+        XCTAssertNil(NTFSToolDiskInfo.volume(root, stat: stat("ntfs", ro: true)))
+        XCTAssertNil(NTFSToolDiskInfo.volume([:], stat: { _ in nil }))
+        var noName = Self.appleRO
+        noName["DAVolumeName"] = nil
+        XCTAssertEqual(NTFSToolDiskInfo.volume(noName, stat: stat("ntfs", ro: true))?.volume.name, "Untitled 1")
+    }
+
+    func testLiveInventoryEnumeratesRealDisksWithoutCrashing() {
+        let inv = DAInventory()
+        _ = inv.volumes()   // works whether or not this Mac has NTFS drives
+        var changed = false
+        inv.onChange = { changed = true }
+        inv.fire()
+        RunLoop.main.run(until: Date().addingTimeInterval(0.8))
+        XCTAssertTrue(changed, "callbacks within 0.5 s are coalesced into one change")
+        XCTAssertNotNil(NTFSToolDiskInfo.liveStat("/"))
+        XCTAssertNil(NTFSToolDiskInfo.liveStat("/nonexistent-\(UUID().uuidString)"))
+    }
+}
