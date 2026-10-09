@@ -443,3 +443,96 @@ final class NTFSToolDiskInfoTests: XCTestCase {
         XCTAssertNil(NTFSToolDiskInfo.liveStat("/nonexistent-\(UUID().uuidString)"))
     }
 }
+
+/// The app shell boots in demo mode with its window and menus.
+final class NTFSToolAppShellTests: XCTestCase {
+    func testDelegateBootsInDemoWithWindowAndMenus() throws {
+        setenv("NTFSTOOL_DEMO", "1", 1)
+        setenv("NTFSTOOL_DEMO_LANG", "en", 1)
+        defer { unsetenv("NTFSTOOL_DEMO"); unsetenv("NTFSTOOL_DEMO_LANG") }
+        _ = NSApplication.shared
+        let d = NTFSToolAppDelegate()
+        var opened: [URL] = []
+        d.presenter.workspaceOpen = { opened.append($0) }
+        d.applicationDidFinishLaunching(Notification(name: NSApplication.didFinishLaunchingNotification))
+        RunLoop.main.run(until: Date().addingTimeInterval(0.7))
+        XCTAssertEqual(d.window.title, "NTFSTool")
+        XCTAssertEqual(d.model.volumes.count, 3)
+        let titles = NSApp.mainMenu?.items.compactMap { $0.submenu?.title } ?? []
+        XCTAssertTrue(titles.contains(L("menu_help_title")))
+        d.openHelp()
+        d.openWebsite()
+        d.openGitHub()
+        RunLoop.main.run(until: Date().addingTimeInterval(0.2))
+        XCTAssertEqual(opened, [NTFSToolModel.helpURL, NTFSToolModel.websiteURL, NTFSToolModel.githubURL])
+        d.about()
+        XCTAssertTrue(d.applicationShouldTerminateAfterLastWindowClosed(NSApp))
+        d.window.orderOut(nil)
+        XCTAssertTrue(d.applicationShouldHandleReopen(NSApp, hasVisibleWindows: false))
+        XCTAssertTrue(d.window.isVisible)
+        d.observeSystem()
+        XCTAssertEqual(d.observers.count, 4)
+        d.window.close()
+        d.aboutController?.close()
+    }
+}
+
+/// A notification is posted for drives plugged in after launch (not for ones already connected).
+final class NTFSToolInsertionTests: XCTestCase {
+    var sys: DemoDiskSystem!
+    var drv: DemoDriverStatus!
+    var presenter: ScriptedPresenter!
+    var model: NTFSToolModel!
+    var cards: [InsertionCard] = []
+    var shown = 0
+
+    override func setUp() {
+        L10n.shared.use(AppLanguage.byLproj("en")!)
+        sys = DemoDiskSystem(); drv = DemoDriverStatus(.ready); presenter = ScriptedPresenter(); cards = []; shown = 0
+        model = NTFSToolModel(system: sys, driver: drv, presenter: presenter, exec: .inline)
+        model.onInsertion = { [unowned self] in self.cards.append($0) }
+        model.showWindow = { [unowned self] in self.shown += 1 }
+        model.refresh()
+    }
+
+    func testDrivesPresentAtLaunchDoNotNotify() {
+        XCTAssertTrue(cards.isEmpty)
+        model.refresh()
+        XCTAssertTrue(cards.isEmpty)
+    }
+
+    func testNewWritableDriveNotifiesWithOpenAndEject() {
+        sys.plugIn(DemoDiskSystem.vol("disk9s1", "NEW", size: 1, used: 0, writable: false))
+        model.diskChanged()
+        XCTAssertEqual(cards.count, 1)
+        XCTAssertEqual(cards[0].kind, .mounted(readOnly: false))
+        XCTAssertEqual(cards[0].actions, [.open, .eject])
+        XCTAssertEqual(cards[0].volumeID, "disk9s1")
+        XCTAssertTrue(cards[0].title.contains("NEW"))
+        model.performInsertion(volumeID: "disk9s1", action: .open)
+        XCTAssertEqual(presenter.revealed, ["/Volumes/NEW"])
+        model.performInsertion(volumeID: "disk9s1", action: .show)
+        XCTAssertEqual(shown, 1)
+        XCTAssertEqual(model.selectedID, "disk9s1")
+        model.performInsertion(volumeID: "disk9s1", action: .eject)
+        XCTAssertFalse(model.volumes.contains { $0.id == "disk9s1" })
+        model.performInsertion(volumeID: "gone", action: .open)
+    }
+
+    func testReadOnlyDrivesNotifyWhatToDo() {
+        drv.current = .needsEnable
+        sys.driverEnabled = false
+        sys.plugIn(DemoDiskSystem.vol("disk9s1", "RO", size: 1, used: 0, writable: false))
+        model.diskChanged()
+        XCTAssertEqual(cards.last?.kind, .needsAction, "extension off: offer Make Writable")
+        XCTAssertEqual(cards.last?.actions.map(\.title), [L("make_writable")])
+        model.performInsertion(volumeID: "disk9s1", action: .mount)
+        XCTAssertEqual(drv.opened, 1, "clicking it starts the extension guide")
+        sys.driverEnabled = true
+        sys.hibernated = ["disk10s1"]
+        sys.plugIn(DemoDiskSystem.vol("disk10s1", "HIB", size: 1, used: 0, writable: false))
+        model.diskChanged()
+        XCTAssertEqual(cards.last?.kind, .mounted(readOnly: true), "hibernated: mounted, but read-only")
+        XCTAssertEqual(cards.last?.body, L("banner_ro_hibernated"))
+    }
+}
