@@ -18,6 +18,11 @@ If this software is helpful to you, welcome Star's attention.
 
 ✈️ [Official Website](https://ntfstool.com) | 📖 [Manual](http://docs.ntfstool.com)
 
+## 🧰 More free Mac tools from NTFS Tool
+
+- 📸 **[wxShot](https://github.com/ntfstool/wxShot)** – the WeChat-style screenshot for macOS that works even when WeChat is not signed in (⌥A, long screenshot, offline text extraction, MIT). ⭐ If it helps you, a Star on [ntfstool/wxShot](https://github.com/ntfstool/wxShot) means a lot.
+- 💽 **[NTFS2exFAT](https://github.com/ntfstool/ntfs2exfat)** – safely convert an NTFS drive to exFAT on a Mac, with verified copy.
+
 ## 💽 Installation
 Download from [GitHub Releases](https://github.com/ntfstool/ntfstool/releases) and install it.
 

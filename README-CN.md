@@ -16,6 +16,11 @@
 
 ✈️ 去 [官网](https://ntfstool.com) 逛逛  |  📖 查看 [帮助手册](http://docs.ntfstool.com)
 
+## 🧰 NTFS Tool 团队的更多免费 Mac 工具
+
+- 📸 **[wxShot](https://github.com/ntfstool/wxShot)**：微信截图替代品，不登录微信也能用的 macOS 截图工具（默认 ⌥A，长截图、离线提取文字，MIT 开源）。⭐ 如果对你有帮助，欢迎到 [ntfstool/wxShot](https://github.com/ntfstool/wxShot) 点个 Star。
+- 💽 **[NTFS2exFAT](https://github.com/ntfstool/ntfs2exfat)**：在 Mac 上把 NTFS 硬盘安全转换为 exFAT，带校验的拷贝。
+
 ## 💽 安装稳定版
 
 [GitHub](https://github.com/ntfstool/ntfstool/releases) 和 [官网](https://ntfstool.com) 提供了已经编译好的稳定版安装包，当然你也可以自己克隆代码编译打包。
