@@ -82,3 +82,54 @@ and follows the same rules as common FUSE NTFS drivers:
 
 Device I/O is plain direct, write-through I/O with block alignment. The official builds add a caching layer and
 other tuning on top; this edition intentionally keeps the simplest correct path so it is easy to follow.
+
+## App layers
+
+| Layer | Files | Notes |
+| --- | --- | --- |
+| Entry point | `Sources/NTFSTool/main.swift` | calls `NTFSToolAppMain.run()` |
+| App shell | `NTFSToolApp.swift`, `NTFSToolWindow.swift`, `NTFSToolAbout.swift` | AppKit: menu, window with sidebar + toolbar, About |
+| Model | `NTFSToolModel.swift` | every user flow; UI only calls the model |
+| Views | `NTFSToolViews.swift`, `NTFSToolComponents.swift` | SwiftUI sidebar, detail page, guide card |
+| System | `NTFSToolSystem.swift`, `NTFSToolDiskInfo.swift`, `NTFSToolFSKitSystem.swift` | DiskArbitration, mount table, FSKit extension status |
+| Services | `NTFSToolPresenter.swift`, `NTFSToolSystemServices.swift`, `NTFSToolL10n.swift` | alerts, notifications, runtime language switching |
+| Core | `Sources/NTFSToolCore` | volume model, language list, driver short names, event log |
+
+All side effects go through protocols (`NTFSToolDiskSystem`, `NTFSToolDriverStatusProviding`, `Presenting`,
+`Notifying`). Real implementations talk to macOS; the demo implementations (`DemoDiskSystem`,
+`DemoDriverStatus`) keep disks in memory. Tests drive the model synchronously with the demo implementations.
+
+### Volume state
+
+`NTFSToolStateClassifier` decides a volume's state from the mount table entry alone:
+
+| Mounted by | Writable? | State |
+| --- | --- | --- |
+| our module (`ntfstooloss`; also `ntfstool` / `ntfspro` from the official builds) | yes | read-write |
+| our module | no | read-only: Windows hibernated / Fast Startup |
+| Apple's `ntfs` | — | read-only by the system driver → enable the extension |
+| not mounted | — | not mounted |
+
+## Demo mode
+
+`NTFSTOOL_DEMO=1` (or `make demo`) replaces the real system services with in-memory disks, so you can work on
+the UI without a driver, without real disks and without an Apple Developer account.
+
+| Variable | Meaning |
+| --- | --- |
+| `NTFSTOOL_DEMO=1` | use demo disks |
+| `NTFSTOOL_DEMO_SCENE` | `guide`, `readonly` or `empty` (default: three drives) |
+| `NTFSTOOL_DEMO_SELECT` | select a volume by name |
+| `NTFSTOOL_DEMO_LANG` | UI language by lproj name, e.g. `zh-Hans`, `ja`, `ar` |
+| `NTFSTOOL_SNAPSHOT=<file.png>` | render the window to a PNG and quit |
+
+## Localization
+
+User-visible text is looked up with `L("key")` from `Sources/NTFSToolApp/Resources/<lang>.lproj/Localizable.strings`.
+English is the fallback for missing keys. The UI language follows the system's preferred languages
+(`NTFSTOOL_DEMO_LANG` overrides it for screenshots).
+
+## Privacy
+
+The open-source edition makes no network requests. Links (website, GitHub, NTFSTool Pro) open in the browser
+only when clicked. The app's entitlements contain only the App Sandbox.
