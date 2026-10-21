@@ -89,3 +89,31 @@ system will not load the driver. This is an Apple platform rule that applies to 
 
 All build options are documented at the top of [`scripts/build-app.sh`](scripts/build-app.sh).
 Provisioning profiles and signing keys never belong in this repository; `make scan` checks for them.
+
+## Layout
+
+| Path | What it is |
+| --- | --- |
+| `Sources/NTFSTool` | App entry point (`main.swift`) |
+| `Sources/NTFSToolApp` | AppKit shell, SwiftUI views, the app model, system services, 20 localizations |
+| `Sources/NTFSToolCore` | Pure logic without AppKit: disk model, language list, settings store, local event log |
+| `Sources/NTFSToolBridge` | C bridge (`ntfstool_bridge.c`) exposing inode-based operations on top of `libntfstool-driver` |
+| `Sources/NTFSToolDriver` | Swift core of the driver (no FSKit dependency, unit-testable on any macOS) |
+| `FSKitModule/NTFSToolFS` | The FSKit module (`NTFSToolFS.appex`) that macOS loads to mount NTFS volumes |
+| `Tests/` | Unit tests for the app model and for the driver (real NTFS images) |
+| `scripts/` | `build-app.sh`, `build-fskit.sh`, `scan-secrets.sh` |
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how a write travels from Finder to the disk.
+
+## Contributing
+
+Issues and pull requests are welcome. Please sign off your commits (`git commit -s`) to certify the
+[Developer Certificate of Origin](https://developercertificate.org/) — see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+MIT License — see [LICENSE](LICENSE) and [NOTICE](NOTICE).
+The bundled NTFS engine is NTFSTool's own `libntfstool-driver`, shipped as a prebuilt static library (see
+[Vendor/README.md](Vendor/README.md)).
+
+Earlier versions of this repository (the Electron app) remain available in the git history.
