@@ -1,0 +1,25 @@
+NTFSTool
+Copyright © 2019-2026 NTFSTool
+
+Released under the MIT License. See the file LICENSE (identical copy in COPYING).
+
+-------------------------------------------------------------------------------
+Bundled binaries
+-------------------------------------------------------------------------------
+
+Vendor/NTFSToolNTFS.xcframework
+    A prebuilt static library (libntfstool-driver.a, arm64 + x86_64) and its
+    headers: NTFSTool's own NTFS engine, provided as a binary. See
+    Vendor/README.md.
+
+-------------------------------------------------------------------------------
+Trademarks
+-------------------------------------------------------------------------------
+
+"NTFSTool" and the NTFSTool icons/logos are trademarks of the NTFSTool project.
+The MIT License covers the source code only; it does not grant any right to use the
+name or logos. See "Trademarks" in README.md.
+
+NTFS and Windows are trademarks of Microsoft Corporation. macOS, FSKit and
+App Store are trademarks of Apple Inc. This project is not affiliated with or
+endorsed by Microsoft or Apple.
