@@ -7,7 +7,68 @@ extension, no macFUSE, no reduced security settings, no admin password. The app 
 
 [简体中文说明](README-CN.md) · [Architecture guide](docs/ARCHITECTURE.md)
 
-![NTFSTool](Resources/Icon/preview.png)
+<p align="center">
+  <img src="docs/screenshots/overview.png" alt="NTFSTool main window: a read-write NTFS drive with capacity bar and details" width="760">
+</p>
+
+<p align="center"><i>If this project is useful or interesting to you, a ⭐ on GitHub helps others find it.</i></p>
+
+## Screenshots
+
+Real screenshots of the app built from this repository (`make app`). The drives shown are the sample drives of the
+built-in demo mode (`make demo`), so you can try every screen without a physical disk.
+
+### One window for all your NTFS drives
+
+Every NTFS volume with its state at a glance: **Read & Write**, **Read-Only**, **Not Mounted**. Capacity bar,
+mount point, bus (USB / Thunderbolt) and device details, plus *Show in Finder* and *Eject*.
+
+| A Thunderbolt SSD, read & write | A drive that is not mounted |
+| --- | --- |
+| ![Thunderbolt drive](docs/screenshots/thunderbolt-drive.png) | ![Not mounted drive](docs/screenshots/not-mounted.png) |
+
+### Guided setup — no password, no kernel extension
+
+NTFSTool is a regular FSKit file system module. The only thing macOS asks for is one switch in
+**System Settings → General → Login Items & Extensions → File System Extensions**. The app explains it step by
+step and detects the change automatically.
+
+![Enable the file system extension](docs/screenshots/enable-extension.png)
+
+### Honest about read-only drives
+
+If Windows was hibernated or *Fast Startup* is on, writing would corrupt the disk. NTFSTool mounts such a drive
+**read-only** and tells you why, instead of failing or risking your data.
+
+![Drive left hibernated by Windows](docs/screenshots/hibernated-windows.png)
+
+### Light, dark and everything in between
+
+| Light | Dark |
+| --- | --- |
+| ![Light mode](docs/screenshots/thunderbolt-drive.png) | ![Dark mode](docs/screenshots/dark-overview.png) |
+
+![Dark mode, extension guide](docs/screenshots/dark-enable-extension.png)
+
+### 20 languages, including right-to-left
+
+English, 简体中文, 繁體中文, 日本語, 한국어, Deutsch, Français, Español, Italiano, Português, Русский, العربية,
+فارسی, Türkçe, हिन्दी, বাংলা, Bahasa Indonesia, Kiswahili, ไทย and Tiếng Việt. The layout mirrors properly for
+Arabic and Persian.
+
+| Japanese | German |
+| --- | --- |
+| ![Japanese](docs/screenshots/japanese.png) | ![German](docs/screenshots/german.png) |
+
+| Arabic (right-to-left) | Simplified Chinese |
+| --- | --- |
+| ![Arabic, right-to-left](docs/screenshots/arabic-rtl.png) | ![Simplified Chinese](docs/screenshots/chinese.png) |
+
+### Empty state and About
+
+| Waiting for a drive | About |
+| --- | --- |
+| ![No drive connected](docs/screenshots/no-drive.png) | ![About window](docs/screenshots/about.png) |
 
 ## What this repository is
 

@@ -7,7 +7,24 @@
 
 [English](README.md) · [架构说明](docs/ARCHITECTURE.md) · [官网 ntfstool.com](https://ntfstool.com/?utm_source=github_opensource) · [NTFSTool Pro](#ntfstool-pro专业版)
 
-![NTFSTool](Resources/Icon/preview.png)
+<p align="center">
+  <img src="docs/screenshots/chinese.png" alt="NTFSTool 主界面：一个可读写的 NTFS 硬盘，含容量条和详细信息" width="760">
+</p>
+
+<p align="center"><i>如果这个项目对你有用或有启发，欢迎在 GitHub 上点个 ⭐，让更多人看到。</i></p>
+
+## 界面截图
+
+以下是用本仓库源码编译（`make app`）出来的真实界面截图，硬盘是内置演示模式（`make demo`）里的示例硬盘，没有物理硬盘也能体验每个界面。完整截图见 [README（英文）](README.md#screenshots)。
+
+| 可读写的 Thunderbolt 硬盘 | 启用文件系统扩展的引导 |
+| --- | --- |
+| ![Thunderbolt 硬盘](docs/screenshots/thunderbolt-drive.png) | ![启用文件系统扩展](docs/screenshots/enable-extension.png) |
+
+| Windows 休眠导致只读 | 深色模式 |
+| --- | --- |
+| ![Windows 休眠导致只读](docs/screenshots/hibernated-windows.png) | ![深色模式](docs/screenshots/dark-overview.png) |
+
 
 ## 项目简介
 
