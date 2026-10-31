@@ -5,26 +5,63 @@
 
 本仓库面向**自用、研究和学习**：你可以自己编译使用，也可以把它当作 macOS 文件系统开发的完整参考工程来读。
 
-[English](README.md) · [架构说明](docs/ARCHITECTURE.md) · [官网 ntfstool.com](https://ntfstool.com/?utm_source=github_opensource) · [NTFSTool Pro](#ntfstool-pro专业版)
+[架构说明](docs/ARCHITECTURE.md) · [官网 ntfstool.com](https://ntfstool.com/?utm_source=github_opensource) · [NTFSTool Pro](#ntfstool-pro专业版)
+
+[English](README.md) · **简体中文** · [繁體中文](docs/readme/README.zh-Hant.md) · [日本語](docs/readme/README.ja.md) · [한국어](docs/readme/README.ko.md) · [Deutsch](docs/readme/README.de.md) · [Français](docs/readme/README.fr.md) · [Español](docs/readme/README.es.md) · [Italiano](docs/readme/README.it.md) · [Português](docs/readme/README.pt.md) · [Русский](docs/readme/README.ru.md) · [العربية](docs/readme/README.ar.md) · [فارسی](docs/readme/README.fa.md) · [Türkçe](docs/readme/README.tr.md) · [हिन्दी](docs/readme/README.hi.md) · [বাংলা](docs/readme/README.bn.md) · [Bahasa Indonesia](docs/readme/README.id.md) · [Kiswahili](docs/readme/README.sw.md) · [ไทย](docs/readme/README.th.md) · [Tiếng Việt](docs/readme/README.vi.md)
 
 <p align="center">
-  <img src="docs/screenshots/chinese.png" alt="NTFSTool 主界面：一个可读写的 NTFS 硬盘，含容量条和详细信息" width="760">
+  <img src="docs/screenshots/overview.png" alt="NTFSTool 主界面：一个可读写的 NTFS 硬盘，含容量条和详细信息" width="760">
 </p>
 
 <p align="center"><i>如果这个项目对你有用或有启发，欢迎在 GitHub 上点个 ⭐，让更多人看到。</i></p>
 
 ## 界面截图
 
-以下是用本仓库源码编译（`make app`）出来的真实界面截图，硬盘是内置演示模式（`make demo`）里的示例硬盘，没有物理硬盘也能体验每个界面。完整截图见 [README（英文）](README.md#screenshots)。
+以下是用本仓库源码编译（`make app`）出来的真实界面截图。硬盘是内置演示模式（`make demo`）里的示例硬盘，没有物理硬盘也能体验每个界面。界面截图统一使用英文界面，应用本身支持 20 种语言。
 
-| 可读写的 Thunderbolt 硬盘 | 启用文件系统扩展的引导 |
+### 主界面
+
+所有 NTFS 硬盘集中在一个窗口里：**可读写**、**只读**、**未挂载**一目了然，附带容量条、挂载点、接口（USB / Thunderbolt）和设备信息，并可「在访达中显示」或「推出」。
+
+![主界面：可读写的 USB 硬盘](docs/screenshots/overview.png)
+
+| 可读写的 Thunderbolt 固态硬盘 | 未挂载的硬盘 |
 | --- | --- |
-| ![Thunderbolt 硬盘](docs/screenshots/thunderbolt-drive.png) | ![启用文件系统扩展](docs/screenshots/enable-extension.png) |
+| ![Thunderbolt 硬盘](docs/screenshots/thunderbolt-drive.png) | ![未挂载的硬盘](docs/screenshots/not-mounted.png) |
 
-| Windows 休眠导致只读 | 深色模式 |
+### 引导式设置：无需密码，无需内核扩展
+
+NTFSTool 是标准的 FSKit 文件系统模块。macOS 只需要你在 **系统设置 → 通用 → 登录项与扩展 → 文件系统扩展** 里打开一个开关。应用会一步步引导，并自动检测到你已开启。
+
+![打开文件系统扩展](docs/screenshots/enable-extension.png)
+
+### 默认保证数据安全
+
+如果 Windows 处于休眠或开启了「快速启动」，直接写入会损坏磁盘。NTFSTool 会以**只读**方式挂载这类硬盘，并明确告诉你如何处理，而不是冒数据风险。
+
+| Windows 休眠导致只读 | 应用给出的提示 |
 | --- | --- |
-| ![Windows 休眠导致只读](docs/screenshots/hibernated-windows.png) | ![深色模式](docs/screenshots/dark-overview.png) |
+| ![休眠的硬盘](docs/screenshots/hibernated-windows.png) | ![请完全关闭 Windows](docs/screenshots/dialog-shut-down-windows.png) |
 
+### 重新插拔硬盘
+
+macOS 只允许系统在硬盘插入时挂载物理硬盘，所以应用会先安全推出，再请你重新插入，之后即以读写方式挂载。
+
+![请重新插入硬盘](docs/screenshots/dialog-plug-in-again.png)
+
+### 深色模式
+
+| 主界面 | 扩展引导 |
+| --- | --- |
+| ![深色模式主界面](docs/screenshots/dark-overview.png) | ![深色模式扩展引导](docs/screenshots/dark-enable-extension.png) |
+
+### 精简布局、空状态与关于
+
+| 隐藏边栏 | 等待插入硬盘 |
+| --- | --- |
+| ![隐藏边栏](docs/screenshots/sidebar-hidden.png) | ![未连接硬盘](docs/screenshots/no-drive.png) |
+
+![关于 NTFSTool](docs/screenshots/about.png)
 
 ## 项目简介
 

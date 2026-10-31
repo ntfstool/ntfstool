@@ -5,7 +5,9 @@ Free, open-source read-write NTFS for macOS, built on Apple's **FSKit** and NTFS
 Plug in a Windows (NTFS) drive and macOS mounts it writable through NTFSTool's FSKit driver module — no kernel
 extension, no macFUSE, no reduced security settings, no admin password. The app itself is fully sandboxed.
 
-[简体中文说明](README-CN.md) · [Architecture guide](docs/ARCHITECTURE.md)
+**English** · [简体中文](README-CN.md) · [繁體中文](docs/readme/README.zh-Hant.md) · [日本語](docs/readme/README.ja.md) · [한국어](docs/readme/README.ko.md) · [Deutsch](docs/readme/README.de.md) · [Français](docs/readme/README.fr.md) · [Español](docs/readme/README.es.md) · [Italiano](docs/readme/README.it.md) · [Português](docs/readme/README.pt.md) · [Русский](docs/readme/README.ru.md) · [العربية](docs/readme/README.ar.md) · [فارسی](docs/readme/README.fa.md) · [Türkçe](docs/readme/README.tr.md) · [हिन्दी](docs/readme/README.hi.md) · [বাংলা](docs/readme/README.bn.md) · [Bahasa Indonesia](docs/readme/README.id.md) · [Kiswahili](docs/readme/README.sw.md) · [ไทย](docs/readme/README.th.md) · [Tiếng Việt](docs/readme/README.vi.md)
+
+[Architecture guide](docs/ARCHITECTURE.md)
 
 <p align="center">
   <img src="docs/screenshots/overview.png" alt="NTFSTool main window: a read-write NTFS drive with capacity bar and details" width="760">
@@ -18,57 +20,59 @@ extension, no macFUSE, no reduced security settings, no admin password. The app 
 Real screenshots of the app built from this repository (`make app`). The drives shown are the sample drives of the
 built-in demo mode (`make demo`), so you can try every screen without a physical disk.
 
-### One window for all your NTFS drives
+### Main window
 
-Every NTFS volume with its state at a glance: **Read & Write**, **Read-Only**, **Not Mounted**. Capacity bar,
-mount point, bus (USB / Thunderbolt) and device details, plus *Show in Finder* and *Eject*.
+One window for all your NTFS drives. Each volume shows its state at a glance — **Read & Write**, **Read-Only** or
+**Not Mounted** — with a capacity bar, mount point, bus (USB / Thunderbolt) and device details, plus *Show in
+Finder* and *Eject*.
+
+![Main window: a read-write USB drive](docs/screenshots/overview.png)
 
 | A Thunderbolt SSD, read & write | A drive that is not mounted |
 | --- | --- |
 | ![Thunderbolt drive](docs/screenshots/thunderbolt-drive.png) | ![Not mounted drive](docs/screenshots/not-mounted.png) |
 
-### Guided setup — no password, no kernel extension
+### Guided setup: no password, no kernel extension
 
 NTFSTool is a regular FSKit file system module. The only thing macOS asks for is one switch in
 **System Settings → General → Login Items & Extensions → File System Extensions**. The app explains it step by
-step and detects the change automatically.
+step and notices the change by itself.
 
-![Enable the file system extension](docs/screenshots/enable-extension.png)
+![Turn on the file system extension](docs/screenshots/enable-extension.png)
 
-### Honest about read-only drives
+### Safe by default
 
 If Windows was hibernated or *Fast Startup* is on, writing would corrupt the disk. NTFSTool mounts such a drive
-**read-only** and tells you why, instead of failing or risking your data.
+**read-only** and tells you exactly how to fix it, instead of risking your data.
 
-![Drive left hibernated by Windows](docs/screenshots/hibernated-windows.png)
-
-### Light, dark and everything in between
-
-| Light | Dark |
+| Drive left hibernated by Windows | What the app tells you |
 | --- | --- |
-| ![Light mode](docs/screenshots/thunderbolt-drive.png) | ![Dark mode](docs/screenshots/dark-overview.png) |
+| ![Hibernated drive](docs/screenshots/hibernated-windows.png) | ![Shut Down Windows Completely](docs/screenshots/dialog-shut-down-windows.png) |
 
-![Dark mode, extension guide](docs/screenshots/dark-enable-extension.png)
+### Plugging a drive in again
 
-### 20 languages, including right-to-left
+macOS only lets the system mount physical drives when they are plugged in, so the app safely ejects the drive and
+asks you to plug it back in; it then mounts read-write.
 
-English, 简体中文, 繁體中文, 日本語, 한국어, Deutsch, Français, Español, Italiano, Português, Русский, العربية,
-فارسی, Türkçe, हिन्दी, বাংলা, Bahasa Indonesia, Kiswahili, ไทย and Tiếng Việt. The layout mirrors properly for
-Arabic and Persian.
+![Plug the drive in again](docs/screenshots/dialog-plug-in-again.png)
 
-| Japanese | German |
+### Dark mode
+
+| Main window | Extension guide |
 | --- | --- |
-| ![Japanese](docs/screenshots/japanese.png) | ![German](docs/screenshots/german.png) |
+| ![Dark mode, main window](docs/screenshots/dark-overview.png) | ![Dark mode, extension guide](docs/screenshots/dark-enable-extension.png) |
 
-| Arabic (right-to-left) | Simplified Chinese |
+### Compact layout, empty state and About
+
+| Sidebar hidden | Waiting for a drive |
 | --- | --- |
-| ![Arabic, right-to-left](docs/screenshots/arabic-rtl.png) | ![Simplified Chinese](docs/screenshots/chinese.png) |
+| ![Sidebar hidden](docs/screenshots/sidebar-hidden.png) | ![No drive connected](docs/screenshots/no-drive.png) |
 
-### Empty state and About
+![About NTFSTool](docs/screenshots/about.png)
 
-| Waiting for a drive | About |
-| --- | --- |
-| ![No drive connected](docs/screenshots/no-drive.png) | ![About window](docs/screenshots/about.png) |
+The interface is available in 20 languages, including right-to-left layouts for Arabic and Persian: English,
+简体中文, 繁體中文, 日本語, 한국어, Deutsch, Français, Español, Italiano, Português, Русский, العربية, فارسی,
+Türkçe, हिन्दी, বাংলা, Bahasa Indonesia, Kiswahili, ไทย and Tiếng Việt.
 
 ## What this repository is
 
