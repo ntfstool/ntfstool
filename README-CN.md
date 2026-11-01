@@ -5,6 +5,8 @@
 
 本仓库面向**自用、研究和学习**：你可以自己编译使用，也可以把它当作 macOS 文件系统开发的完整参考工程来读。
 
+> **找旧版？** 之前基于 Electron/Fuse 的旧版本（2.x – 4.7.x）及其完整提交历史已归档在 [`V3` 分支](https://github.com/ntfstool/ntfstool/tree/V3)，不再维护；当前 `master` 是基于 FSKit 的新版。
+
 [架构说明](docs/ARCHITECTURE.md) · [官网 ntfstool.com](https://ntfstool.com/?utm_source=github_opensource) · [NTFSTool Pro](#ntfstool-pro专业版)
 
 [English](README.md) · **简体中文** · [繁體中文](docs/readme/README.zh-Hant.md) · [日本語](docs/readme/README.ja.md) · [한국어](docs/readme/README.ko.md) · [Deutsch](docs/readme/README.de.md) · [Français](docs/readme/README.fr.md) · [Español](docs/readme/README.es.md) · [Italiano](docs/readme/README.it.md) · [Português](docs/readme/README.pt.md) · [Русский](docs/readme/README.ru.md) · [العربية](docs/readme/README.ar.md) · [فارسی](docs/readme/README.fa.md) · [Türkçe](docs/readme/README.tr.md) · [हिन्दी](docs/readme/README.hi.md) · [বাংলা](docs/readme/README.bn.md) · [Bahasa Indonesia](docs/readme/README.id.md) · [Kiswahili](docs/readme/README.sw.md) · [ไทย](docs/readme/README.th.md) · [Tiếng Việt](docs/readme/README.vi.md)
