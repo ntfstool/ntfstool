@@ -7,6 +7,8 @@ Windows（NTFS）のドライブを接続すると、macOS は NTFSTool の FSKi
 
 [English](../../README.md) · [简体中文](../../README-CN.md) · [繁體中文](README.zh-Hant.md) · **日本語** · [한국어](README.ko.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md) · [Русский](README.ru.md) · [العربية](README.ar.md) · [فارسی](README.fa.md) · [Türkçe](README.tr.md) · [हिन्दी](README.hi.md) · [বাংলা](README.bn.md) · [Bahasa Indonesia](README.id.md) · [Kiswahili](README.sw.md) · [ไทย](README.th.md) · [Tiếng Việt](README.vi.md)
 
+> **旧バージョンをお探しですか？** 以前の Electron/Fuse ベースのリリース（2.x – 4.7.x）と全コミット履歴は [`V3` ブランチ](https://github.com/ntfstool/ntfstool/tree/V3) にアーカイブされています。メンテナンスは終了しており、現在の `master` は FSKit ベースの新版です。
+
 [アーキテクチャガイド](../ARCHITECTURE.md)
 
 <p align="center">
@@ -177,20 +179,7 @@ Issue とプルリクエストを歓迎します。[Developer Certificate of Ori
 ## ライセンス
 
 MIT License ――[LICENSE](../../LICENSE) と [NOTICE](../../NOTICE) をご覧ください。
-同梱の NTFS エンジンは NTFSTool 独自の `libntfstool-driver` で、ビルド済みの静的ライブラリとして提供されます
-（[Vendor/README.md](../../Vendor/README.md) を参照）。
-
-このリポジトリの以前のバージョン（Electron アプリ）は git の履歴から引き続き参照できます。
 
 ## 商標
 
-MIT License が与えるのはコードであり、ブランドではありません。「NTFSTool」および NTFSTool のアイコンとロゴは
-NTFSTool プロジェクトの商標であり、MIT License の**対象外**です。
-
-- このソースをご自身用にビルドして使用すること、また「NTFSTool をベースにした」と紹介することは自由です。
-- 改変版やフォークを（あらゆるアプリストアを含め）**配布**する場合は、別の名前とアイコンを付け、NTFSTool のロゴを取り除き、
-  独自のバンドル識別子を使用してください。公式の NTFSTool リリースのように見えたり、そう名乗ったりしてはなりません。
-- このリポジトリの無改変ビルドは、事前の許可がある場合に限り、NTFSTool の名前で再配布できます。
-
-NTFS と Windows は Microsoft Corporation の商標であり、macOS と FSKit は Apple Inc. の商標です。このプロジェクトは
-Microsoft および Apple とは無関係です。
+**本アプリおよびそのフォークを Mac App Store に公開しないでください**。公式の無料版と競合し、ユーザーの混乱を招くためです。

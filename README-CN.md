@@ -152,7 +152,7 @@ NTFS 写入出错会直接损坏用户数据，驱动层遵循常见 FUSE NTFS �
                               ▼
                         ntfstool_bridge.c          C 桥接层（Sources/NTFSToolBridge）
                               ▼
-                        libntfstool-driver         NTFS 引擎（Vendor/NTFSToolNTFS.xcframework，预编译）
+                        libntfstool-driver         NTFS 引擎（Vendor/NTFSToolNTFS.xcframework)
                               ▼
                         FSKit 交给驱动的原始磁盘设备
 
@@ -224,7 +224,6 @@ FSKit 模块需要受限权限 `com.apple.developer.fskit.fsmodule`，macOS 只�
 | `Sources/NTFSToolCore` | 不依赖 AppKit 的纯逻辑：磁盘模型、语言列表、驱动名、本地事件日志 |
 | `Sources/NTFSToolBridge` | C 桥接层（`ntfstool_bridge.c`），在 libntfstool-driver 之上提供按 inode 号操作的接口 |
 | `Sources/NTFSToolDriver` | 驱动的 Swift 核心（不依赖 FSKit，任何 macOS 上都能单元测试） |
-| `Vendor/NTFSToolNTFS.xcframework` | 预编译的 NTFS 引擎（libntfstool-driver 静态库，arm64 + x86_64，含头文件），说明见 [Vendor/README.md](Vendor/README.md) |
 | `FSKitModule/NTFSToolFS` | macOS 加载的 FSKit 模块（`NTFSToolFS.appex`） |
 | `Tests/` | App 模型测试、驱动测试（真实 NTFS 磁盘映像） |
 | `scripts/` | `build-app.sh`、`build-fskit.sh`、`scan-secrets.sh` |
@@ -247,24 +246,13 @@ App 的权限只有 App Sandbox。
 欢迎提交 Issue 和 Pull Request。提交时请加上 `git commit -s` 签署
 [开发者原创声明（DCO）](https://developercertificate.org/)，详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-## 使用范围与许可证
+## 许可证
 
-- **用途**：本仓库供个人自用、研究和学习。
-- **商业使用须授权**：以 NTFSTool 的名称、图标或品牌进行任何商业使用（销售、上架应用商店、预装或捆绑分发、
-  基于它提供付费服务等），须事先获得 NTFSTool 的书面授权。授权联系：service@ntfstool.com。
-- **代码许可证**：MIT 许可证，见 [LICENSE](LICENSE) 和 [NOTICE](NOTICE)。内置的 NTFS 引擎是 NTFSTool 自有的
-  libntfstool-driver，以预编译静态库形式提供，见 [Vendor/README.md](Vendor/README.md)。
-- 本仓库早期的 Electron 版本（MIT 许可）保存在 `archive/electron-master` 分支。
+MIT 许可证，见 [LICENSE](LICENSE) 和 [NOTICE](NOTICE)。
 
 ## 商标
 
-「NTFSTool」名称和图标是 NTFSTool 的商标，不在 MIT 授权范围内。
-
-- 你可以自己编译、使用本仓库的代码，并注明「基于 NTFSTool」。
-- **分发**修改版或分支（包括上架任何应用商店）时，必须换用不同的名称、图标和 bundle id，不能看起来像或自称官方 NTFSTool。
-- 未经许可，不得以 NTFSTool 名义再分发本仓库的未修改版本。
-
-NTFS 和 Windows 是微软公司的商标；macOS 和 FSKit 是苹果公司的商标。本项目与微软、苹果无关。
+**请不要把本项目或其衍生版本上架 Mac App Store**——会与官方免费版竞争并造成用户混淆。
 
 ## 联系我们
 

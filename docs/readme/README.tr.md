@@ -9,6 +9,8 @@ yok. Uygulamanın kendisi tamamen korumalı alanda (sandbox) çalışır.
 
 [English](../../README.md) · [简体中文](../../README-CN.md) · [繁體中文](README.zh-Hant.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md) · [Русский](README.ru.md) · [العربية](README.ar.md) · [فارسی](README.fa.md) · **Türkçe** · [हिन्दी](README.hi.md) · [বাংলা](README.bn.md) · [Bahasa Indonesia](README.id.md) · [Kiswahili](README.sw.md) · [ไทย](README.th.md) · [Tiếng Việt](README.vi.md)
 
+> **Eski sürümü mü arıyorsunuz?** Önceki Electron/Fuse tabanlı sürümler (2.x – 4.7.x) ve tüm geçmişleri [`V3` dalında](https://github.com/ntfstool/ntfstool/tree/V3) arşivlenmiştir; artık bakımı yapılmıyor. `master`, FSKit tabanlı güncel sürümdür.
+
 [Mimari rehberi](../ARCHITECTURE.md)
 
 <p align="center">
@@ -177,21 +179,7 @@ onayladığınızı göstermek için lütfen commit'lerinizi imzalayın (`git co
 ## Lisans
 
 MIT Lisansı — bkz. [LICENSE](../../LICENSE) ve [NOTICE](../../NOTICE).
-Pakete dahil NTFS motoru, NTFSTool'un kendi `libntfstool-driver` kütüphanesidir ve önceden derlenmiş bir statik kütüphane olarak sunulur (bkz.
-[Vendor/README.md](../../Vendor/README.md)).
-
-Bu deponun önceki sürümleri (Electron uygulaması) git geçmişinde erişilebilir durumda kalır.
 
 ## Ticari markalar
 
-MIT Lisansı size kodu verir, markayı vermez. "NTFSTool" ile NTFSTool simgeleri ve logoları, NTFSTool projesinin ticari markalarıdır
-ve MIT Lisansı kapsamında lisanslanmış **değildir**.
-
-- Bu kaynağı kendiniz için derleyip kullanabilir ve ondan "NTFSTool tabanlı" olarak söz edebilirsiniz.
-- Değiştirilmiş bir sürümü veya fork'u (herhangi bir uygulama mağazası dahil) **dağıtırsanız**, ona farklı bir ad ve simge
-  vermeli, NTFSTool logolarını kaldırmalı ve kendi bundle identifier'ınızı kullanmalısınız — resmî bir NTFSTool sürümü gibi
-  görünmemeli veya öyle olduğunu iddia etmemelidir.
-- Bu deponun değiştirilmemiş derlemeleri, yalnızca önceden izin alınarak NTFSTool adı altında yeniden dağıtılabilir.
-
-NTFS ve Windows, Microsoft Corporation'ın ticari markalarıdır; macOS ve FSKit, Apple Inc.'in ticari markalarıdır. Bu
-proje Microsoft veya Apple ile bağlantılı değildir.
+**Lütfen bu uygulamayı veya bir çatalını (fork) Mac App Store'da yayımlamayın** — resmî ücretsiz sürümle rekabet eder ve kullanıcıları karıştırır.

@@ -7,6 +7,8 @@ extension, không cần macFUSE, không phải hạ thấp thiết lập bảo m
 
 [English](../../README.md) · [简体中文](../../README-CN.md) · [繁體中文](README.zh-Hant.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md) · [Русский](README.ru.md) · [العربية](README.ar.md) · [فارسی](README.fa.md) · [Türkçe](README.tr.md) · [हिन्दी](README.hi.md) · [বাংলা](README.bn.md) · [Bahasa Indonesia](README.id.md) · [Kiswahili](README.sw.md) · [ไทย](README.th.md) · **Tiếng Việt**
 
+> **Tìm bản cũ?** Các bản trước dựa trên Electron/Fuse (2.x – 4.7.x) cùng toàn bộ lịch sử được lưu trữ ở [nhánh `V3`](https://github.com/ntfstool/ntfstool/tree/V3). Không còn được bảo trì; `master` là bản hiện tại dựa trên FSKit.
+
 [Hướng dẫn kiến trúc](../ARCHITECTURE.md)
 
 <p align="center">
@@ -177,22 +179,7 @@ Chào đón các issue và pull request. Vui lòng ký xác nhận các commit c
 
 ## Giấy phép
 
-Giấy phép MIT — xem [LICENSE](../../LICENSE) và [NOTICE](../../NOTICE).
-Engine NTFS đi kèm là `libntfstool-driver` của chính NTFSTool, được phân phối dưới dạng thư viện tĩnh biên dịch sẵn (xem
-[Vendor/README.md](../../Vendor/README.md)).
-
-Các phiên bản trước của kho mã này (ứng dụng Electron) vẫn còn trong lịch sử git.
 
 ## Nhãn hiệu
 
-Giấy phép MIT trao cho bạn mã nguồn, không phải thương hiệu. "NTFSTool" cùng các biểu tượng và logo của NTFSTool là nhãn hiệu của
-dự án NTFSTool và **không** được cấp phép theo Giấy phép MIT.
-
-- Bạn có thể build và dùng mã nguồn này cho riêng mình, và nhắc đến nó là "dựa trên NTFSTool".
-- Nếu bạn **phân phối** một phiên bản đã sửa đổi hoặc một bản fork (kể cả trên bất kỳ cửa hàng ứng dụng nào), bạn phải đặt cho nó một tên
-  và biểu tượng khác, gỡ bỏ các logo NTFSTool, và dùng bundle identifier của riêng bạn — nó không được trông giống, hay tuyên bố
-  là, một bản phát hành chính thức của NTFSTool.
-- Các bản build chưa sửa đổi của kho mã này chỉ được phân phối lại dưới tên NTFSTool khi có sự cho phép trước.
-
-NTFS và Windows là nhãn hiệu của Microsoft Corporation; macOS và FSKit là nhãn hiệu của Apple Inc. Dự án
-này không liên kết với Microsoft hay Apple.
+**Vui lòng không đưa ứng dụng này, hoặc bản fork của nó, lên Mac App Store** — việc đó cạnh tranh với bản miễn phí chính thức và gây nhầm lẫn cho người dùng.

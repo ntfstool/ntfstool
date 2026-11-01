@@ -7,6 +7,8 @@ extension ไม่ต้องใช้ macFUSE ไม่ต้องลดร�
 
 [English](../../README.md) · [简体中文](../../README-CN.md) · [繁體中文](README.zh-Hant.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md) · [Русский](README.ru.md) · [العربية](README.ar.md) · [فارسی](README.fa.md) · [Türkçe](README.tr.md) · [हिन्दी](README.hi.md) · [বাংলা](README.bn.md) · [Bahasa Indonesia](README.id.md) · [Kiswahili](README.sw.md) · **ไทย** · [Tiếng Việt](README.vi.md)
 
+> **มองหาเวอร์ชันเก่า?** เวอร์ชันก่อนหน้าที่ใช้ Electron/Fuse (2.x – 4.7.x) และประวัติทั้งหมดถูกเก็บถาวรไว้ใน [บรานช์ `V3`](https://github.com/ntfstool/ntfstool/tree/V3) ซึ่งเลิกดูแลแล้ว ส่วน `master` คือเวอร์ชันปัจจุบันที่ใช้ FSKit
+
 [คู่มือสถาปัตยกรรม](../ARCHITECTURE.md)
 
 <p align="center">
@@ -178,21 +180,7 @@ provisioning profile และคีย์สำหรับลงนามต�
 ## สัญญาอนุญาต
 
 MIT License — ดู [LICENSE](../../LICENSE) และ [NOTICE](../../NOTICE)
-เอนจิน NTFS ที่รวมมาคือ `libntfstool-driver` ของ NTFSTool เอง จัดส่งเป็นไลบรารีสแตติกที่คอมไพล์ไว้ล่วงหน้า (ดู
-[Vendor/README.md](../../Vendor/README.md))
-
-รุ่นก่อนหน้าของรีโพซิทอรีนี้ (แอป Electron) ยังคงมีอยู่ในประวัติ git
 
 ## เครื่องหมายการค้า
 
-MIT License ให้โค้ดแก่คุณ ไม่ได้ให้แบรนด์ "NTFSTool" รวมถึงไอคอนและโลโก้ของ NTFSTool เป็นเครื่องหมายการค้าของ
-โปรเจกต์ NTFSTool และ**ไม่ได้**อยู่ภายใต้สัญญาอนุญาต MIT
-
-- คุณสร้างและใช้ซอร์สนี้เพื่อตัวคุณเองได้ และอ้างถึงว่า "based on NTFSTool" ได้
-- หากคุณ**เผยแพร่**เวอร์ชันที่แก้ไขหรือ fork (รวมถึงบนแอปสโตร์ใด ๆ) คุณต้องตั้งชื่อ
-  และไอคอนที่แตกต่างออกไป ลบโลโก้ NTFSTool ออก และใช้ bundle identifier ของคุณเอง — ต้องไม่ดูเหมือน หรืออ้างว่า
-  เป็นรุ่นทางการของ NTFSTool
-- บิลด์ที่ไม่ได้แก้ไขจากรีโพซิทอรีนี้จะเผยแพร่ซ้ำภายใต้ชื่อ NTFSTool ได้ก็ต่อเมื่อได้รับอนุญาตล่วงหน้าเท่านั้น
-
-NTFS และ Windows เป็นเครื่องหมายการค้าของ Microsoft Corporation; macOS และ FSKit เป็นเครื่องหมายการค้าของ Apple Inc. โปรเจกต์
-นี้ไม่มีส่วนเกี่ยวข้องกับ Microsoft หรือ Apple
+**โปรดอย่านำแอปนี้หรือฟอร์กของแอปนี้ไปเผยแพร่บน Mac App Store** — เพราะจะแข่งกับเวอร์ชันฟรีอย่างเป็นทางการและทำให้ผู้ใช้สับสน

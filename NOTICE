@@ -4,15 +4,6 @@ Copyright © 2019-2026 NTFSTool
 Released under the MIT License. See the file LICENSE (identical copy in COPYING).
 
 -------------------------------------------------------------------------------
-Bundled binaries
--------------------------------------------------------------------------------
-
-Vendor/NTFSToolNTFS.xcframework
-    A prebuilt static library (libntfstool-driver.a, arm64 + x86_64) and its
-    headers: NTFSTool's own NTFS engine, provided as a binary. See
-    Vendor/README.md.
-
--------------------------------------------------------------------------------
 Trademarks
 -------------------------------------------------------------------------------
 

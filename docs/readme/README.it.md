@@ -8,6 +8,8 @@ senza macFUSE, senza ridurre le impostazioni di sicurezza, senza password di amm
 
 [English](../../README.md) · [简体中文](../../README-CN.md) · [繁體中文](README.zh-Hant.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Español](README.es.md) · **Italiano** · [Português](README.pt.md) · [Русский](README.ru.md) · [العربية](README.ar.md) · [فارسی](README.fa.md) · [Türkçe](README.tr.md) · [हिन्दी](README.hi.md) · [বাংলা](README.bn.md) · [Bahasa Indonesia](README.id.md) · [Kiswahili](README.sw.md) · [ไทย](README.th.md) · [Tiếng Việt](README.vi.md)
 
+> **Cerchi la vecchia versione?** Le versioni precedenti basate su Electron/Fuse (2.x – 4.7.x) e tutta la loro cronologia sono archiviate nel [branch `V3`](https://github.com/ntfstool/ntfstool/tree/V3). Non sono più mantenute; `master` è l'edizione attuale basata su FSKit.
+
 [Guida all'architettura](../ARCHITECTURE.md)
 
 <p align="center">
@@ -179,21 +181,7 @@ Issue e pull request sono benvenute. Firma i tuoi commit (`git commit -s`) per c
 
 ## Licenza
 
-Licenza MIT — vedi [LICENSE](../../LICENSE) e [NOTICE](../../NOTICE). Il motore NTFS incluso è il `libntfstool-driver` di NTFSTool, distribuito come
-libreria statica precompilata (vedi
-[Vendor/README.md](../../Vendor/README.md)).
-
-Le versioni precedenti di questo repository (l'app Electron) restano disponibili nella cronologia di git.
 
 ## Marchi
 
-La licenza MIT ti dà il codice, non il marchio. «NTFSTool» e le icone e i loghi di NTFSTool sono marchi del progetto NTFSTool e **non** sono
-concessi in licenza con la licenza MIT.
-
-- Puoi compilare e usare questo codice sorgente per te stesso e citarlo come «basato su NTFSTool».
-- Se **distribuisci** una versione modificata o un fork (anche su qualsiasi app store), devi dargli un nome e un'icona diversi, rimuovere i
-  loghi di NTFSTool e usare un tuo bundle identifier — non deve sembrare una versione ufficiale di NTFSTool né dichiararsi tale.
-- Le build non modificate di questo repository possono essere ridistribuite con il nome NTFSTool solo con autorizzazione preventiva.
-
-NTFS e Windows sono marchi di Microsoft Corporation; macOS e FSKit sono marchi di Apple Inc. Questo progetto non è affiliato a Microsoft né
-ad Apple.
+**Per favore non pubblicare questa app, né un suo fork, sul Mac App Store**: farebbe concorrenza alla versione gratuita ufficiale e confonderebbe gli utenti.

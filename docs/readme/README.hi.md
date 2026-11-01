@@ -10,6 +10,8 @@ macOS के लिए मुफ़्त, ओपन-सोर्स, रीड-
 
 [English](../../README.md) · [简体中文](../../README-CN.md) · [繁體中文](README.zh-Hant.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md) · [Русский](README.ru.md) · [العربية](README.ar.md) · [فارسی](README.fa.md) · [Türkçe](README.tr.md) · **हिन्दी** · [বাংলা](README.bn.md) · [Bahasa Indonesia](README.id.md) · [Kiswahili](README.sw.md) · [ไทย](README.th.md) · [Tiếng Việt](README.vi.md)
 
+> **पुराना संस्करण ढूँढ रहे हैं?** पहले के Electron/Fuse आधारित संस्करण (2.x – 4.7.x) और उनका पूरा इतिहास [`V3` ब्रांच](https://github.com/ntfstool/ntfstool/tree/V3) में संग्रहीत है। अब इनका रखरखाव नहीं होता; `master` FSKit पर आधारित वर्तमान संस्करण है।
+
 [आर्किटेक्चर गाइड](../ARCHITECTURE.md)
 
 <p align="center">
@@ -177,21 +179,7 @@ Issue और pull request का स्वागत है। कृपया [D
 ## लाइसेंस
 
 MIT लाइसेंस — देखें [LICENSE](../../LICENSE) और [NOTICE](../../NOTICE)।
-साथ में शामिल NTFS इंजन NTFSTool का अपना `libntfstool-driver` है, जो पहले से बनी स्टैटिक लाइब्रेरी के रूप में दिया गया है (देखें
-[Vendor/README.md](../../Vendor/README.md))।
-
-इस रिपॉज़िटरी के पुराने संस्करण (Electron ऐप) git इतिहास में उपलब्ध हैं।
 
 ## ट्रेडमार्क
 
-MIT लाइसेंस आपको कोड देता है, ब्रांड नहीं। "NTFSTool" और NTFSTool के आइकन तथा लोगो NTFSTool प्रोजेक्ट के ट्रेडमार्क हैं
-और MIT लाइसेंस के तहत लाइसेंस प्राप्त **नहीं** हैं।
-
-- आप इस सोर्स को अपने लिए बना और उपयोग कर सकते हैं, और इसे "NTFSTool पर आधारित" कह सकते हैं।
-- अगर आप किसी संशोधित संस्करण या फ़ोर्क को **वितरित** करते हैं (किसी भी ऐप स्टोर सहित), तो आपको उसे अलग नाम और आइकन देना होगा,
-  NTFSTool के लोगो हटाने होंगे, और अपना बंडल आइडेंटिफ़ायर उपयोग करना होगा — वह आधिकारिक NTFSTool रिलीज़ जैसा
-  दिखना या होने का दावा करना नहीं चाहिए।
-- इस रिपॉज़िटरी के असंशोधित बिल्ड को NTFSTool नाम के तहत केवल पूर्व अनुमति से ही पुनः वितरित किया जा सकता है।
-
-NTFS और Windows Microsoft Corporation के ट्रेडमार्क हैं; macOS और FSKit Apple Inc. के ट्रेडमार्क हैं। यह
-प्रोजेक्ट Microsoft या Apple से संबद्ध नहीं है।
+**कृपया इस ऐप या इसके किसी फ़ोर्क को Mac App Store पर प्रकाशित न करें** — इससे आधिकारिक निःशुल्क संस्करण से प्रतिस्पर्धा होगी और उपयोगकर्ता भ्रमित होंगे।
