@@ -7,6 +7,8 @@ sans réduire les réglages de sécurité, sans mot de passe administrateur. L'a
 
 [English](../../README.md) · [简体中文](../../README-CN.md) · [繁體中文](README.zh-Hant.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Deutsch](README.de.md) · **Français** · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md) · [Русский](README.ru.md) · [العربية](README.ar.md) · [فارسی](README.fa.md) · [Türkçe](README.tr.md) · [हिन्दी](README.hi.md) · [বাংলা](README.bn.md) · [Bahasa Indonesia](README.id.md) · [Kiswahili](README.sw.md) · [ไทย](README.th.md) · [Tiếng Việt](README.vi.md)
 
+> **Vous cherchez l'ancienne version ?** Les anciennes versions Electron/Fuse (2.x – 4.7.x) et tout leur historique sont archivées dans la [branche `V3`](https://github.com/ntfstool/ntfstool/tree/V3). Elles ne sont plus maintenues ; `master` est l'édition actuelle basée sur FSKit.
+
 [Guide d'architecture](../ARCHITECTURE.md)
 
 <p align="center">
@@ -177,21 +179,7 @@ Les issues et les pull requests sont les bienvenues. Merci de signer vos commits
 
 ## Licence
 
-Licence MIT — voir [LICENSE](../../LICENSE) et [NOTICE](../../NOTICE). Le moteur NTFS inclus est le `libntfstool-driver` propre à NTFSTool, fourni sous forme de
-bibliothèque statique précompilée (voir
-[Vendor/README.md](../../Vendor/README.md)).
-
-Les versions antérieures de ce dépôt (l'application Electron) restent disponibles dans l'historique git.
 
 ## Marques
 
-La licence MIT vous donne le code, pas la marque. « NTFSTool » ainsi que les icônes et logos NTFSTool sont des marques du projet NTFSTool et ne sont
-**pas** concédés sous licence MIT.
-
-- Vous pouvez compiler et utiliser ce code source pour vous-même, et le désigner comme « basé sur NTFSTool ».
-- Si vous **distribuez** une version modifiée ou un fork (y compris sur un app store), vous devez lui donner un nom et une icône différents, retirer les
-  logos NTFSTool et utiliser votre propre identifiant de bundle — elle ne doit ni ressembler à une version officielle de NTFSTool, ni prétendre en être
-  une.
-- Les compilations non modifiées de ce dépôt ne peuvent être redistribuées sous le nom NTFSTool qu'avec une autorisation préalable.
-
-NTFS et Windows sont des marques de Microsoft Corporation ; macOS et FSKit sont des marques d'Apple Inc. Ce projet n'est affilié ni à Microsoft ni à Apple.
+**Merci de ne pas publier cette application, ni un fork, sur le Mac App Store** : cela concurrencerait la version gratuite officielle et prêterait à confusion.

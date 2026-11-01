@@ -8,6 +8,8 @@ NTFS رایگان و متن‌باز با قابلیت خواندن و نوشت�
 
 [English](../../README.md) · [简体中文](../../README-CN.md) · [繁體中文](README.zh-Hant.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md) · [Русский](README.ru.md) · [العربية](README.ar.md) · **فارسی** · [Türkçe](README.tr.md) · [हिन्दी](README.hi.md) · [বাংলা](README.bn.md) · [Bahasa Indonesia](README.id.md) · [Kiswahili](README.sw.md) · [ไทย](README.th.md) · [Tiếng Việt](README.vi.md)
 
+> **دنبال نسخهٔ قدیمی هستید؟** نسخه‌های قبلی مبتنی بر Electron/Fuse (از 2.x تا 4.7.x) و تمام تاریخچهٔ آن‌ها در [شاخهٔ `V3`](https://github.com/ntfstool/ntfstool/tree/V3) بایگانی شده‌اند و دیگر نگهداری نمی‌شوند؛ شاخهٔ `master` نسخهٔ فعلی مبتنی بر FSKit است.
+
 [راهنمای معماری](../ARCHITECTURE.md)
 
 <p align="center">
@@ -176,22 +178,7 @@ issueها و pull requestها پذیرفته می‌شوند. لطفاً commit�
 
 ## مجوز
 
-مجوز MIT — [LICENSE](../../LICENSE) و [NOTICE](../../NOTICE) را ببینید.
-موتور NTFS همراه، `libntfstool-driver` خود NTFSTool است که به‌صورت یک کتابخانهٔ ایستای از پیش ساخته‌شده ارائه می‌شود (نگاه کنید به
-[Vendor/README.md](../../Vendor/README.md)).
-
-نسخه‌های قدیمی‌تر این مخزن (برنامهٔ Electron) در تاریخچهٔ git در دسترس هستند.
 
 ## علائم تجاری
 
-مجوز MIT کد را به شما می‌دهد، نه برند را. «NTFSTool» و نمادها و لوگوهای NTFSTool علائم تجاری
-پروژهٔ NTFSTool هستند و **تحت** مجوز MIT **نیستند**.
-
-- می‌توانید این منبع را برای خودتان بسازید و استفاده کنید، و از آن به‌عنوان «مبتنی بر NTFSTool» یاد کنید.
-- اگر نسخهٔ تغییریافته یا فورکی را **منتشر** کنید (از جمله در هر فروشگاه برنامه)، باید نام و نماد
-  متفاوتی به آن بدهید، لوگوهای NTFSTool را حذف کنید و از bundle identifier خودتان استفاده کنید — نباید شبیه
-  نسخهٔ رسمی NTFSTool باشد یا ادعا کند که چنین است.
-- نسخه‌های بدون تغییر این مخزن را فقط با مجوز قبلی می‌توان با نام NTFSTool بازتوزیع کرد.
-
-NTFS و Windows علائم تجاری Microsoft Corporation هستند؛ macOS و FSKit علائم تجاری Apple Inc. هستند. این
-پروژه وابسته به Microsoft یا Apple نیست.
+**لطفاً این برنامه یا فورک آن را در Mac App Store منتشر نکنید** — با نسخهٔ رایگان رسمی رقابت می‌کند و کاربران را دچار سردرگمی می‌کند.

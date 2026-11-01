@@ -7,6 +7,8 @@ extension, bila macFUSE, bila kupunguza mipangilio ya usalama, bila nenosiri la 
 
 [English](../../README.md) · [简体中文](../../README-CN.md) · [繁體中文](README.zh-Hant.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md) · [Русский](README.ru.md) · [العربية](README.ar.md) · [فارسی](README.fa.md) · [Türkçe](README.tr.md) · [हिन्दी](README.hi.md) · [বাংলা](README.bn.md) · [Bahasa Indonesia](README.id.md) · **Kiswahili** · [ไทย](README.th.md) · [Tiếng Việt](README.vi.md)
 
+> **Unatafuta toleo la zamani?** Matoleo ya awali yanayotegemea Electron/Fuse (2.x – 4.7.x) pamoja na historia yake yote yamehifadhiwa kwenye [tawi la `V3`](https://github.com/ntfstool/ntfstool/tree/V3). Hayatunzwi tena; `master` ni toleo la sasa linalotegemea FSKit.
+
 [Mwongozo wa usanifu](../ARCHITECTURE.md)
 
 <p align="center">
@@ -177,22 +179,7 @@ Issue na pull request zinakaribishwa. Tafadhali tia sahihi commit zako (`git com
 
 ## Leseni
 
-Leseni ya MIT — tazama [LICENSE](../../LICENSE) na [NOTICE](../../NOTICE).
-Injini ya NTFS iliyojumuishwa ni `libntfstool-driver` ya NTFSTool yenyewe, inayotolewa kama maktaba tuli iliyojengwa awali (tazama
-[Vendor/README.md](../../Vendor/README.md)).
-
-Matoleo ya awali ya hazina hii (programu ya Electron) yanapatikana katika historia ya git.
 
 ## Alama za biashara
 
-Leseni ya MIT inakupa msimbo, si chapa. "NTFSTool" na aikoni na nembo za NTFSTool ni alama za biashara za
-mradi wa NTFSTool na **hazijapewa** leseni chini ya Leseni ya MIT.
-
-- Unaweza kujenga na kutumia chanzo hiki kwa ajili yako mwenyewe, na kukirejelea kama "kulingana na NTFSTool".
-- Ukiwa **unasambaza** toleo lililorekebishwa au fork (ikiwa ni pamoja na kwenye duka lolote la programu), lazima ulipe jina
-  na aikoni tofauti, uondoe nembo za NTFSTool, na utumie bundle identifier yako mwenyewe — haipaswi kuonekana kama, wala kudai
-  kuwa, toleo rasmi la NTFSTool.
-- Miundo isiyorekebishwa ya hazina hii inaweza kusambazwa tena chini ya jina NTFSTool kwa idhini ya awali tu.
-
-NTFS na Windows ni alama za biashara za Microsoft Corporation; macOS na FSKit ni alama za biashara za Apple Inc. Mradi
-huu hauhusiani na Microsoft wala Apple.
+**Tafadhali usichapishe programu hii, wala fork yake, kwenye Mac App Store** — itashindana na toleo rasmi lisilolipiwa na kuwachanganya watumiaji.

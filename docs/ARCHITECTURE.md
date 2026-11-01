@@ -18,7 +18,7 @@ with a header comment describing its role, so you can read this page first and t
                          ntfstool_bridge.c (C)             (Sources/NTFSToolBridge)
                                │  ntfs_inode_open / ntfs_attr_pread / …
                                ▼
-                         libntfstool-driver                        (Vendor/NTFSToolNTFS.xcframework, prebuilt)
+                         libntfstool-driver                        
                                │  pread / pwrite through a custom device
                                ▼
                          FSBlockDeviceResource (raw disk handed over by FSKit)

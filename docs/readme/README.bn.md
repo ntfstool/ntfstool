@@ -7,6 +7,8 @@ macOS-এর জন্য বিনামূল্যের, ওপেন-সো
 
 [English](../../README.md) · [简体中文](../../README-CN.md) · [繁體中文](README.zh-Hant.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md) · [Русский](README.ru.md) · [العربية](README.ar.md) · [فارسی](README.fa.md) · [Türkçe](README.tr.md) · [हिन्दी](README.hi.md) · **বাংলা** · [Bahasa Indonesia](README.id.md) · [Kiswahili](README.sw.md) · [ไทย](README.th.md) · [Tiếng Việt](README.vi.md)
 
+> **পুরোনো সংস্করণ খুঁজছেন?** আগের Electron/Fuse-ভিত্তিক সংস্করণ (2.x – 4.7.x) ও তাদের পূর্ণ ইতিহাস [`V3` ব্রাঞ্চে](https://github.com/ntfstool/ntfstool/tree/V3) সংরক্ষিত আছে। এগুলোর রক্ষণাবেক্ষণ বন্ধ; `master` হলো FSKit-ভিত্তিক বর্তমান সংস্করণ।
+
 [আর্কিটেকচার গাইড](../ARCHITECTURE.md)
 
 <p align="center">
@@ -178,21 +180,7 @@ Finder থেকে ডিস্ক পর্যন্ত একটি লেখ
 ## লাইসেন্স
 
 MIT লাইসেন্স — [LICENSE](../../LICENSE) ও [NOTICE](../../NOTICE) দেখুন।
-সংযুক্ত NTFS ইঞ্জিনটি NTFSTool-এর নিজস্ব `libntfstool-driver`, যা পূর্বে-কম্পাইল করা স্ট্যাটিক লাইব্রেরি হিসেবে দেওয়া হয় (দেখুন
-[Vendor/README.md](../../Vendor/README.md))।
-
-এই রিপোজিটরির আগের সংস্করণগুলো (Electron অ্যাপ) git ইতিহাসে পাওয়া যায়।
 
 ## ট্রেডমার্ক
 
-MIT লাইসেন্স আপনাকে কোড দেয়, ব্র্যান্ড নয়। "NTFSTool" এবং NTFSTool-এর আইকন ও লোগো NTFSTool প্রকল্পের
-ট্রেডমার্ক এবং MIT লাইসেন্সের আওতায় **লাইসেন্সকৃত নয়**।
-
-- আপনি এই সোর্স নিজের জন্য বিল্ড ও ব্যবহার করতে পারেন, এবং একে "based on NTFSTool" বলে উল্লেখ করতে পারেন।
-- আপনি যদি কোনো পরিবর্তিত সংস্করণ বা ফর্ক **বিতরণ** করেন (যেকোনো অ্যাপ স্টোরসহ), তাহলে তার একটি ভিন্ন
-  নাম ও আইকন দিতে হবে, NTFSTool লোগো সরিয়ে ফেলতে হবে এবং নিজের bundle identifier ব্যবহার করতে হবে — এটি যেন NTFSTool-এর অফিসিয়াল
-  রিলিজের মতো না দেখায়, বা তেমন দাবি না করে।
-- এই রিপোজিটরির অপরিবর্তিত বিল্ড NTFSTool নামে শুধু পূর্বানুমতি নিয়েই পুনরায় বিতরণ করা যাবে।
-
-NTFS ও Windows হলো Microsoft Corporation-এর ট্রেডমার্ক; macOS ও FSKit হলো Apple Inc.-এর ট্রেডমার্ক। এই
-প্রকল্প Microsoft বা Apple-এর সঙ্গে সম্পর্কিত নয়।
+**অনুগ্রহ করে এই অ্যাপ বা এর কোনো ফর্ক Mac App Store-এ প্রকাশ করবেন না** — এতে অফিশিয়াল ফ্রি সংস্করণের সঙ্গে প্রতিযোগিতা হবে এবং ব্যবহারকারীরা বিভ্রান্ত হবেন।

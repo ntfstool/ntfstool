@@ -8,6 +8,8 @@
 
 [English](../../README.md) · [简体中文](../../README-CN.md) · [繁體中文](README.zh-Hant.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md) · [Русский](README.ru.md) · **العربية** · [فارسی](README.fa.md) · [Türkçe](README.tr.md) · [हिन्दी](README.hi.md) · [বাংলা](README.bn.md) · [Bahasa Indonesia](README.id.md) · [Kiswahili](README.sw.md) · [ไทย](README.th.md) · [Tiếng Việt](README.vi.md)
 
+> **تبحث عن الإصدار القديم؟** الإصدارات السابقة المبنية على Electron/Fuse (من 2.x إلى 4.7.x) وسجلّها الكامل مؤرشفة في [فرع `V3`](https://github.com/ntfstool/ntfstool/tree/V3). لم تعد مدعومة؛ والفرع `master` هو الإصدار الحالي المبني على FSKit.
+
 [دليل البنية المعمارية](../ARCHITECTURE.md)
 
 <p align="center">
@@ -176,22 +178,7 @@ make            # → build/NTFSTool.app (ad-hoc signed, native architecture)
 
 ## الترخيص
 
-رخصة MIT — راجع [LICENSE](../../LICENSE) و[NOTICE](../../NOTICE).
-محرك NTFS المضمَّن هو `libntfstool-driver` الخاص بـ NTFSTool، ويُوزَّع كمكتبة ساكنة مبنية مسبقًا (راجع
-[Vendor/README.md](../../Vendor/README.md)).
-
-تظل الإصدارات السابقة من هذا المستودع (تطبيق Electron) متاحة في سجل git.
 
 ## العلامات التجارية
 
-تمنحك رخصة MIT الشيفرة لا العلامة التجارية. "NTFSTool" وأيقونات NTFSTool وشعاراته علامات تجارية
-لمشروع NTFSTool و**غير** مشمولة برخصة MIT.
-
-- يمكنك بناء هذا المصدر واستخدامه لنفسك، والإشارة إليه بعبارة "مبني على NTFSTool".
-- إذا قمت بـ**توزيع** نسخة معدَّلة أو fork (بما في ذلك على أي متجر تطبيقات)، فيجب أن تمنحها اسمًا وأيقونة
-  مختلفين، وتزيل شعارات NTFSTool، وتستخدم معرّف الحزمة (bundle identifier) الخاص بك — ويجب ألّا تبدو
-  كإصدار رسمي من NTFSTool أو تدّعي ذلك.
-- لا يجوز إعادة توزيع النسخ غير المعدَّلة من هذا المستودع باسم NTFSTool إلا بإذن مسبق.
-
-NTFS وWindows علامتان تجاريتان لشركة Microsoft Corporation؛ وmacOS وFSKit علامتان تجاريتان لشركة Apple Inc. هذا
-المشروع غير تابع لـ Microsoft أو Apple.
+**يرجى عدم نشر هذا التطبيق أو أي نسخة متفرعة منه على Mac App Store** — فهذا ينافس النسخة المجانية الرسمية ويربك المستخدمين.

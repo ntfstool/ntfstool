@@ -180,21 +180,7 @@ Issues and pull requests are welcome. Please sign off your commits (`git commit 
 ## License
 
 MIT License — see [LICENSE](LICENSE) and [NOTICE](NOTICE).
-The bundled NTFS engine is NTFSTool's own `libntfstool-driver`, shipped as a prebuilt static library (see
-[Vendor/README.md](Vendor/README.md)).
-
-Earlier versions of this repository (the Electron app) remain available in the git history.
 
 ## Trademarks
 
-The MIT License gives you the code, not the brand. "NTFSTool" and the NTFSTool icons and logos are trademarks of the
-NTFSTool project and are **not** licensed under the MIT License.
-
-- You may build and use this source for yourself, and refer to it as "based on NTFSTool".
-- If you **distribute** a modified version or a fork (including on any app store), you must give it a different
-  name and icon, remove the NTFSTool logos, and use your own bundle identifier — it must not look like, or claim
-  to be, an official NTFSTool release.
-- Unmodified builds of this repository may only be redistributed under the NTFSTool name with prior permission.
-
-NTFS and Windows are trademarks of Microsoft Corporation; macOS and FSKit are trademarks of Apple Inc. This
-project is not affiliated with Microsoft or Apple.
+**Please do not publish this app, or a fork of it, on the Mac App Store** — it would compete with and confuse users of the official free version.

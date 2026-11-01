@@ -7,6 +7,8 @@
 
 [English](../../README.md) · [简体中文](../../README-CN.md) · **繁體中文** · [日本語](README.ja.md) · [한국어](README.ko.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md) · [Русский](README.ru.md) · [العربية](README.ar.md) · [فارسی](README.fa.md) · [Türkçe](README.tr.md) · [हिन्दी](README.hi.md) · [বাংলা](README.bn.md) · [Bahasa Indonesia](README.id.md) · [Kiswahili](README.sw.md) · [ไทย](README.th.md) · [Tiếng Việt](README.vi.md)
 
+> **找舊版？** 先前以 Electron/Fuse 為基礎的舊版本（2.x – 4.7.x）及其完整提交歷史已封存於 [`V3` 分支](https://github.com/ntfstool/ntfstool/tree/V3)，不再維護；目前的 `master` 是以 FSKit 為基礎的新版。
+
 [架構指南](../ARCHITECTURE.md)
 
 <p align="center">
@@ -177,21 +179,7 @@ FSKit 模組使用受限權利 `com.apple.developer.fskit.fsmodule`。macOS 只�
 ## 授權條款
 
 MIT License——詳見 [LICENSE](../../LICENSE) 與 [NOTICE](../../NOTICE)。
-隨附的 NTFS 引擎是 NTFSTool 自行開發的 `libntfstool-driver`，以預先建置的靜態函式庫形式提供（參見
-[Vendor/README.md](../../Vendor/README.md)）。
-
-本儲存庫的早期版本（Electron 應用程式）仍可在 git 歷史記錄中找到。
 
 ## 商標
 
-MIT License 授予你的是程式碼，而不是品牌。「NTFSTool」以及 NTFSTool 的圖示與標誌是
-NTFSTool 專案的商標，**不**在 MIT License 的授權範圍內。
-
-- 你可以為自己建置並使用此原始碼，並可稱其「基於 NTFSTool」。
-- 如果你**散布**修改版或分支版本（包括在任何應用程式商店中），必須為其使用不同的
-  名稱與圖示，移除 NTFSTool 標誌，並使用你自己的 bundle identifier——它不得看起來像、或自稱為
-  NTFSTool 官方版本。
-- 本儲存庫的未修改建置版本，未經事先許可，不得以 NTFSTool 名稱重新散布。
-
-NTFS 與 Windows 是 Microsoft Corporation 的商標；macOS 與 FSKit 是 Apple Inc. 的商標。本
-專案與 Microsoft 或 Apple 無任何關聯。
+**請不要把本專案或其衍生版本上架 Mac App Store**——會與官方免費版競爭並造成使用者混淆。

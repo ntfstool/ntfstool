@@ -7,6 +7,8 @@ extension, tanpa macFUSE, tanpa menurunkan pengaturan keamanan, tanpa kata sandi
 
 [English](../../README.md) · [简体中文](../../README-CN.md) · [繁體中文](README.zh-Hant.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md) · [Русский](README.ru.md) · [العربية](README.ar.md) · [فارسی](README.fa.md) · [Türkçe](README.tr.md) · [हिन्दी](README.hi.md) · [বাংলা](README.bn.md) · **Bahasa Indonesia** · [Kiswahili](README.sw.md) · [ไทย](README.th.md) · [Tiếng Việt](README.vi.md)
 
+> **Mencari versi lama?** Rilis lama berbasis Electron/Fuse (2.x – 4.7.x) beserta seluruh riwayatnya diarsipkan di [branch `V3`](https://github.com/ntfstool/ntfstool/tree/V3). Tidak lagi dipelihara; `master` adalah edisi terkini berbasis FSKit.
+
 [Panduan arsitektur](../ARCHITECTURE.md)
 
 <p align="center">
@@ -177,22 +179,7 @@ Issue dan pull request sangat diterima. Mohon tanda tangani commit Anda (`git co
 
 ## Lisensi
 
-Lisensi MIT — lihat [LICENSE](../../LICENSE) dan [NOTICE](../../NOTICE).
-Mesin NTFS yang disertakan adalah `libntfstool-driver` milik NTFSTool sendiri, dikirim sebagai pustaka statis prakompilasi (lihat
-[Vendor/README.md](../../Vendor/README.md)).
-
-Versi-versi awal repositori ini (aplikasi Electron) tetap tersedia di riwayat git.
 
 ## Merek dagang
 
-Lisensi MIT memberi Anda kodenya, bukan mereknya. "NTFSTool" serta ikon dan logo NTFSTool adalah merek dagang dari
-proyek NTFSTool dan **tidak** dilisensikan di bawah Lisensi MIT.
-
-- Anda boleh membangun dan menggunakan sumber ini untuk diri sendiri, dan menyebutnya sebagai "berbasis NTFSTool".
-- Jika Anda **mendistribusikan** versi yang dimodifikasi atau fork (termasuk di toko aplikasi mana pun), Anda harus memberinya nama
-  dan ikon yang berbeda, menghapus logo NTFSTool, dan menggunakan bundle identifier Anda sendiri — tidak boleh terlihat seperti, atau mengaku
-  sebagai, rilis resmi NTFSTool.
-- Build tanpa modifikasi dari repositori ini hanya boleh didistribusikan ulang dengan nama NTFSTool dengan izin terlebih dahulu.
-
-NTFS dan Windows adalah merek dagang Microsoft Corporation; macOS dan FSKit adalah merek dagang Apple Inc. Proyek
-ini tidak berafiliasi dengan Microsoft maupun Apple.
+**Mohon jangan menerbitkan aplikasi ini, atau fork-nya, di Mac App Store** — ini akan bersaing dengan versi gratis resmi dan membingungkan pengguna.

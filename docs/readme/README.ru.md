@@ -8,6 +8,8 @@ NTFSTool (**libntfstool-driver**).
 
 [English](../../README.md) · [简体中文](../../README-CN.md) · [繁體中文](README.zh-Hant.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md) · **Русский** · [العربية](README.ar.md) · [فارسی](README.fa.md) · [Türkçe](README.tr.md) · [हिन्दी](README.hi.md) · [বাংলা](README.bn.md) · [Bahasa Indonesia](README.id.md) · [Kiswahili](README.sw.md) · [ไทย](README.th.md) · [Tiếng Việt](README.vi.md)
 
+> **Ищете старую версию?** Прежние версии на Electron/Fuse (2.x – 4.7.x) и вся их история архивированы в [ветке `V3`](https://github.com/ntfstool/ntfstool/tree/V3). Они больше не поддерживаются; `master` — текущая версия на основе FSKit.
+
 [Руководство по архитектуре](../ARCHITECTURE.md)
 
 <p align="center">
@@ -178,21 +180,7 @@ Issues и pull request приветствуются. Подписывайте с
 
 ## Лицензия
 
-Лицензия MIT — см. [LICENSE](../../LICENSE) и [NOTICE](../../NOTICE). Встроенный NTFS-движок — это собственная `libntfstool-driver` от NTFSTool,
-поставляемая в виде готовой статической библиотеки (см.
-[Vendor/README.md](../../Vendor/README.md)).
-
-Более ранние версии этого репозитория (приложение на Electron) остаются доступными в истории git.
 
 ## Товарные знаки
 
-Лицензия MIT даёт вам код, но не бренд. «NTFSTool», а также значки и логотипы NTFSTool — товарные знаки проекта NTFSTool и **не**
-лицензируются по лицензии MIT.
-
-- Вы можете собирать и использовать этот исходный код для себя и называть его «основан на NTFSTool».
-- Если вы **распространяете** изменённую версию или форк (в том числе в любом магазине приложений), вы обязаны дать ему другое название и
-  значок, убрать логотипы NTFSTool и использовать собственный bundle identifier — он не должен выглядеть как официальная сборка NTFSTool или
-  выдавать себя за неё.
-- Неизменённые сборки этого репозитория можно распространять под названием NTFSTool только с предварительного разрешения.
-
-NTFS и Windows — товарные знаки Microsoft Corporation; macOS и FSKit — товарные знаки Apple Inc. Этот проект не связан ни с Microsoft, ни с Apple.
+**Пожалуйста, не публикуйте это приложение или его форк в Mac App Store** — это будет конкурировать с официальной бесплатной версией и вводить пользователей в заблуждение.

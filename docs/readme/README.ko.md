@@ -7,6 +7,8 @@ Windows(NTFS) 드라이브를 연결하면 macOS가 NTFSTool의 FSKit 드라이�
 
 [English](../../README.md) · [简体中文](../../README-CN.md) · [繁體中文](README.zh-Hant.md) · [日本語](README.ja.md) · **한국어** · [Deutsch](README.de.md) · [Français](README.fr.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Português](README.pt.md) · [Русский](README.ru.md) · [العربية](README.ar.md) · [فارسی](README.fa.md) · [Türkçe](README.tr.md) · [हिन्दी](README.hi.md) · [বাংলা](README.bn.md) · [Bahasa Indonesia](README.id.md) · [Kiswahili](README.sw.md) · [ไทย](README.th.md) · [Tiếng Việt](README.vi.md)
 
+> **이전 버전을 찾으세요?** 이전 Electron/Fuse 기반 릴리스(2.x – 4.7.x)와 전체 커밋 기록은 [`V3` 브랜치](https://github.com/ntfstool/ntfstool/tree/V3)에 보관되어 있습니다. 더 이상 유지보수하지 않으며, 현재 `master`는 FSKit 기반 새 버전입니다.
+
 [아키텍처 가이드](../ARCHITECTURE.md)
 
 <p align="center">
@@ -177,20 +179,7 @@ FSKit 모듈은 제한된 권한 `com.apple.developer.fskit.fsmodule`을 사용�
 ## 라이선스
 
 MIT License — [LICENSE](../../LICENSE)와 [NOTICE](../../NOTICE)를 참고하세요.
-번들로 포함된 NTFS 엔진은 NTFSTool 자체 `libntfstool-driver`이며, 미리 빌드된 정적 라이브러리로 제공됩니다
-([Vendor/README.md](../../Vendor/README.md) 참고).
-
-이 저장소의 이전 버전(Electron 앱)은 git 기록에 남아 있습니다.
 
 ## 상표
 
-MIT License는 코드를 제공할 뿐, 브랜드를 제공하지 않습니다. "NTFSTool"과 NTFSTool 아이콘 및 로고는
-NTFSTool 프로젝트의 상표이며 MIT License의 허가 대상이 **아닙니다**.
-
-- 이 소스를 직접 빌드하여 사용할 수 있으며, "NTFSTool 기반"이라고 언급할 수 있습니다.
-- 수정된 버전이나 포크를 (모든 앱 스토어를 포함하여) **배포**하는 경우, 다른 이름과 아이콘을 사용하고, NTFSTool 로고를 제거하고,
-  자신의 번들 식별자를 사용해야 합니다. 공식 NTFSTool 릴리스처럼 보이거나 그렇게 주장해서는 안 됩니다.
-- 이 저장소의 수정되지 않은 빌드는 사전 허가가 있는 경우에만 NTFSTool 이름으로 재배포할 수 있습니다.
-
-NTFS와 Windows는 Microsoft Corporation의 상표이며, macOS와 FSKit은 Apple Inc.의 상표입니다. 이
-프로젝트는 Microsoft 또는 Apple과 관련이 없습니다.
+**이 앱이나 포크를 Mac App Store에 올리지 말아 주세요.** 공식 무료 버전과 경쟁하고 사용자에게 혼란을 줍니다.
