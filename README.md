@@ -7,6 +7,8 @@ extension, no macFUSE, no reduced security settings, no admin password. The app 
 
 **English** · [简体中文](README-CN.md) · [繁體中文](docs/readme/README.zh-Hant.md) · [日本語](docs/readme/README.ja.md) · [한국어](docs/readme/README.ko.md) · [Deutsch](docs/readme/README.de.md) · [Français](docs/readme/README.fr.md) · [Español](docs/readme/README.es.md) · [Italiano](docs/readme/README.it.md) · [Português](docs/readme/README.pt.md) · [Русский](docs/readme/README.ru.md) · [العربية](docs/readme/README.ar.md) · [فارسی](docs/readme/README.fa.md) · [Türkçe](docs/readme/README.tr.md) · [हिन्दी](docs/readme/README.hi.md) · [বাংলা](docs/readme/README.bn.md) · [Bahasa Indonesia](docs/readme/README.id.md) · [Kiswahili](docs/readme/README.sw.md) · [ไทย](docs/readme/README.th.md) · [Tiếng Việt](docs/readme/README.vi.md)
 
+> **Looking for the old version?** The previous Electron/Fuse-based releases (2.x – 4.7.x) and their full history are archived on the [`V3` branch](https://github.com/ntfstool/ntfstool/tree/V3). It is no longer maintained; this `master` branch is the current FSKit-based edition.
+
 [Architecture guide](docs/ARCHITECTURE.md)
 
 <p align="center">
