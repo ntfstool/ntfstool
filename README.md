@@ -88,7 +88,7 @@ Mac App Store and keeps the same architecture, but it is deliberately kept small
 - there is no licensing, activation or trial code.
 
 If you just want the best experience as a user, install the official builds from [ntfstool.com](https://ntfstool.com).
-NTFSTool Pro (closed source) adds a second driver for older macOS versions, disk repair and other tools.
+NTFSTool Pro (closed source) adds a second driver for older macOS versions, disk repair and other tools. The mount layer of that driver is open source as [OpenMacFUSE](https://github.com/ntfstool/openmacfuse) (MIT), a FUSE 2.x library for macOS that needs no kernel extension.
 
 ## Features
 
