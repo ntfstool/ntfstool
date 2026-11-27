@@ -242,6 +242,17 @@ public final class NTFSVolume {
         if r != 0 { throw NTFSError(r) }
     }
 
+    /// Like `lookup`, and also returns the name as stored on disk (lookups ignore case).
+    public func lookupStored(_ name: String, in dir: UInt64) throws -> (ino: UInt64, name: String) {
+        try locked { v in
+            var ino: UInt64 = 0
+            try check(ntfstool_lookup(v, dir, name, &ino))
+            guard let c = ntfstool_stored_name(v, dir, ino, name) else { return (ino, name) }
+            defer { free(c) }
+            return (ino, String(cString: c))
+        }
+    }
+
     public var isMounted: Bool { lock.lock(); defer { lock.unlock() }; return vol != nil }
 
     public func label() throws -> String {

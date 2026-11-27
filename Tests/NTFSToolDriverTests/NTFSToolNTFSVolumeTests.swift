@@ -131,7 +131,7 @@ final class NTFSVolumeTests: XCTestCase {
         let g = try vol.lookup("hello.txt", in: R)
         XCTAssertEqual(g, f)
         XCTAssertEqual(try vol.read(g, length: 100), Data("hello ntfs".utf8))
-        posix(ENOENT) { _ = try vol.lookup("HELLO.TXT", in: R) } // POSIX (case-sensitive) lookups, like other NTFS drivers
+        XCTAssertEqual(try vol.lookup("HELLO.TXT", in: R), f) // names ignore case, like Windows
     }
 
     func testUnalignedAndLargeWritesThroughAlignmentLayer() throws {
@@ -237,6 +237,47 @@ final class NTFSVolumeTests: XCTestCase {
         try vol.rename("Ünïcode ok.txt", in: R, to: "renamed.txt", in: R)
         vol.windowsNames = false
         _ = try vol.create("again:ok.txt", in: R, type: .file)
+    }
+
+    func testCaseInsensitiveNames() throws {
+        let f = try vol.create("Player.cs", in: R, type: .file)
+        try vol.write(f, offset: 0, data: Data("X".utf8))
+        let d = try vol.create("Assets", in: R, type: .directory)
+        // Lookup ignores case; listings keep the case as typed.
+        XCTAssertEqual(try vol.lookup("player.CS", in: R), f)
+        XCTAssertEqual(try vol.lookup("ASSETS", in: R), d)
+        XCTAssertEqual(try vol.lookupStored("player.CS", in: R).name, "Player.cs")
+        XCTAssertEqual(try names(R), ["Assets", "Player.cs"])
+        posix(ENOENT) { _ = try vol.lookup("Players.cs", in: R) }
+        // No second name that differs only in case.
+        posix(EEXIST) { _ = try vol.create("PLAYER.CS", in: R, type: .file) }
+        posix(EEXIST) { _ = try vol.create("assets", in: R, type: .directory) }
+        // Case-only rename keeps the file and its content.
+        try vol.rename("Player.cs", in: R, to: "PLAYER.cs", in: R)
+        XCTAssertEqual(try names(R), ["Assets", "PLAYER.cs"])
+        XCTAssertEqual(try vol.lookup("player.cs", in: R), f)
+        XCTAssertEqual(try vol.read(f, length: 5), Data("X".utf8))
+        // Rename addressed by a differently-cased source name.
+        try vol.rename("player.CS", in: R, to: "Enemy.cs", in: d)
+        XCTAssertEqual(try names(R), ["Assets"])
+        XCTAssertEqual(try names(d), ["Enemy.cs"])
+        // Rename over a target that differs in case replaces it (one file left).
+        let g = try vol.create("enemy.tmp", in: d, type: .file)
+        try vol.write(g, offset: 0, data: Data("Y".utf8))
+        try vol.rename("enemy.tmp", in: d, to: "ENEMY.CS", in: d)
+        XCTAssertEqual(try names(d), ["ENEMY.CS"])
+        XCTAssertEqual(try vol.read(try vol.lookup("enemy.cs", in: d), length: 5), Data("Y".utf8))
+        // Delete by a differently-cased name; non-ASCII folds too.
+        try vol.remove("enemy.CS", in: d)
+        XCTAssertEqual(try names(d), [])
+        _ = try vol.create("Ünï.txt", in: d, type: .file)
+        try vol.remove("ÜNÏ.TXT", in: d)
+        try vol.remove("ASSETS", in: R)
+        XCTAssertEqual(try names(R), [])
+        // Create -> delete -> create of the same name.
+        for _ in 0..<3 { _ = try vol.create("tmp", in: R, type: .directory); try vol.remove("tmp", in: R) }
+        try remount()
+        XCTAssertEqual(try names(R), [])
     }
 
     func testRenameCases() throws {
