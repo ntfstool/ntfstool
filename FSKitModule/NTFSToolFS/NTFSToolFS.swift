@@ -471,8 +471,8 @@ final class NTFSToolVolume: FSVolume, FSVolume.Operations, FSVolume.OpenCloseOpe
     func lookupItem(named name: FSFileName, inDirectory directory: FSItem, replyHandler: @escaping (FSItem?, FSFileName?, Error?) -> Void) {
         do {
             let dir = n(directory)
-            let ino = try ntfs.lookup(try self.name(name), in: dir.ino)
-            replyHandler(item(ino, parent: dir.ino), name, nil)
+            let found = try ntfs.lookupStored(try self.name(name), in: dir.ino)
+            replyHandler(item(found.ino, parent: dir.ino), FSFileName(string: found.name), nil)
         } catch { replyHandler(nil, nil, posixError(error)) }
     }
 
@@ -525,6 +525,15 @@ final class NTFSToolVolume: FSVolume, FSVolume.Operations, FSVolume.OpenCloseOpe
     func removeItem(_ item: FSItem, named name: FSFileName, fromDirectory directory: FSItem, replyHandler: @escaping (Error?) -> Void) {
         do {
             try ntfs.remove(try self.name(name), in: n(directory).ino)
+            // NTFS reuses a freed record number at once. Forget the item, or a new file created on that
+            // number would be handed this stale one (seen as EISDIR after an rmdir). Link counts can't tell
+            // us if it was the last name (DOS aliases count), so always forget; a surviving hard link just
+            // gets a fresh item on its next lookup.
+            if !isNull(item) {
+                items.lock()
+                if registry[n(item).ino] === item { registry[n(item).ino] = nil }
+                items.unlock()
+            }
             changed(directory)
             replyHandler(nil)
         } catch { replyHandler(posixError(error)) }
