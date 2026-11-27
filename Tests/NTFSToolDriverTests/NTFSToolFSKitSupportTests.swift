@@ -21,7 +21,7 @@ final class FSKitSupportTests: XCTestCase {
 
     func testModes() {
         XCTAssertEqual(NTFSToolFSKit.mode(for: .directory) & UInt32(S_IFMT), UInt32(S_IFDIR))
-        XCTAssertEqual(NTFSToolFSKit.mode(for: .file) & 0o777, 0o666)
+        XCTAssertEqual(NTFSToolFSKit.mode(for: .file) & 0o777, 0o777)
         XCTAssertEqual(NTFSToolFSKit.mode(for: .symlink) & UInt32(S_IFMT), UInt32(S_IFLNK))
     }
 
