@@ -433,6 +433,8 @@ ntfstool_vol *ntfstool_mount(const ntfstool_io *io, int readonly, int *err)
      * mode reach ntfs_inode_lookup_by_mbsname() with a NULL name buffer and fail
      * with EINVAL (a regular mount never hits this because it always creates the caches). */
     ntfsdrv_create_lru_caches(v->vol);
+    /* Match Windows: names differing only in case are the same file (still stored as typed). */
+    NVolClearCaseSensitive(v->vol);
     /* Hide system metadata files ($MFT, ...) and DOS short names from listings. */
     ntfsdrv_set_shown_files(v->vol, FALSE, TRUE, FALSE);
     /* Load the free cluster / free MFT record counts used by statfs. */
@@ -511,6 +513,27 @@ int ntfstool_lookup(ntfstool_vol *v, uint64_t dir, const char *name, uint64_t *i
     /* Records 0..15 are NTFS metadata files ($MFT, $LogFile, ...); never expose them. */
     if (!r && *ino < FILE_first_user && *ino != FILE_root) r = ENOENT;
     return r;
+}
+
+char *ntfstool_stored_name(ntfstool_vol *v, uint64_t dir, uint64_t ino, const char *name)
+{
+    ntfschar *u = NULL;
+    char *out = NULL;
+    int len = ntfsdrv_mbstoucs(name, &u);
+    ntfsdrv_inode *ni = len > 0 ? open_ino(v, ino) : NULL;
+    ntfsdrv_attr_search_ctx *c = ni ? ntfsdrv_attr_get_search_ctx(ni, NULL) : NULL;
+    /* A file has one $FILE_NAME per name (plus DOS aliases); pick the one in `dir` that matches. */
+    while (c && !out && !ntfsdrv_attr_lookup(AT_FILE_NAME, NULL, 0, CASE_SENSITIVE, 0, NULL, 0, c)) {
+        if (c->attr->non_resident) continue;
+        FILE_NAME_ATTR *fn = (FILE_NAME_ATTR *)((u8 *)c->attr + le16_to_cpu(c->attr->value_offset));
+        if (fn->file_name_type == FILE_NAME_DOS || MREF_LE(fn->parent_directory) != dir) continue;
+        if (ntfsdrv_names_are_equal(fn->file_name, fn->file_name_length, u, (size_t)len, IGNORE_CASE, v->vol->upcase, v->vol->upcase_len)
+            && ntfsdrv_ucstombs(fn->file_name, fn->file_name_length, &out, 0) < 0) out = NULL;
+    }
+    if (c) ntfsdrv_attr_put_search_ctx(c);
+    if (ni) ntfsdrv_inode_close(ni);
+    free(u);
+    return out;
 }
 
 int ntfstool_getattr(ntfstool_vol *v, uint64_t ino, ntfstool_attr *out)

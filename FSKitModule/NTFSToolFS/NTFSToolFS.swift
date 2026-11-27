@@ -339,7 +339,7 @@ final class NTFSToolVolume: FSVolume, FSVolume.Operations, FSVolume.OpenCloseOpe
         c.supports64BitObjectIDs = true
         c.supportsFastStatFS = true
         c.doesNotSupportSettingFilePermissions = true
-        c.caseFormat = .sensitive              // POSIX names, the usual default
+        c.caseFormat = .insensitiveCasePreserving // like Windows; apps such as Unity refuse case-sensitive volumes
         return c
     }
 
@@ -544,7 +544,7 @@ final class NTFSToolVolume: FSVolume, FSVolume.Operations, FSVolume.OpenCloseOpe
         do {
             try ntfs.rename(try name(sourceName), in: n(sourceDirectory).ino, to: try name(destinationName), in: n(destinationDirectory).ino)
             if !isNull(item) { n(item).parent = n(destinationDirectory).ino }
-            if let over = overItem, !isNull(over) { // the replaced target no longer exists
+            if let over = overItem, !isNull(over), over !== item { // the replaced target no longer exists (a case-only rename passes the item itself)
                 items.lock()
                 if registry[n(over).ino] === over { registry[n(over).ino] = nil }
                 items.unlock()
