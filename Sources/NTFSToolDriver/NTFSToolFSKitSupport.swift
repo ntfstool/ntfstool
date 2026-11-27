@@ -85,7 +85,8 @@ public enum NTFSToolFSKit {
         switch type {
         case .directory: return UInt32(S_IFDIR) | 0o777
         case .symlink: return UInt32(S_IFLNK) | 0o777
-        case .file: return UInt32(S_IFREG) | 0o666
+        // Executable too: NTFS stores no x bit, and tools kept on the volume (Unity's Burst linker) must launch.
+        case .file: return UInt32(S_IFREG) | 0o777
         }
     }
 
