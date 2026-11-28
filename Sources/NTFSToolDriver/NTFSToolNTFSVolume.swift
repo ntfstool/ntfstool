@@ -221,6 +221,12 @@ public final class NTFSVolume {
         set { lock.lock(); defer { lock.unlock() }; if let v = vol { ntfstool_set_windows_names(v, newValue ? 1 : 0) } }
     }
 
+    /// Match names ignoring case, like Windows (`ntfstool_set_case_insensitive`). Off by default.
+    public var caseInsensitive: Bool {
+        get { lock.lock(); defer { lock.unlock() }; return vol.map { ntfstool_case_insensitive($0) != 0 } ?? false }
+        set { lock.lock(); defer { lock.unlock() }; if let v = vol { ntfstool_set_case_insensitive(v, newValue ? 1 : 0) } }
+    }
+
     /// Run `body` with the volume lock held; throws ENXIO once unmounted.
     func locked<T>(_ body: (OpaquePointer) throws -> T) throws -> T {
         lock.lock()
@@ -242,11 +248,12 @@ public final class NTFSVolume {
         if r != 0 { throw NTFSError(r) }
     }
 
-    /// Like `lookup`, and also returns the name as stored on disk (lookups ignore case).
+    /// Like `lookup`, and also returns the name as stored on disk (which can differ in case when `caseInsensitive` is on).
     public func lookupStored(_ name: String, in dir: UInt64) throws -> (ino: UInt64, name: String) {
         try locked { v in
             var ino: UInt64 = 0
             try check(ntfstool_lookup(v, dir, name, &ino))
+            if ntfstool_case_insensitive(v) == 0 { return (ino, name) }
             guard let c = ntfstool_stored_name(v, dir, ino, name) else { return (ino, name) }
             defer { free(c) }
             return (ino, String(cString: c))

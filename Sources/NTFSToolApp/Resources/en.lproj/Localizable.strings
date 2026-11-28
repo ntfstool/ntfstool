@@ -59,6 +59,12 @@
 "mount" = "Mount";
 "mount_point" = "Mount Point";
 "no" = "No";
+"nocase_confirm_body" = "\"Photo.jpg\" and \"photo.jpg\" will be the same file, as on Windows.\n\nIf a drive already has names that differ only in case (often from Linux or Git), opening or deleting one may affect the other.";
+"nocase_confirm_title" = "Ignore Case in File Names?";
+"nocase_menu" = "Ignore Case in File Names";
+"nocase_reconnect_body" = "Eject your NTFS drives and plug them back in to apply the new setting.";
+"nocase_reconnect_title" = "Reconnect Your Drives";
+"nocase_turn_on" = "Turn On";
 "notify_driver_ready_body" = "NTFS drives you plug in will now be mounted read-write automatically.";
 "notify_driver_ready_title" = "NTFS Writing Is On";
 "notify_ejected_body" = "\"{name}\" was ejected safely.";
@@ -70,6 +76,8 @@
 "reconnect_body" = "macOS only lets the system mount physical drives when they're plugged in. We'll safely eject \"{name}\" first — then unplug it and plug it back in, and it will be mounted read-write.";
 "reconnect_title" = "Plug the Drive In Again";
 "refresh" = "Refresh";
+"settings_failed_body" = "Try again.";
+"settings_failed_title" = "Couldn't Save the Setting";
 "show_in_finder" = "Show in Finder";
 "sidebar_none" = "No NTFS drive connected";
 "sidebar_title" = "NTFS Drives";

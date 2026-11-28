@@ -93,6 +93,13 @@ int ntfstool_is_readonly(ntfstool_vol *v);
 void ntfstool_set_windows_names(ntfstool_vol *v, int on);
 int ntfstool_windows_names(ntfstool_vol *v);
 
+/** case_insensitive: match names ignoring case, like Windows (names keep the case they were created with,
+ *  and a second name differing only in case is refused). Off by default: POSIX, case-sensitive names.
+ *  On a volume that already holds names differing only in case, lookups resolve them all to one of them,
+ *  so opening or deleting the other one hits the wrong file. Set it right after mounting. */
+void ntfstool_set_case_insensitive(ntfstool_vol *v, int on);
+int ntfstool_case_insensitive(ntfstool_vol *v);
+
 /** Volume label as UTF-8 (caller frees). */
 char *ntfstool_label(ntfstool_vol *v);
 int ntfstool_set_label(ntfstool_vol *v, const char *label);
@@ -101,7 +108,7 @@ uint64_t ntfstool_serial(ntfstool_vol *v);
 
 /** Find `name` in directory `dir`. */
 int ntfstool_lookup(ntfstool_vol *v, uint64_t dir, const char *name, uint64_t *ino);
-/** Name lookups ignore case; this returns the spelling stored on disk for `name` (which resolved to `ino`) in `dir`.
+/** With case_insensitive on, name lookups ignore case; this returns the spelling stored on disk for `name` (which resolved to `ino`) in `dir`.
  *  malloc'ed, or NULL if it cannot be determined. */
 char *ntfstool_stored_name(ntfstool_vol *v, uint64_t dir, uint64_t ino, const char *name);
 int ntfstool_getattr(ntfstool_vol *v, uint64_t ino, ntfstool_attr *out);

@@ -59,6 +59,12 @@
 "mount" = "Montar";
 "mount_point" = "Ponto de montagem";
 "no" = "Não";
+"nocase_confirm_body" = "“Photo.jpg” e “photo.jpg” serão o mesmo arquivo, como no Windows.\n\nSe uma unidade já tiver nomes que diferem apenas em maiúsculas e minúsculas (geralmente do Linux ou do Git), abrir ou apagar um deles pode afetar o outro.";
+"nocase_confirm_title" = "Ignorar maiúsculas em nomes de arquivos?";
+"nocase_menu" = "Ignorar maiúsculas em nomes de arquivos";
+"nocase_reconnect_body" = "Ejete suas unidades NTFS e conecte-as novamente para aplicar o novo ajuste.";
+"nocase_reconnect_title" = "Conecte as unidades novamente";
+"nocase_turn_on" = "Ativar";
 "notify_driver_ready_body" = "As unidades NTFS que você conectar serão montadas automaticamente para leitura e gravação.";
 "notify_driver_ready_title" = "Gravação NTFS ativada";
 "notify_ejected_body" = "“{name}” foi ejetada com segurança.";
@@ -70,6 +76,8 @@
 "reconnect_body" = "O macOS só permite que o sistema monte unidades físicas ao conectá-las. Primeiro vamos ejetar “{name}” com segurança; depois desconecte e conecte-a novamente, e ela será montada para leitura e gravação.";
 "reconnect_title" = "Conecte a unidade novamente";
 "refresh" = "Atualizar";
+"settings_failed_body" = "Tente novamente.";
+"settings_failed_title" = "Não foi possível salvar o ajuste";
 "show_in_finder" = "Mostrar no Finder";
 "sidebar_none" = "Nenhuma unidade NTFS conectada";
 "sidebar_title" = "Unidades NTFS";

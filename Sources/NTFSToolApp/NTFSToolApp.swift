@@ -103,6 +103,9 @@ final class NTFSToolAppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         }
         // Wire notifications: new drives post a card (not in demo mode), and
         // clicks on cards or plain notifications come back to the model / window.
+        // Demo mode has no App Group; NTFSTOOL_DEMO_SETTINGS=<file> shows the settings for screenshots and UI tests.
+        model.settingsURL = demo ? env["NTFSTOOL_DEMO_SETTINGS"].map { URL(fileURLWithPath: $0) }
+                                 : SharedSettings.groupFile(group: Self.info("NTFSToolAppGroup"))
         model.onInsertion = { [weak self] card in if !demo { self?.notifier.post(card) } }
         model.showWindow = { [weak self] in self?.window.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true) }
         notifier.onCardAction = { [weak self] id, action in self?.model.performInsertion(volumeID: id, action: action) }
@@ -153,6 +156,11 @@ final class NTFSToolAppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
 
     // MARK: Menus
 
+    @objc func toggleCaseInsensitive(_ sender: NSMenuItem) {
+        model.toggleCaseInsensitive()
+        sender.state = model.caseInsensitive ? .on : .off
+    }
+
     /// Builds the menu bar in code (there is no nib): App, Edit, Window, Help.
     func buildMenu() {
         let main = NSMenu()
@@ -161,6 +169,12 @@ final class NTFSToolAppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         let appMenu = NSMenu()
         appMenu.addItem(withTitle: L("menu_about"), action: #selector(about), keyEquivalent: "").target = self
         appMenu.addItem(.separator())
+        if model.settingsURL != nil {
+            let nocase = appMenu.addItem(withTitle: L("nocase_menu"), action: #selector(toggleCaseInsensitive(_:)), keyEquivalent: "")
+            nocase.target = self
+            nocase.state = model.caseInsensitive ? .on : .off
+            appMenu.addItem(.separator())
+        }
         appMenu.addItem(withTitle: L("menu_hide"), action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: L("menu_quit"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")

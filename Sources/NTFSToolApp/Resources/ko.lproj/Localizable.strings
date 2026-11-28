@@ -59,6 +59,12 @@
 "mount" = "마운트";
 "mount_point" = "마운트 지점";
 "no" = "아니요";
+"nocase_confirm_body" = "'Photo.jpg'와 'photo.jpg'는 Windows에서처럼 같은 파일이 됩니다.\n\n드라이브에 이미 대소문자만 다른 이름이 있으면(Linux나 Git에서 만든 경우가 많습니다) 하나를 열거나 삭제할 때 다른 파일에도 영향이 갈 수 있습니다.";
+"nocase_confirm_title" = "파일 이름 대소문자를 구분하지 않을까요?";
+"nocase_menu" = "파일 이름에서 대소문자 구분 안 함";
+"nocase_reconnect_body" = "새 설정을 적용하려면 NTFS 드라이브를 추출한 다음 다시 연결하세요.";
+"nocase_reconnect_title" = "드라이브를 다시 연결하세요";
+"nocase_turn_on" = "켜기";
 "notify_driver_ready_body" = "이제 연결하는 NTFS 드라이브는 자동으로 읽기/쓰기로 마운트됩니다.";
 "notify_driver_ready_title" = "NTFS 쓰기가 켜졌습니다";
 "notify_ejected_body" = "'{name}'을(를) 안전하게 추출했습니다.";
@@ -70,6 +76,8 @@
 "reconnect_body" = "macOS에서는 실제 드라이브를 연결할 때만 시스템이 마운트할 수 있습니다. 먼저 '{name}'을(를) 안전하게 추출할 테니, 뽑았다가 다시 연결하면 읽기/쓰기로 마운트됩니다.";
 "reconnect_title" = "드라이브를 다시 연결하세요";
 "refresh" = "새로 고침";
+"settings_failed_body" = "다시 시도하세요.";
+"settings_failed_title" = "설정을 저장할 수 없음";
 "show_in_finder" = "Finder에서 보기";
 "sidebar_none" = "연결된 NTFS 드라이브 없음";
 "sidebar_title" = "NTFS 드라이브";

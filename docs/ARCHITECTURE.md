@@ -77,6 +77,11 @@ and follows the same rules as common FUSE NTFS drivers:
 - rename is implemented as link + unlink (with a temporary name for case-only renames), and a directory can never
   be moved into its own subtree (`is_descendant`);
 - names Windows cannot use are refused when the volume is mounted with `-o windows_names` (the same rule set as the engine's `ntfsdrv_forbidden_names`);
+- names are case-sensitive (POSIX) by default. "Ignore Case in File Names" in the App menu makes them
+  case-insensitive and case-preserving like Windows (Unity and similar apps need it): the app writes
+  `settings.json` to the App Group container (`SharedSettings`), the module reads it in `loadResource` and
+  reports `caseFormat` to match. It is opt-in because names that already differ only in case resolve to one
+  file, so opening or deleting one of them can hit the other;
 - extended attributes are stored as NTFS named data streams (the usual `user_xattr` scheme);
 - a hibernated or "Fast Startup" Windows volume is mounted read-only instead of failing.
 
@@ -121,6 +126,7 @@ the UI without a driver, without real disks and without an Apple Developer accou
 | `NTFSTOOL_DEMO_SCENE` | `guide`, `readonly` or `empty` (default: three drives) |
 | `NTFSTOOL_DEMO_SELECT` | select a volume by name |
 | `NTFSTOOL_DEMO_LANG` | UI language by lproj name, e.g. `zh-Hans`, `ja`, `ar` |
+| `NTFSTOOL_DEMO_SETTINGS` | settings file path; shows the App-menu settings (real builds use the App Group) |
 | `NTFSTOOL_SNAPSHOT=<file.png>` | render the window to a PNG and quit |
 
 ## Localization

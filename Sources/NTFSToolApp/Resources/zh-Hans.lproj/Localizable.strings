@@ -59,6 +59,12 @@
 "mount" = "挂载";
 "mount_point" = "挂载点";
 "no" = "否";
+"nocase_confirm_body" = "“Photo.jpg”和“photo.jpg”将视为同一个文件，和 Windows 一样。\n\n如果磁盘上已有只差大小写的文件（多见于 Linux 或 Git），打开或删除其中一个可能影响另一个。";
+"nocase_confirm_title" = "文件名不区分大小写？";
+"nocase_menu" = "文件名不区分大小写";
+"nocase_reconnect_body" = "请推出 NTFS 磁盘后重新插上，新设置才会生效。";
+"nocase_reconnect_title" = "请重新插入磁盘";
+"nocase_turn_on" = "开启";
 "notify_driver_ready_body" = "以后插入的 NTFS 磁盘会自动以可读写方式挂载。";
 "notify_driver_ready_title" = "已开启 NTFS 写入";
 "notify_ejected_body" = "“{name}”已安全推出。";
@@ -70,6 +76,8 @@
 "reconnect_body" = "macOS 只允许系统在插入时挂载实体磁盘。我们会先安全推出“{name}”，请拔下后重新插上，它就会以可读写方式挂载。";
 "reconnect_title" = "请重新插入磁盘";
 "refresh" = "刷新";
+"settings_failed_body" = "请再试一次。";
+"settings_failed_title" = "无法保存设置";
 "show_in_finder" = "在访达中显示";
 "sidebar_none" = "未连接 NTFS 磁盘";
 "sidebar_title" = "NTFS 磁盘";

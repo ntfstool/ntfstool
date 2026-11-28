@@ -433,8 +433,7 @@ ntfstool_vol *ntfstool_mount(const ntfstool_io *io, int readonly, int *err)
      * mode reach ntfs_inode_lookup_by_mbsname() with a NULL name buffer and fail
      * with EINVAL (a regular mount never hits this because it always creates the caches). */
     ntfsdrv_create_lru_caches(v->vol);
-    /* Match Windows: names differing only in case are the same file (still stored as typed). */
-    NVolClearCaseSensitive(v->vol);
+    /* Names are case-sensitive (POSIX) unless ntfstool_set_case_insensitive() turns on Windows-style matching. */
     /* Hide system metadata files ($MFT, ...) and DOS short names from listings. */
     ntfsdrv_set_shown_files(v->vol, FALSE, TRUE, FALSE);
     /* Load the free cluster / free MFT record counts used by statfs. */
@@ -677,6 +676,13 @@ int ntfstool_flush(ntfstool_vol *v, uint64_t ino)
 
 void ntfstool_set_windows_names(ntfstool_vol *v, int on) { v->win_names = on ? 1 : 0; }
 int ntfstool_windows_names(ntfstool_vol *v) { return v->win_names; }
+
+void ntfstool_set_case_insensitive(ntfstool_vol *v, int on)
+{
+    if (on) NVolClearCaseSensitive(v->vol);
+    else NVolSetCaseSensitive(v->vol);
+}
+int ntfstool_case_insensitive(ntfstool_vol *v) { return NVolCaseSensitive(v->vol) ? 0 : 1; }
 
 /* With windows_names on, reject names Windows cannot handle: forbidden characters
  * (" * / : < > ? \ |), reserved device names (CON, AUX, ...), and trailing dots or

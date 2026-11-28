@@ -59,6 +59,12 @@
 "mount" = "Monte Et";
 "mount_point" = "Bağlama noktası";
 "no" = "Hayır";
+"nocase_confirm_body" = "\"Photo.jpg\" ve \"photo.jpg\" Windows'ta olduğu gibi aynı dosya olur.\n\nBir sürücüde adları yalnızca büyük/küçük harf bakımından farklı olan dosyalar zaten varsa (çoğunlukla Linux veya Git kaynaklı), birini açmak ya da silmek diğerini de etkileyebilir.";
+"nocase_confirm_title" = "Dosya adlarında büyük/küçük harf yoksayılsın mı?";
+"nocase_menu" = "Dosya Adlarında Büyük/Küçük Harfi Yoksay";
+"nocase_reconnect_body" = "Yeni ayarı uygulamak için NTFS sürücülerinizi çıkarın ve yeniden takın.";
+"nocase_reconnect_title" = "Sürücüleri yeniden takın";
+"nocase_turn_on" = "Aç";
 "notify_driver_ready_body" = "Takacağınız NTFS sürücüler artık otomatik olarak okunur-yazılır bağlanacak.";
 "notify_driver_ready_title" = "NTFS yazma açık";
 "notify_ejected_body" = "\"{name}\" güvenle çıkarıldı.";
@@ -70,6 +76,8 @@
 "reconnect_body" = "macOS fiziksel sürücüleri yalnızca takıldıklarında sistemin bağlamasına izin verir. Önce \"{name}\" sürücüsünü güvenle çıkaracağız; ardından çıkarıp yeniden takın, okunur-yazılır bağlanacak.";
 "reconnect_title" = "Sürücüyü yeniden takın";
 "refresh" = "Yenile";
+"settings_failed_body" = "Yeniden deneyin.";
+"settings_failed_title" = "Ayar kaydedilemedi";
 "show_in_finder" = "Finder'da Göster";
 "sidebar_none" = "Bağlı NTFS sürücü yok";
 "sidebar_title" = "NTFS Sürücüler";

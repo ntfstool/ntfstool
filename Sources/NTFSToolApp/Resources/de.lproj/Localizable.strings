@@ -59,6 +59,12 @@
 "mount" = "Einbinden";
 "mount_point" = "Mount-Punkt";
 "no" = "Nein";
+"nocase_confirm_body" = "„Photo.jpg“ und „photo.jpg“ sind dann dieselbe Datei – wie unter Windows.\n\nEnthält ein Laufwerk bereits Namen, die sich nur in der Groß-/Kleinschreibung unterscheiden (oft von Linux oder Git), kann das Öffnen oder Löschen einer Datei die andere betreffen.";
+"nocase_confirm_title" = "Groß-/Kleinschreibung in Dateinamen ignorieren?";
+"nocase_menu" = "Groß-/Kleinschreibung in Dateinamen ignorieren";
+"nocase_reconnect_body" = "Werfen Sie Ihre NTFS-Laufwerke aus und schließen Sie sie wieder an, um die neue Einstellung anzuwenden.";
+"nocase_reconnect_title" = "Laufwerke neu anschließen";
+"nocase_turn_on" = "Einschalten";
 "notify_driver_ready_body" = "Eingesteckte NTFS-Laufwerke werden ab jetzt automatisch beschreibbar aktiviert.";
 "notify_driver_ready_title" = "NTFS-Schreiben ist aktiviert";
 "notify_ejected_body" = "„{name}“ wurde sicher ausgeworfen.";
@@ -70,6 +76,8 @@
 "reconnect_body" = "macOS lässt physische Laufwerke nur beim Anschließen vom System aktivieren. Wir werfen „{name}“ zuerst sicher aus – ziehen Sie es dann ab und stecken Sie es wieder an, danach ist es beschreibbar.";
 "reconnect_title" = "Laufwerk neu anschließen";
 "refresh" = "Aktualisieren";
+"settings_failed_body" = "Versuchen Sie es erneut.";
+"settings_failed_title" = "Einstellung konnte nicht gespeichert werden";
 "show_in_finder" = "Im Finder zeigen";
 "sidebar_none" = "Kein NTFS-Laufwerk angeschlossen";
 "sidebar_title" = "NTFS-Laufwerke";

@@ -59,6 +59,12 @@
 "mount" = "Funga";
 "mount_point" = "Mahali pa kupachika";
 "no" = "Hapana";
+"nocase_confirm_body" = "\"Photo.jpg\" na \"photo.jpg\" zitakuwa faili moja, kama kwenye Windows.\n\nKama diski tayari ina majina yanayotofautiana kwa herufi kubwa/ndogo tu (mara nyingi kutoka Linux au Git), kufungua au kufuta moja kunaweza kuathiri nyingine.";
+"nocase_confirm_title" = "Puuza herufi kubwa/ndogo kwenye majina ya faili?";
+"nocase_menu" = "Puuza herufi kubwa/ndogo kwenye majina ya faili";
+"nocase_reconnect_body" = "Toa diski zako za NTFS kisha uzichomeke tena ili kutumia mpangilio mpya.";
+"nocase_reconnect_title" = "Chomeka diski tena";
+"nocase_turn_on" = "Washa";
 "notify_driver_ready_body" = "Diski za NTFS utakazochomeka sasa zitawekwa kwa kusoma na kuandika kiotomatiki.";
 "notify_driver_ready_title" = "Kuandika NTFS kumewashwa";
 "notify_ejected_body" = "\"{name}\" imetolewa kwa usalama.";
@@ -70,6 +76,8 @@
 "reconnect_body" = "macOS inaruhusu mfumo pekee kuweka diski halisi zinapochomekwa. Kwanza tutatoa \"{name}\" kwa usalama — kisha iondoe na uichomeke tena, itawekwa kwa kusoma na kuandika.";
 "reconnect_title" = "Chomeka diski tena";
 "refresh" = "Onyesha upya";
+"settings_failed_body" = "Jaribu tena.";
+"settings_failed_title" = "Imeshindwa kuhifadhi mpangilio";
 "show_in_finder" = "Onyesha kwenye Finder";
 "sidebar_none" = "Hakuna diski ya NTFS iliyounganishwa";
 "sidebar_title" = "Diski za NTFS";

@@ -131,7 +131,7 @@ final class NTFSVolumeTests: XCTestCase {
         let g = try vol.lookup("hello.txt", in: R)
         XCTAssertEqual(g, f)
         XCTAssertEqual(try vol.read(g, length: 100), Data("hello ntfs".utf8))
-        XCTAssertEqual(try vol.lookup("HELLO.TXT", in: R), f) // names ignore case, like Windows
+        posix(ENOENT) { _ = try vol.lookup("HELLO.TXT", in: R) } // POSIX (case-sensitive) lookups by default
     }
 
     func testUnalignedAndLargeWritesThroughAlignmentLayer() throws {
@@ -239,7 +239,38 @@ final class NTFSVolumeTests: XCTestCase {
         _ = try vol.create("again:ok.txt", in: R, type: .file)
     }
 
+    func testCaseSensitiveByDefault() throws {
+        XCTAssertFalse(vol.caseInsensitive, "off by default")
+        let a = try vol.create("a.txt", in: R, type: .file)
+        let b = try vol.create("A.TXT", in: R, type: .file)
+        XCTAssertNotEqual(a, b)
+        XCTAssertEqual(try vol.lookupStored("a.txt", in: R).ino, a)
+        XCTAssertEqual(try vol.lookupStored("A.TXT", in: R).name, "A.TXT")
+        posix(ENOENT) { _ = try vol.lookup("A.txt", in: R) }
+        try vol.remove("a.txt", in: R)
+        XCTAssertEqual(try names(R), ["A.TXT"])
+        try remount()
+        XCTAssertFalse(vol.caseInsensitive, "the setting is per mount")
+    }
+
+    /// The risk the opt-in setting warns about: names that already differ only in case resolve to one file.
+    func testCaseInsensitiveOnExistingCaseDuplicates() throws {
+        let a = try vol.create("a.txt", in: R, type: .file)
+        try vol.write(a, offset: 0, data: Data("lower".utf8))
+        let b = try vol.create("A.TXT", in: R, type: .file)
+        try vol.write(b, offset: 0, data: Data("UPPER".utf8))
+        try remount()
+        vol.caseInsensitive = true
+        XCTAssertEqual(try names(R), ["A.TXT", "a.txt"], "listings still show both")
+        XCTAssertEqual(try vol.lookup("a.txt", in: R), try vol.lookup("A.TXT", in: R), "both names resolve to one file")
+        vol.caseInsensitive = false
+        XCTAssertEqual(try vol.read(try vol.lookup("a.txt", in: R), length: 10), Data("lower".utf8))
+        XCTAssertEqual(try vol.read(try vol.lookup("A.TXT", in: R), length: 10), Data("UPPER".utf8))
+    }
+
     func testCaseInsensitiveNames() throws {
+        vol.caseInsensitive = true
+        XCTAssertTrue(vol.caseInsensitive)
         let f = try vol.create("Player.cs", in: R, type: .file)
         try vol.write(f, offset: 0, data: Data("X".utf8))
         let d = try vol.create("Assets", in: R, type: .directory)
@@ -277,6 +308,7 @@ final class NTFSVolumeTests: XCTestCase {
         // Create -> delete -> create of the same name.
         for _ in 0..<3 { _ = try vol.create("tmp", in: R, type: .directory); try vol.remove("tmp", in: R) }
         try remount()
+        vol.caseInsensitive = true
         XCTAssertEqual(try names(R), [])
     }
 
