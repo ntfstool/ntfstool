@@ -44,6 +44,60 @@ final class NTFSToolModelTests: XCTestCase {
         model.refresh()
     }
 
+    // MARK: Case-insensitive setting
+
+    func settingsFile() -> URL {
+        let u = FileManager.default.temporaryDirectory.appendingPathComponent("ntfstool-settings-\(UUID().uuidString)/settings.json")
+        addTeardownBlock { try? FileManager.default.removeItem(at: u.deletingLastPathComponent()) }
+        return u
+    }
+
+    func testCaseInsensitiveNeedsConfirmationAndIsSharedWithTheModule() {
+        let url = settingsFile()
+        model.settingsURL = url
+        XCTAssertFalse(model.caseInsensitive, "off by default")
+        // Cancel: nothing changes, nothing is written.
+        presenter.on("nocase_confirm_body", press: 1)
+        model.toggleCaseInsensitive()
+        XCTAssertTrue(presenter.shown("nocase_confirm_body"))
+        XCTAssertFalse(model.caseInsensitive)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
+        // Confirm: saved for the module; connected drives must be reconnected to pick it up.
+        presenter.alerts = []
+        presenter.on("nocase_confirm_body", press: 0)
+        model.toggleCaseInsensitive()
+        XCTAssertTrue(model.caseInsensitive)
+        XCTAssertEqual(SharedSettings.load(url), SharedSettings(caseInsensitive: true))
+        XCTAssertTrue(presenter.shown("nocase_reconnect_body"))
+        // A new model (next launch) reads it back.
+        make()
+        model.settingsURL = url
+        XCTAssertTrue(model.caseInsensitive)
+        // Turning it off needs no confirmation.
+        presenter.alerts = []
+        model.toggleCaseInsensitive()
+        XCTAssertFalse(model.caseInsensitive)
+        XCTAssertFalse(presenter.shown("nocase_confirm_body"))
+        XCTAssertEqual(SharedSettings.load(url), SharedSettings())
+    }
+
+    func testCaseInsensitiveWithoutAppGroupDoesNothing() {
+        XCTAssertNil(model.settingsURL)
+        model.toggleCaseInsensitive()
+        XCTAssertFalse(model.caseInsensitive)
+        XCTAssertTrue(presenter.alerts.isEmpty)
+    }
+
+    func testSharedSettingsDefaultsWhenMissingOrBroken() throws {
+        let url = settingsFile()
+        XCTAssertEqual(SharedSettings.load(nil), SharedSettings())
+        XCTAssertEqual(SharedSettings.load(url), SharedSettings())
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data("not json".utf8).write(to: url)
+        XCTAssertEqual(SharedSettings.load(url), SharedSettings())
+        XCTAssertNil(SharedSettings.groupFile(group: ""))
+    }
+
     func testListsDrivesSelectsFirstAndReportsDriver() {
         XCTAssertTrue(model.loaded)
         XCTAssertEqual(model.volumes.map(\.id), ["disk4s1", "disk5s2", "disk6s1"])

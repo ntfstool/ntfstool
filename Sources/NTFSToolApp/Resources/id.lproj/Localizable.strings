@@ -59,6 +59,12 @@
 "mount" = "Pasang";
 "mount_point" = "Titik pasang";
 "no" = "Tidak";
+"nocase_confirm_body" = "\"Photo.jpg\" dan \"photo.jpg\" akan menjadi file yang sama, seperti di Windows.\n\nJika drive sudah memiliki nama yang hanya berbeda huruf besar/kecil (sering dari Linux atau Git), membuka atau menghapus salah satunya dapat memengaruhi yang lain.";
+"nocase_confirm_title" = "Abaikan huruf besar/kecil pada nama file?";
+"nocase_menu" = "Abaikan Huruf Besar/Kecil pada Nama File";
+"nocase_reconnect_body" = "Keluarkan drive NTFS lalu colokkan kembali untuk menerapkan pengaturan baru.";
+"nocase_reconnect_title" = "Colokkan ulang drive";
+"nocase_turn_on" = "Aktifkan";
 "notify_driver_ready_body" = "Drive NTFS yang Anda colokkan kini otomatis dipasang baca-tulis.";
 "notify_driver_ready_title" = "Penulisan NTFS aktif";
 "notify_ejected_body" = "\"{name}\" telah dikeluarkan dengan aman.";
@@ -70,6 +76,8 @@
 "reconnect_body" = "macOS hanya mengizinkan sistem memasang drive fisik saat dicolokkan. Kami akan mengeluarkan \"{name}\" dengan aman terlebih dahulu — lalu cabut dan colokkan kembali, drive akan dipasang baca-tulis.";
 "reconnect_title" = "Colokkan ulang drive";
 "refresh" = "Segarkan";
+"settings_failed_body" = "Coba lagi.";
+"settings_failed_title" = "Tidak dapat menyimpan pengaturan";
 "show_in_finder" = "Tampilkan di Finder";
 "sidebar_none" = "Tidak ada drive NTFS tersambung";
 "sidebar_title" = "Drive NTFS";

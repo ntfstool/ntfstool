@@ -236,6 +236,35 @@ public final class NTFSToolModel: ObservableObject {
         }
     }
 
+    // MARK: Settings
+
+    /// Shared settings file read by the FSKit module (App Group); nil when the build has no App Group,
+    /// in which case the settings are hidden and the module uses its defaults.
+    public var settingsURL: URL? { didSet { caseInsensitive = SharedSettings.load(settingsURL).caseInsensitive } }
+    /// Names ignore case, like Windows. Off by default; applies to drives mounted after the change.
+    @Published public private(set) var caseInsensitive = false
+
+    /// Menu action. Turning it on first explains the risk: on a drive that already holds names
+    /// differing only in case, those names resolve to one file, so the wrong one may be opened or deleted.
+    public func toggleCaseInsensitive() {
+        guard let url = settingsURL else { return }
+        let on = !caseInsensitive
+        if on {
+            let r = presenter.alert(title: L("nocase_confirm_title"), message: L("nocase_confirm_body"),
+                                    buttons: [L("nocase_turn_on"), L("cancel")], style: .warning)
+            guard r == 0 else { return }
+        }
+        do { try SharedSettings(caseInsensitive: on).save(url) } catch {
+            alert("settings_failed_title", "settings_failed_body")
+            return
+        }
+        caseInsensitive = on
+        // The module reads the setting when it mounts a drive; drives mounted now keep the old behavior.
+        if volumes.contains(where: { $0.state == .writable || $0.state == .readOnlyHibernated }) {
+            alert("nocase_reconnect_title", "nocase_reconnect_body", style: .info)
+        }
+    }
+
     // MARK: Extension guide
 
     /// Opens the extension settings and starts polling until the switch is on.

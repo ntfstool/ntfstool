@@ -59,6 +59,12 @@
 "mount" = "تحميل";
 "mount_point" = "نقطة التركيب";
 "no" = "لا";
+"nocase_confirm_body" = "سيُعامَل «Photo.jpg» و«photo.jpg» على أنهما الملف نفسه، كما في Windows.\n\nإذا كان على القرص أسماء تختلف في حالة الأحرف فقط (غالبًا من Linux أو Git)، فقد يؤثر فتح أحدها أو حذفه في الآخر.";
+"nocase_confirm_title" = "تجاهل حالة الأحرف في أسماء الملفات؟";
+"nocase_menu" = "تجاهل حالة الأحرف في أسماء الملفات";
+"nocase_reconnect_body" = "أخرج أقراص NTFS ثم أعد توصيلها لتطبيق الإعداد الجديد.";
+"nocase_reconnect_title" = "أعد توصيل الأقراص";
+"nocase_turn_on" = "تشغيل";
 "notify_driver_ready_body" = "ستُحمَّل أقراص NTFS التي توصلها تلقائيًا للقراءة والكتابة.";
 "notify_driver_ready_title" = "تم تفعيل الكتابة على NTFS";
 "notify_ejected_body" = "أُخرج \"{name}\" بأمان.";
@@ -70,6 +76,8 @@
 "reconnect_body" = "لا يسمح macOS إلا للنظام بتحميل الأقراص الفعلية عند توصيلها. سنُخرج \"{name}\" بأمان أولاً، ثم افصله وأعد توصيله وسيُحمَّل للقراءة والكتابة.";
 "reconnect_title" = "أعد توصيل القرص";
 "refresh" = "تحديث";
+"settings_failed_body" = "حاول مجددًا.";
+"settings_failed_title" = "تعذّر حفظ الإعداد";
 "show_in_finder" = "إظهار في Finder";
 "sidebar_none" = "لا يوجد قرص NTFS موصول";
 "sidebar_title" = "أقراص NTFS";

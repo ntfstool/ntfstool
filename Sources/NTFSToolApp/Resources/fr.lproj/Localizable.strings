@@ -59,6 +59,12 @@
 "mount" = "Monter";
 "mount_point" = "Point de montage";
 "no" = "Non";
+"nocase_confirm_body" = "« Photo.jpg » et « photo.jpg » seront le même fichier, comme sous Windows.\n\nSi un disque contient déjà des noms qui ne diffèrent que par la casse (souvent issus de Linux ou de Git), ouvrir ou supprimer l'un peut affecter l'autre.";
+"nocase_confirm_title" = "Ignorer la casse dans les noms de fichiers ?";
+"nocase_menu" = "Ignorer la casse dans les noms de fichiers";
+"nocase_reconnect_body" = "Éjectez vos disques NTFS puis rebranchez-les pour appliquer le nouveau réglage.";
+"nocase_reconnect_title" = "Rebranchez les disques";
+"nocase_turn_on" = "Activer";
 "notify_driver_ready_body" = "Les disques NTFS que vous branchez seront désormais montés en lecture-écriture automatiquement.";
 "notify_driver_ready_title" = "Écriture NTFS activée";
 "notify_ejected_body" = "« {name} » a été éjecté en toute sécurité.";
@@ -70,6 +76,8 @@
 "reconnect_body" = "macOS ne laisse le système monter les disques physiques qu'au branchement. Nous allons d'abord éjecter « {name} » en toute sécurité : débranchez-le puis rebranchez-le, il sera monté en lecture-écriture.";
 "reconnect_title" = "Rebranchez le disque";
 "refresh" = "Actualiser";
+"settings_failed_body" = "Réessayez.";
+"settings_failed_title" = "Impossible d'enregistrer le réglage";
 "show_in_finder" = "Afficher dans le Finder";
 "sidebar_none" = "Aucun disque NTFS connecté";
 "sidebar_title" = "Disques NTFS";

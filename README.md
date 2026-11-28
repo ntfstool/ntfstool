@@ -101,6 +101,7 @@ NTFSTool Pro (closed source) adds a second driver for older macOS versions, disk
 - 20 UI languages
 - Extended attributes stored as NTFS named streams (no `._` files); optional `windows_names` mount option
   refuses file names Windows cannot use
+- Optional case-insensitive file names, like Windows (App menu; off by default)
 
 ## Requirements
 

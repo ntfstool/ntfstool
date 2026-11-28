@@ -59,6 +59,12 @@
 "mount" = "マウント";
 "mount_point" = "マウントポイント";
 "no" = "いいえ";
+"nocase_confirm_body" = "「Photo.jpg」と「photo.jpg」は、Windows と同様に同じファイルになります。\n\nドライブにすでに大文字と小文字だけが異なる名前がある場合（Linux や Git で作成されたものに多く見られます）、一方を開いたり削除したりすると、もう一方にも影響することがあります。";
+"nocase_confirm_title" = "ファイル名の大文字と小文字を区別しないようにしますか？";
+"nocase_menu" = "ファイル名の大文字と小文字を区別しない";
+"nocase_reconnect_body" = "新しい設定を反映するには、NTFS ドライブを取り出して挿し直してください。";
+"nocase_reconnect_title" = "ドライブを接続し直してください";
+"nocase_turn_on" = "オンにする";
 "notify_driver_ready_body" = "今後接続した NTFS ドライブは自動的に読み書き可能でマウントされます。";
 "notify_driver_ready_title" = "NTFS への書き込みがオンになりました";
 "notify_ejected_body" = "「{name}」を安全に取り出しました。";
@@ -70,6 +76,8 @@
 "reconnect_body" = "macOS では、物理ドライブのマウントは接続時にシステムだけが行えます。まず「{name}」を安全に取り出しますので、抜いてから挿し直してください。読み書き可能でマウントされます。";
 "reconnect_title" = "ドライブを接続し直してください";
 "refresh" = "更新";
+"settings_failed_body" = "もう一度お試しください。";
+"settings_failed_title" = "設定を保存できませんでした";
 "show_in_finder" = "Finder に表示";
 "sidebar_none" = "NTFS ドライブが接続されていません";
 "sidebar_title" = "NTFS ドライブ";

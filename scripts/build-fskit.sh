@@ -49,8 +49,9 @@ SDK=$(xcrun --show-sdk-path)
 CSRC=(Sources/NTFSToolBridge/ntfstool_bridge.c)
 # Prebuilt libntfstool-driver (static, arm64 + x86_64) and its headers.
 NTFSLIB=Vendor/NTFSToolNTFS.xcframework/macos-arm64_x86_64
-# NTFSToolEventLog.swift is shared with the app (Foundation only) for the optional event log.
-SWSRC=(Sources/NTFSToolDriver/*.swift FSKitModule/NTFSToolFS/*.swift Sources/NTFSToolCore/NTFSToolEventLog.swift)
+# NTFSToolEventLog.swift and NTFSToolSharedSettings.swift are shared with the app (Foundation only):
+# the optional event log and the settings the app passes to the module.
+SWSRC=(Sources/NTFSToolDriver/*.swift FSKitModule/NTFSToolFS/*.swift Sources/NTFSToolCore/NTFSToolEventLog.swift Sources/NTFSToolCore/NTFSToolSharedSettings.swift)
 BINS=()
 for A in "${ARCHS[@]}"; do
   mkdir -p "$OUT/$A"

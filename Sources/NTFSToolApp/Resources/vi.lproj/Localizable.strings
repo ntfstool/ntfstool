@@ -59,6 +59,12 @@
 "mount" = "Gắn";
 "mount_point" = "Điểm gắn";
 "no" = "Không";
+"nocase_confirm_body" = "\"Photo.jpg\" và \"photo.jpg\" sẽ là cùng một tệp, giống như trên Windows.\n\nNếu ổ đã có các tên chỉ khác nhau ở chữ hoa/thường (thường từ Linux hoặc Git), việc mở hoặc xóa một tệp có thể ảnh hưởng đến tệp còn lại.";
+"nocase_confirm_title" = "Bỏ qua chữ hoa/thường trong tên tệp?";
+"nocase_menu" = "Bỏ qua chữ hoa/thường trong tên tệp";
+"nocase_reconnect_body" = "Hãy đẩy ra các ổ NTFS rồi cắm lại để áp dụng cài đặt mới.";
+"nocase_reconnect_title" = "Hãy cắm lại các ổ";
+"nocase_turn_on" = "Bật";
 "notify_driver_ready_body" = "Từ giờ các ổ NTFS cắm vào sẽ tự động được gắn ở chế độ đọc-ghi.";
 "notify_driver_ready_title" = "Đã bật ghi NTFS";
 "notify_ejected_body" = "Đã đẩy \"{name}\" ra an toàn.";
@@ -70,6 +76,8 @@
 "reconnect_body" = "macOS chỉ cho phép hệ thống gắn ổ vật lý khi cắm vào. Chúng tôi sẽ đẩy \"{name}\" ra an toàn trước — sau đó hãy rút ra và cắm lại, ổ sẽ được gắn ở chế độ đọc-ghi.";
 "reconnect_title" = "Hãy cắm lại ổ";
 "refresh" = "Làm mới";
+"settings_failed_body" = "Hãy thử lại.";
+"settings_failed_title" = "Không thể lưu cài đặt";
 "show_in_finder" = "Hiển thị trong Finder";
 "sidebar_none" = "Chưa kết nối ổ NTFS";
 "sidebar_title" = "Ổ NTFS";

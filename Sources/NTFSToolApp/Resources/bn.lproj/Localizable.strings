@@ -59,6 +59,12 @@
 "mount" = "মাউন্ট";
 "mount_point" = "মাউন্ট পয়েন্ট";
 "no" = "না";
+"nocase_confirm_body" = "“Photo.jpg” ও “photo.jpg” Windows-এর মতোই একই ফাইল হবে।\n\nকোনো ড্রাইভে আগে থেকে শুধু বড়-ছোট হাতের অক্ষরে আলাদা নাম থাকলে (প্রায়ই Linux বা Git থেকে), একটি খুললে বা মুছলে অন্যটিও প্রভাবিত হতে পারে।";
+"nocase_confirm_title" = "বড়-ছোট হাতের অক্ষর উপেক্ষা করবেন?";
+"nocase_menu" = "ফাইলের নামে বড়-ছোট হাতের অক্ষর উপেক্ষা করুন";
+"nocase_reconnect_body" = "নতুন সেটিং কার্যকর করতে NTFS ড্রাইভগুলো বের করে আবার লাগান।";
+"nocase_reconnect_title" = "ড্রাইভগুলো আবার লাগান";
+"nocase_turn_on" = "চালু করুন";
 "notify_driver_ready_body" = "এখন থেকে লাগানো NTFS ড্রাইভ নিজে থেকেই পড়া-লেখা উভয়ভাবে মাউন্ট হবে।";
 "notify_driver_ready_title" = "NTFS লেখা চালু হয়েছে";
 "notify_ejected_body" = "\"{name}\" নিরাপদে বের করা হয়েছে।";
@@ -70,6 +76,8 @@
 "reconnect_body" = "macOS শুধু লাগানোর সময় সিস্টেমকে ফিজিক্যাল ড্রাইভ মাউন্ট করতে দেয়। আমরা আগে \"{name}\" নিরাপদে বের করব — তারপর খুলে আবার লাগান, এটি পড়া-লেখা উভয়ভাবে মাউন্ট হবে।";
 "reconnect_title" = "ড্রাইভটি আবার লাগান";
 "refresh" = "রিফ্রেশ";
+"settings_failed_body" = "আবার চেষ্টা করুন।";
+"settings_failed_title" = "সেটিং সংরক্ষণ করা যায়নি";
 "show_in_finder" = "Finder-এ দেখান";
 "sidebar_none" = "কোনো NTFS ড্রাইভ যুক্ত নেই";
 "sidebar_title" = "NTFS ড্রাইভ";

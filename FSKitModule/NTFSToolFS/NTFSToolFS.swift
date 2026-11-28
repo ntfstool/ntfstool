@@ -44,6 +44,10 @@ let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "ntfstool.fskit", ca
 /// with the host app, so the app's diagnostics view can show module events.
 /// Enabled only when Info.plist has `NTFSToolLogGroup`; otherwise a no-op.
 let events = EventLog(url: (Bundle.main.object(forInfoDictionaryKey: "NTFSToolLogGroup") as? String).flatMap { EventLog.groupFile("module.log", group: $0) })
+/// Settings written by the host app in the same App Group (defaults when there is none).
+func sharedSettings() -> SharedSettings {
+    SharedSettings.load((Bundle.main.object(forInfoDictionaryKey: "NTFSToolLogGroup") as? String).flatMap { SharedSettings.groupFile(group: $0) })
+}
 /// Errors (by errno and operation) seen during the current mount; summarized in the event log on unload.
 let errorTally = ErrorTally()
 /// Number of device I/O errors logged individually during this mount (capped to keep the log small).
@@ -194,13 +198,16 @@ final class NTFSToolFileSystem: FSUnaryFileSystem, FSUnaryFileSystemOperations {
             }
             let ntfs = opened.value
             ntfs.windowsNames = opts.windowsNames // usually empty here; `mount -o` options arrive in activate
+            // Decided here, before FSKit asks for the volume capabilities (caseFormat), and fixed for the mount.
+            let settings = sharedSettings()
+            ntfs.caseInsensitive = settings.caseInsensitive
             if opened.fellBack { log.info("load: volume is hibernated or write-protected, mounted read-only") }
             let v = NTFSToolVolume(ntfs)
             volume = v
             containerStatus = .ready
             log.info("load: mounted readOnly=\(ntfs.readOnly, privacy: .public) options=\(options.taskOptions.joined(separator: " "), privacy: .public)")
             events.event("load", ["ok": true, "bsd": block.bsdName, "ro_req": opts.readOnly, "media_writable": block.isWritable,
-                                  "fell_back": opened.fellBack, "ro": ntfs.readOnly, "ms": Int(Date().timeIntervalSince(started) * 1000),
+                                  "fell_back": opened.fellBack, "ro": ntfs.readOnly, "nocase": ntfs.caseInsensitive, "ms": Int(Date().timeIntervalSince(started) * 1000),
                                   "options": options.taskOptions.joined(separator: " ")])
             replyHandler(v, nil)
         } catch {
@@ -339,7 +346,9 @@ final class NTFSToolVolume: FSVolume, FSVolume.Operations, FSVolume.OpenCloseOpe
         c.supports64BitObjectIDs = true
         c.supportsFastStatFS = true
         c.doesNotSupportSettingFilePermissions = true
-        c.caseFormat = .insensitiveCasePreserving // like Windows; apps such as Unity refuse case-sensitive volumes
+        // POSIX names by default. The app's opt-in setting makes it Windows-like (Unity and similar apps
+        // refuse case-sensitive volumes); names that already differ only in case then resolve to one file.
+        c.caseFormat = ntfs.caseInsensitive ? .insensitiveCasePreserving : .sensitive
         return c
     }
 
